@@ -1,6 +1,7 @@
 from testing_agent import TestingAgent
 from browser import PlaywrightBrowser
-from langchain_google_genai import ChatGoogleGenerativeAI, ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 import os
 from dotenv import load_dotenv
 load_dotenv()
