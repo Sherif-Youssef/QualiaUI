@@ -8,6 +8,7 @@ class DOMElement(BaseModel):
     tag: str = Field(description="HTML tag name")
     text: Optional[str] = Field(default=None, description="Visible text content")
     position: ElementPosition = Field(description="Element position")
+    visibility: Literal["hidden", "in_viewport_full", "in_viewport_partial", "out_of_viewport"] = Field(description="Element visibility status")
     attributes: Dict[str, str | Dict[str, str]] = Field(default={}, description="Element attributes")
     selector: str = Field(description="Unique element selector")
     depth: int = Field(default=0, description="Visual hierarchy level")
@@ -39,16 +40,17 @@ class DOMElement(BaseModel):
         def render(el: DOMElement, depth: int = 0) -> None:
             prefix = "  " * depth * indent
             parts = []
-            secondary_info = []  # For attributes that go on next line
+            secondary_info = []
             
-            # 1. ID (always first)
+            # 1. ID
             if el.interactive_id is not None:
                 parts.append(f"[{el.interactive_id}]")
             
-            # 2. Tag (always)
+            # 2. Tag & visibility
             parts.append(el.tag)
+            parts.append(f"({el.visibility})")
             
-            # 3. Core identity attributes (always)
+            # 3. Core identity attributes
             if el.attributes.get("id"):
                 parts.append(f"id={el.attributes['id']}")
             if el.attributes.get("name"):
@@ -56,7 +58,7 @@ class DOMElement(BaseModel):
             if el.attributes.get("type"):
                 parts.append(f"type={el.attributes['type']}")
             
-            # 4. Navigation attributes (always for relevant tags)
+            # 4. Navigation attributes
             if el.attributes.get("href"):
                 href = el.attributes['href']
                 # Truncate long URLs
@@ -72,7 +74,7 @@ class DOMElement(BaseModel):
                 else:
                     parts.append(f"src={src}")
             
-            # 5. State flags (always important for interactions)
+            # 5. State flags
             if el.attributes.get("disabled"):
                 parts.append("DISABLED")
             if el.attributes.get("required"):
@@ -80,7 +82,7 @@ class DOMElement(BaseModel):
             if el.attributes.get("checked"):
                 parts.append("CHECKED")
             
-            # 6. Value (important for form elements)
+            # 6. Value
             if el.attributes.get("value"):
                 value = el.attributes['value']
                 if len(value) > 30:
@@ -88,18 +90,18 @@ class DOMElement(BaseModel):
                 else:
                     parts.append(f'value="{value}"')
             
-            # 7. Text content (always if present)
+            # 7. Text content
             if el.text:
                 text = el.text
-                if len(text) > 50:
-                    parts.append(f'text="{text[:47]}..."')
+                if len(text) > 2000:
+                    parts.append(f'text="{text[:1997]}..."')
                 else:
                     parts.append(f'text="{text}"')
             
             # === Standard and Full verbosity attributes ===
             
             if verbosity in ["standard", "full"]:
-                # Placeholder (important for understanding inputs)
+                # Placeholder
                 if el.attributes.get("placeholder"):
                     placeholder = el.attributes['placeholder']
                     if len(placeholder) > 40:
@@ -107,7 +109,7 @@ class DOMElement(BaseModel):
                     else:
                         secondary_info.append(f"placeholder=\"{placeholder}\"")
                 
-                # Alt text (important for images)
+                # Alt text
                 if el.attributes.get("alt"):
                     alt = el.attributes['alt']
                     if len(alt) > 40:
@@ -115,7 +117,7 @@ class DOMElement(BaseModel):
                     else:
                         secondary_info.append(f"alt=\"{alt}\"")
                 
-                # Accessibility attributes (important for context)
+                # Accessibility attributes
                 if el.attributes.get("aria-label"):
                     aria_label = el.attributes['aria-label']
                     if len(aria_label) > 40:
@@ -149,13 +151,13 @@ class DOMElement(BaseModel):
                     else:
                         secondary_info.append(f"class=\"{classes}\"")
             
-            # Position (optional, useful for spatial context)
+            # Position
             if show_position:
                 pos = el.position
                 # Abbreviated position format
                 secondary_info.append(f"pos=({pos.x},{pos.y}) size={pos.width}x{pos.height}")
             
-            # Selector (optional, useful for debugging)
+            # Selector
             if show_selector:
                 selector = el.selector
                 if len(selector) > 50:

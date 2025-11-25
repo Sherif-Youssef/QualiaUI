@@ -57,10 +57,9 @@ class PlaywrightBrowser(BaseBrowser):
             self.browser = self.playwright.webkit.launch(headless=self.headless)
         
         self.context = self.browser.new_context()
+        self.context.add_init_script(path=get_js_serializer_file_path())
 
         self.page = self.context.new_page()
-        js_file_path = get_js_serializer_file_path()
-        self.page.add_script_tag(path=js_file_path)
         self.cdp_session = self.page.context.new_cdp_session(self.page)
         self.cdp_session.send("DOM.enable")
 
@@ -128,20 +127,18 @@ class PlaywrightBrowser(BaseBrowser):
         self.page.go_back()
         return f"page.go_back()"
     
-
-
     def _get_event_listeners(self, locator: Locator) -> list[str]:
         element_handle = locator.element_handle()
         self.page.evaluate("(el) => { window.__tmpElement = el; }", element_handle)
 
-        result = self.client.send("Runtime.evaluate", {
+        result = self.cdp_session.send("Runtime.evaluate", {
             "expression": "window.__tmpElement",
             "returnByValue": False
         })
         object_id = result["result"]["objectId"]
         self.page.evaluate("() => { delete window.__tmpElement; }")
 
-        event_listeners = self.client.send("DOMDebugger.getEventListeners", {"objectId": object_id})
+        event_listeners = self.cdp_session.send("DOMDebugger.getEventListeners", {"objectId": object_id})
         return [event["type"] for event in event_listeners["listeners"] if event["type"] != "invalid"]
 
     def _has_important_event_listeners(self, locator) -> bool:
@@ -157,14 +154,9 @@ class PlaywrightBrowser(BaseBrowser):
         # for locator in self.page.locator("*").all():
             # if self._has_important_event_listeners(locator):
                 # locator.evaluate("(el) => el.setAttribute('hasInteractiveListener', true)")
-        js_file_path = get_js_serializer_file_path()
-        with open(js_file_path, "r") as f:
-            js_code = f.read()
-        
-        self.page.add_script_tag(path=js_file_path)
 
-        json_result = self.page.evaluate(f"getSimplifiedDOMInJSON()")
-        new_dom_head = DOMElement.model_validate_json(json_result)
+        result: dict = self.page.evaluate(f"window.getSimplifiedDOMInJSON()")
+        new_dom_head = DOMElement(**result)
         self.dom_elements = {}
         self._flatten_dom_elements(new_dom_head)
         return new_dom_head
