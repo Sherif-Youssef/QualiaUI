@@ -60,7 +60,6 @@ class SelectOptionAction(BrowserAction):
     action_type: Literal[ACTION.OPTION]
     select_element_id: int
     option_element_id: int
-    target_id: int
 
 class DragAction(BrowserAction):
     action_type: Literal[ACTION.DRAG]
