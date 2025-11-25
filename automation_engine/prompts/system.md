@@ -21,6 +21,7 @@ You will be given a JSON-like object exactly like this:
 
   * **[N]** - Interactive integer ID (use this to reference elements in actions)
   * `tag` - HTML element type (button, input, a, etc.)
+  * `visibility` Visibility status of the element (hidden, in_viewport_full, in_viewport_partial, or out_of_viewport).
   * `Attributes` - id, name, type, href, etc.
   * `State flags` - REQUIRED, DISABLED, CHECKED (uppercase) if present
   * `text="..."` - visible text content
@@ -32,21 +33,17 @@ You will be given a JSON-like object exactly like this:
 Example:
 current_url: [https://www.saucedemo.com/](https://www.saucedemo.com/)
 page_title: Swag Labs
-body
-[0] a href=index.html
-img src=img/logo-big.png
-h4 text="Login Form"
-label text="Username"
-[1] input id=username type=text REQUIRED
-placeholder="Enter your username"
-label text="Password"
-[2] input id=password type=password REQUIRED
-placeholder="Enter your password"
-[3] a id=log-in href=/app.html text="Sign in"
-label text="Remember Me"
-[4] input type=checkbox
-[5] a href=#
-img src=img/social-icons/twitter
+body (in_viewport_partial)
+    div (in_viewport_full) text="Swag Labs"
+    [0] input (in_viewport_full) id=user-name name=user-name type=text REQUIRED
+      placeholder="Username"
+    [1] input (in_viewport_full) id=password name=password type=password REQUIRED
+      placeholder="Password"
+    [2] input (in_viewport_partial) id=login-button name=login-button type=submit value="Login"
+    div (in_viewport_partial) id=login_credentials text="standard_userlocked_out_userproblem_userperform..."
+        h4 (in_viewport_full) text="Accepted usernames are:"
+    div (out_of_viewport) text="secret_sauce"
+        h4 (out_of_viewport) text="Password for all users:"
 
 ## AgentHistory
 
