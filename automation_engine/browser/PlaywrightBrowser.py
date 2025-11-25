@@ -1,7 +1,7 @@
-from playwright.sync_api import sync_playwright, Page, Browser, BrowserContext, Playwright
+from playwright.sync_api import sync_playwright, Page, Browser, BrowserContext, Playwright, Locator
 from .BaseBrowser import BaseBrowser
 from models import (
-    ACTION,
+ ACTION,
     ClickAction,
     InputAction,
     ScrollAction,
@@ -13,24 +13,7 @@ from models import (
     SelectOptionAction,
     BrowserState
 )
-from typing import Literal, List
-
-from abc import ABC, abstractmethod
-from typing import Dict
-from playwright.sync_api import sync_playwright, Page, Browser, BrowserContext, Playwright, Locator
-from .BaseBrowser import BaseBrowser
-from models import (
-    ACTION,
-    ClickAction,
-    InputAction,
-    ScrollAction,
-    GoBackwardAction,
-    HoverAction,
-    DragAction,
-    FocusAction,
-    DOMElement
-)
-from typing import Literal, List
+from typing import Literal, Dict
 from dom.utils import get_js_serializer_file_path, IMPORTANT_EVENTS
 
 class PlaywrightBrowser(BaseBrowser):
@@ -94,13 +77,11 @@ class PlaywrightBrowser(BaseBrowser):
             code += f"page.fill({target_selector}, {input.input})\n"
         return code
     
-    def _action_select_option(self, action: SelectOptionAction) -> str:
-        self.page.click(action.select_element_id)
-        
-        target_selector = self._get_selector_by_interactive_id(action.target_id)
+    def _action_select_option(self, action: SelectOptionAction) -> str:        
+        select_element = self._get_selector_by_interactive_id(action.select_element_id)
         option_value = self.dom_elements[action.option_element_id].attributes['value']
-        self.page.select_option(target_selector, option_value)
-        return f"page.select_option({target_selector}, value={option_value})"
+        self.page.select_option(select_element, option_value)
+        return f"page.select_option({select_element}, value={option_value})"
 
     def _action_drag(self, action: DragAction) -> str:
         target_selector = self._get_selector_by_interactive_id(action.target_id)

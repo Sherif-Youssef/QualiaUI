@@ -67,7 +67,6 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 8. Prefer actions that are minimal and clearly move the task forward (do not chain unrelated changes).
 9. If the page visually changed before and you must verify success, explain uncertainty in `reasoning`.
 10. If you must scroll, use the SCROLL action with x and y integers (pixels) and explain why.
-11. Before selecting an option, click the element to expand options.
 
 ## Important rules and constraints
 
@@ -85,7 +84,6 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 0. OPTION
     {{
     "action_type": "OPTION",
-    "target_id": int,
     "select_element_id": int,
     "option_element_id": int
     }}
