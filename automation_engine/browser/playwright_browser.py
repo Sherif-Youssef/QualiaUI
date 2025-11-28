@@ -66,7 +66,7 @@ class PlaywrightBrowser(BaseBrowser):
         self.clear_code_history()
 
     def _action_click(self, action: ClickInteractionAction) -> str:
-        target_selector = self._get_selector_by_interactive_id(action.target_id)
+        target_selector = self._get_selector_by_element_id(action.target_id)
         self.page.click(target_selector)
         code = f"page.click('{target_selector}')"
         return code
@@ -74,30 +74,30 @@ class PlaywrightBrowser(BaseBrowser):
     def _action_input(self, action: InputInteractionAction) -> str:
         code = ""
         for input_field in action.input:
-            target_selector = self._get_selector_by_interactive_id(input_field.target_id)
+            target_selector = self._get_selector_by_element_id(input_field.target_id)
             self.page.fill(target_selector, input_field.input)
             code += f"page.fill({target_selector}, {input_field.input})\n"
         return code
     
     def _action_select_option(self, action: SelectOptionInteractionAction) -> str:        
-        select_element = self._get_selector_by_interactive_id(action.select_element_id)
-        option_value = self._get_element_by_interactive_id(action.option_element_id).attributes["value"]
+        select_element = self._get_selector_by_element_id(action.select_element_id)
+        option_value = self._get_element_by_id(action.option_element_id).attributes["value"]
         self.page.select_option(select_element, option_value)
         return f"page.select_option({select_element}, value={option_value})"
 
     def _action_drag(self, action: DragInteractionAction) -> str:
-        target_selector = self._get_selector_by_interactive_id(action.target_id)
-        source_selector = self._get_selector_by_interactive_id(action.source_id)
+        target_selector = self._get_selector_by_element_id(action.target_id)
+        source_selector = self._get_selector_by_element_id(action.source_id)
         self.page.locator(source_selector).dragTo(self.page.locator(target_selector))
         return f"page.locator({source_selector}).dragTo(page.locator({target_selector}))"
     
     def _action_hover(self, action: HoverInteractionAction) -> str:
-        target_selector = self._get_selector_by_interactive_id(action.target_id)
+        target_selector = self._get_selector_by_element_id(action.target_id)
         self.page.locator(target_selector).hover()
         return f"page.locator({target_selector}).hover()"
 
     def _action_focus(self, action: FocusInteractionAction) -> str:
-        target_selector = self._get_selector_by_interactive_id(action.target_id)
+        target_selector = self._get_selector_by_element_id(action.target_id)
         self.page.locator(target_selector).focus()
         return f"page.locator({target_selector}).focus()"
 
@@ -124,6 +124,8 @@ class PlaywrightBrowser(BaseBrowser):
         return not events.isdisjoint(self.IMPORTANT_EVENTS)
 
     def _serialize(self) -> DOMElement:
+        self.page.wait_for_load_state("domcontentloaded")
+
         # for locator in self.page.locator("*").all():
             # if self._has_important_event_listeners(locator):
                 # locator.evaluate("(el) => el.setAttribute('hasInteractiveListener', true)")

@@ -19,7 +19,7 @@ You will be given a JSON-like object exactly like this:
 
 * `elements` is a human-readable hierarchical list where each interactive element is shown as:
 
-  * **[N]** - Interactive integer ID (use this to reference elements in actions)
+  * **[N]** - Element integer ID (**[#N]** when the element is interactive, use this to reference elements in actions)
   * `tag` - HTML element type (button, input, a, etc.)
   * `visibility` Visibility status of the element (hidden, in_viewport_full, in_viewport_partial, or out_of_viewport).
   * `Attributes` - id, name, type, href, etc.
@@ -33,17 +33,29 @@ You will be given a JSON-like object exactly like this:
 Example:
 current_url: [https://www.saucedemo.com/](https://www.saucedemo.com/)
 page_title: Swag Labs
-body (in_viewport_partial)
-    div (in_viewport_full) text="Swag Labs"
-    [0] input (in_viewport_full) id=user-name name=user-name type=text REQUIRED
-      placeholder="Username"
-    [1] input (in_viewport_full) id=password name=password type=password REQUIRED
-      placeholder="Password"
-    [2] input (in_viewport_partial) id=login-button name=login-button type=submit value="Login"
-    div (in_viewport_partial) id=login_credentials text="standard_userlocked_out_userproblem_userperform..."
-        h4 (in_viewport_full) text="Accepted usernames are:"
-    div (out_of_viewport) text="secret_sauce"
-        h4 (out_of_viewport) text="Password for all users:"
+[0] body (in_viewport_full)
+    [1] div (in_viewport_full) text="Swag Labs"
+      class="login_logo"
+    [#2] form (in_viewport_full)
+        [#3] input (in_viewport_full) id=user-name name=user-name type=text REQUIRED
+          placeholder="Username"
+          data-test="username"
+          class="input_error form_input"
+        [#4] input (in_viewport_full) id=password name=password type=password REQUIRED
+          placeholder="Password"
+          data-test="password"
+          class="input_error form_input"
+        [#5] input (in_viewport_full) id=login-button name=login-button type=submit value="Login"
+          data-test="login-button"
+          class="submit-button btn_action"
+    [6] div (in_viewport_full) id=login_credentials text="standard_user..."
+      data-test="login-credentials"
+      class="login_credentials"
+        [7] h4 (in_viewport_full) text="Accepted usernames are:"
+    [8] div (in_viewport_full) text="secret_sauce"
+      data-test="login-password"
+      class="login_password"
+        [9] h4 (in_viewport_full) text="Password for all users:"
 
 ## AgentHistory
 
@@ -71,11 +83,11 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 ## Important rules and constraints
 
 * **Interactive ID MUST BE an integer** (no quotes).
-* Only interact with elements that have an ID in `elements`.
+* Only interact with elements that have an ID next to a '#' in `elements`.
 * Return a JSON-serializable string (no extra wrapper, no markdown fences, no code blocks).
 * Only include fields required for the chosen action and `reasoning`. Do not include irrelevant fields.
 * Always include `reasoning`. It should be concise but specific.
-* If you choose FAILED, include `fail_reason` explaining why no valid action exists.
+* If you choose FAILED, the `reasoning` should explain why no valid action exists.
 * If you choose COMPLETED, the `reasoning` should state why the goal is satisfied.
 * If multiple interactive actions are valid, pick the one that most directly progresses the `goal`.
 
@@ -166,7 +178,6 @@ Example FAILED:
 * If an input is REQUIRED and empty, prefer INPUT + then CLICK (but only return one action per response — return the next single step).
 * If a CAPTCHA appears and cannot be solved, return `FAILED` with an explanation and suggested alternative (e.g., try alternative URL).
 * If the element you attempted to use is DISABLED, return `FAILED` and explain.
-* If the page seems truncated (no more pixels to scroll) but you expect more, return SCROLL only if `y` movement is reasonable and justify it.
 
 ## Final notes
 
