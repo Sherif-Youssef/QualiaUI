@@ -1,7 +1,7 @@
 from langchain_core.language_models.chat_models import BaseChatModel
 from browser import BaseBrowser
 from agent import PlanningAgent
-from models import BrowserState, AgentHistory, BrowserAction
+from models import BrowserState, AgentHistory, Action, BrowserAction
 from typing import List, Tuple
 import time
 

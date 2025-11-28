@@ -13,7 +13,7 @@ load_dotenv()
 llm = ChatOpenAI(
     model="x-ai/grok-4.1-fast:free",
     api_key=os.getenv("OPENROUTER_KEY"),
-    base_url="https://openrouter.ai/api/v1", 
+    base_url="https://openrouter.ai/api/v1",
 )
 
 
@@ -24,13 +24,11 @@ testingAgent = TestingAgent(
     browser=browser
 )
 
-prompt = """
-Signup on the website with random name, email, etc as an admin,
-look for Egyptian Foul Medames and go to its page,
-edit its name making it 'Heshamian Steak' and add it to your favourites.
-Make sure that the item appears in your favourites list.
-"""
+# prompt = """
+# Login in as the standard user and buy a bike light. Use any random but believable info when checking out.
+# """
+prompt = "Login in as the standard user"
 
-url = "http://127.0.0.1:8000/"
+url = "https://www.saucedemo.com/"
 
 code, success = testingAgent.start(prompt, url)

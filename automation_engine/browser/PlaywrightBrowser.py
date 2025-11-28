@@ -1,17 +1,17 @@
 from playwright.sync_api import sync_playwright, Page, Browser, BrowserContext, Playwright, Locator
 from .BaseBrowser import BaseBrowser
 from models import (
- ACTION,
-    ClickAction,
-    InputAction,
-    ScrollAction,
-    GoBackwardAction,
-    HoverAction,
-    DragAction,
-    FocusAction,
+    INTERACTION,
+    Action,
     DOMElement,
-    SelectOptionAction,
-    BrowserState
+    BrowserState,
+    ClickInteractionAction,
+    InputInteractionAction,
+    SelectOptionInteractionAction,
+    DragInteractionAction,
+    HoverInteractionAction,
+    FocusInteractionAction,
+    GoBackwardInteractionAction
 )
 from typing import Literal, Dict
 from dom.utils import get_js_serializer_file_path, IMPORTANT_EVENTS
@@ -63,13 +63,13 @@ class PlaywrightBrowser(BaseBrowser):
             self.playwright.stop()
             self.playwright = None
 
-    def _action_click(self, action: ClickAction) -> str:
+    def _action_click(self, action: ClickInteractionAction) -> str:
         target_selector = self._get_selector_by_interactive_id(action.target_id)
         self.page.click(target_selector)
         code = f"page.click('{target_selector}')"
         return code
     
-    def _action_input(self, action: InputAction) -> str:
+    def _action_input(self, action: InputInteractionAction) -> str:
         code = ""
         for input in action.input:
             target_selector = self._get_selector_by_interactive_id(input.target_id)
@@ -77,34 +77,29 @@ class PlaywrightBrowser(BaseBrowser):
             code += f"page.fill({target_selector}, {input.input})\n"
         return code
     
-    def _action_select_option(self, action: SelectOptionAction) -> str:        
+    def _action_select_option(self, action: SelectOptionInteractionAction) -> str:        
         select_element = self._get_selector_by_interactive_id(action.select_element_id)
         option_value = self.dom_elements[action.option_element_id].attributes['value']
         self.page.select_option(select_element, option_value)
         return f"page.select_option({select_element}, value={option_value})"
 
-    def _action_drag(self, action: DragAction) -> str:
+    def _action_drag(self, action: DragInteractionAction) -> str:
         target_selector = self._get_selector_by_interactive_id(action.target_id)
         source_selector = self._get_selector_by_interactive_id(action.source_id)
         self.page.locator(source_selector).dragTo(self.page.locator(target_selector))
         return f"page.locator({source_selector}).dragTo(page.locator({target_selector}))"
     
-    def _action_hover(self, action: HoverAction) -> str:
+    def _action_hover(self, action: HoverInteractionAction) -> str:
         target_selector = self._get_selector_by_interactive_id(action.target_id)
         self.page.locator(target_selector).hover()
         return f"page.locator({target_selector}).hover()"
 
-    def _action_focus(self, action: FocusAction) -> str:
+    def _action_focus(self, action: FocusInteractionAction) -> str:
         target_selector = self._get_selector_by_interactive_id(action.target_id)
         self.page.locator(target_selector).focus()
         return f"page.locator({target_selector}).focus()"
 
-    def _action_scroll(self, action: ScrollAction) -> str:
-        js = f"window.scrollTo({action.x}, {action.y})"
-        self.page.evaluate(js)
-        return f"page.evaluate({js})"
-    
-    def _action_go_backward(self, action: GoBackwardAction) -> str:
+    def _action_go_backward(self, action: GoBackwardInteractionAction) -> str:
         self.page.go_back()
         return f"page.go_back()"
     

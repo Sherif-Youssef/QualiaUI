@@ -1,50 +1,46 @@
-from .action_history import (
-    Action,
-    AgentHistory,
-    ACTION,
-    
-    CompletedAction,
-    FailedAction,
-    ClickAction,
-    InputAction,
-    DragAction,
-    HoverAction,
-    FocusAction,
-    GoBackwardAction,
-    WaitAction,
-    ScrollAction,
-    BrowserAction,
-    TerminatingAction,
-    SelectOptionAction,
+from typing import Union
 
-    ActionAdapter,
-    
+from .agent_history import (
+    AgentHistory,
 )
+
+from .base_action import (
+    ACTION,
+    Action,
+)
+
+from .termination import (
+    TERMINATION,
+    TerminationAction,
+    CompletedTerminationAction,
+    FailedTerminationAction
+)
+
+from .interaction import (
+    INTERACTION,
+    InteractionAction,
+    ClickInteractionAction, 
+    InputInteractionAction, 
+    DragInteractionAction, 
+    HoverInteractionAction, 
+    FocusInteractionAction, 
+    GoBackwardInteractionAction,
+    SelectOptionInteractionAction
+)
+
+from .assertion import (
+    ASSERTION,
+    AssertionAction
+)
+
+from .waiting import (
+    WAITING,
+    WaitingAction
+)
+
+BrowserAction = Union[InteractionAction, AssertionAction, WaitingAction]
+
 from .browser_state import (
     BrowserState, 
     DOMElement
 )
-
-__all__ = [
-    'BrowserState',
-    'DOMElement',
-
-    'AgentHistory',
-    'ACTIONS'
-    'Action',
-    'BrowserAction',
-    'TerminatingAction',
-    'CompletedAction',
-    'FailedAction',
-    'ClickAction',
-    'InputAction',
-    'DragAction',
-    'HoverAction',
-    'FocusAction',
-    'GoBackwardAction',
-    'WaitAction',
-    'ScrollAction',
-    'SelectOptionAction',
-
-    'ActionAdapter'
-]
