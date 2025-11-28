@@ -1,4 +1,4 @@
-from models import BrowserState, AgentHistory, Action, ActionAdapter
+from models import BrowserState, AgentHistory, Action
 from langchain_core.language_models.chat_models import BaseChatModel
 from exceptions import RequestFinishedException
 from prompts import prompt_template
@@ -57,7 +57,7 @@ class PlanningAgent:
 
         response = response.content
         logger.info(f"LLM Response: {response}")
-        action: Action = ActionAdapter.validate_json(response) 
+        action: Action = Action.parse_action(json.loads(response))
 
         return action
         

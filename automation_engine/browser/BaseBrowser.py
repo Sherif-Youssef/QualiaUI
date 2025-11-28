@@ -1,17 +1,18 @@
 from abc import ABC, abstractmethod
 from models import (
-    Action, 
-    ACTION,
-    ClickAction,
-    InputAction,
-    ScrollAction,
-    GoBackwardAction,
-    HoverAction,
-    DragAction,
-    FocusAction,
+    INTERACTION,
+    Action,
+    INTERACTION,
+    InteractionAction,
     DOMElement,
-    SelectOptionAction,
-    BrowserState
+    BrowserState,
+    ClickInteractionAction,
+    InputInteractionAction,
+    SelectOptionInteractionAction,
+    DragInteractionAction,
+    HoverInteractionAction,
+    FocusInteractionAction,
+    GoBackwardInteractionAction
 )
 from typing import Literal, List, Dict, Callable
 
@@ -27,24 +28,21 @@ class BaseBrowser(ABC):
         self.browser_engine = browser_engine
         self.headless = headless
         self.executed_code_history: List[str] = []
-        self.action_map: Dict[ACTION, Callable] = self._initialize_action_map()
+        self.action_map: Dict[INTERACTION, Callable] = self._initialize_action_map()
     
-    def _initialize_action_map(self) -> Dict[ACTION, Callable]:
+    def _initialize_action_map(self) -> Dict[INTERACTION, Callable]:
         return {
-            ACTION.CLICK: self._action_click,
-            ACTION.INPUT: self._action_input,
-            ACTION.SCROLL: self._action_scroll,
-
-            ACTION.GO_BACKWARD: self._action_go_backward,
-            ACTION.DRAG: self._action_drag,
-            ACTION.HOVER: self._action_hover,
-            ACTION.FOCUS: self._action_focus,
-
-            ACTION.OPTION: self._action_select_option,
+            INTERACTION.CLICK: self._action_click,
+            INTERACTION.INPUT: self._action_input,
+            INTERACTION.GO_BACKWARD: self._action_go_backward,
+            INTERACTION.DRAG: self._action_drag,
+            INTERACTION.HOVER: self._action_hover,
+            INTERACTION.FOCUS: self._action_focus,
+            INTERACTION.SELECT_OPTION: self._action_select_option,
         }
     
     def execute_action(self, action: Action) -> bool:
-        action_method = self.action_map.get(action.action_type)
+        action_method = self.action_map.get(action.interaction_action_type)
         assert action_method is not None
         
         try:
@@ -65,35 +63,31 @@ class BaseBrowser(ABC):
         self.clear_code_history()
     
     @abstractmethod
-    def _action_click(self, action: ClickAction) -> str:
+    def _action_click(self, action: ClickInteractionAction) -> str:
         pass
     
     @abstractmethod
-    def _action_input(self, action: InputAction) -> str:
+    def _action_input(self, action: InputInteractionAction) -> str:
         pass
 
     @abstractmethod
-    def _action_drag(self, action: DragAction) -> str:
+    def _action_drag(self, action: DragInteractionAction) -> str:
         pass
 
     @abstractmethod
-    def _action_hover(self, action: HoverAction) -> str:
+    def _action_hover(self, action: HoverInteractionAction) -> str:
         pass
 
     @abstractmethod
-    def _action_focus(self, action: FocusAction) -> str:
-        pass
-
-    @abstractmethod
-    def _action_scroll(self, action: ScrollAction) -> str:
+    def _action_focus(self, action: FocusInteractionAction) -> str:
         pass
     
     @abstractmethod
-    def _action_go_backward(self, action: GoBackwardAction) -> str:
+    def _action_go_backward(self, action: GoBackwardInteractionAction) -> str:
         pass
 
     @abstractmethod
-    def _action_select_option(self, action: SelectOptionAction) -> str:
+    def _action_select_option(self, action: SelectOptionInteractionAction) -> str:
         pass
     
     def get_executed_code_history(self) -> List[str]:

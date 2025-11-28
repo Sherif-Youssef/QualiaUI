@@ -81,30 +81,34 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 
 ## Available Actions (choose one and include only its required fields plus `reasoning`)
 
-0. OPTION
+0. SELECT_OPTION
     {{
-    "action_type": "OPTION",
+    "action_type": "INTERACTION"
+    "interaction_action_type": "SELECT_OPTION",
     "select_element_id": int,
     "option_element_id": int
     }}
 
 1. CLICK
    {{
-   "action_type": "CLICK",
+   "action_type": "INTERACTION"
+   "interaction_action_type": "CLICK",
    "target_id": int,
    "reasoning": "string"
    }}
 
 2. INPUT
    {{
-   "action_type": "INPUT",
+   "action_type": "INTERACTION"
+   "interaction_action_type": "INPUT",
    "input": [{{"input": "text_to_input", "target_id": int}}],
    "reasoning": "string"
    }}
 
 3. DRAG
    {{
-   "action_type": "DRAG",
+   "action_type": "INTERACTION"
+   "interaction_action_type": "DRAG",
    "source_id": int,
    "target_id": int,
    "reasoning": "string"
@@ -112,47 +116,38 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 
 4. HOVER
    {{
-   "action_type": "HOVER",
+   "action_type": "INTERACTION"
+   "interaction_action_type": "HOVER",
    "target_id": int,
    "reasoning": "string"
    }}
 
 5. FOCUS
    {{
-   "action_type": "FOCUS",
+   "action_type": "INTERACTION"
+   "interaction_action_type": "FOCUS",
    "target_id": int,
    "reasoning": "string"
    }}
 
-6. SCROLL
+7. GO_BACKWARD
    {{
-   "action_type": "SCROLL",
-   "x": int,
-   "y": int,
+   "action_type": "INTERACTION"
+   "interaction_action_type": "GO_BACKWARD",
    "reasoning": "string"
    }}
 
-7. WAIT
+8. COMPLETED
    {{
-   "action_type": "WAIT",
+   "action_type": "TERMINATION"
+   "termination_action_type": "COMPLETED",
    "reasoning": "string"
    }}
 
-8. GO_BACKWARD
-   {{
-   "action_type": "GO_BACKWARD",
-   "reasoning": "string"
-   }}
-
-9. COMPLETED
-   {{
-   "action_type": "COMPLETED",
-   "reasoning": "string"
-   }}
-
-10. FAILED
+9. FAILED
     {{
-    "action_type": "FAILED",
+    "action_type": "TERMINATION"
+    "termination_action_type": "FAILED",
     "reasoning": "string",
     "fail_reason": "string"
     }}
@@ -161,10 +156,10 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 ## Examples (must be JSON-serializable strings; do not include explanatory text)
 
 Example CLICK:
-{{"action_type":"CLICK","target_id":3,"reasoning":"Click the 'Sign in' link [3] to submit the form and navigate to the app page."}}
+{{"action_type": "INTERACTION", "interaction_action_type":"CLICK","target_id":3,"reasoning":"Click the 'Sign in' link [3] to submit the form and navigate to the app page."}}
 
 Example FAILED:
-{{"action_type":"FAILED","reasoning":"There are no interactive elements on the page that match the goal.","fail_reason":"No interactive elements with IDs present to achieve the task."}}
+{{"action_type": "TERMINATION", "termination_action_type":"FAILED","reasoning":"There are no interactive elements on the page that match the goal.","fail_reason":"No interactive elements with IDs present to achieve the task."}}
 
 ## Failure handling and edge cases
 
