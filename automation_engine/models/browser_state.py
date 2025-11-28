@@ -199,3 +199,19 @@ class BrowserState(BaseModel):
             {self.parent.to_llm_string()}
 
         """
+
+class DOMState:
+    def __init__(self, root_element: DOMElement):
+        self.dom_elements: Dict[int, DOMElement] = {}
+        self._flatten_dom_elements(root_element)
+
+    def _flatten_dom_elements(self, head: DOMElement):
+        self.dom_elements[head.interactive_id] = head
+        for child in head.children:
+            self._flatten_dom_elements(child)
+    
+    def get_element_by_interactive_id(self, interactive_id: int) -> DOMElement:
+        return self.dom_elements[interactive_id]
+
+    def get_selector_by_interactive_id(self, interactive_id: int) -> str:
+        return self.get_element_by_interactive_id(interactive_id).selector
