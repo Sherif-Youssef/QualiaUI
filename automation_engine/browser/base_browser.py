@@ -59,12 +59,11 @@ class BaseBrowser(ABC):
             action.error = str(e)
             return False
     
-    def _get_selector_by_interactive_id(self, interactive_id: int) -> str:
-        return self.dom_state.get_selector_by_interactive_id(interactive_id)
+    def _get_selector_by_element_id(self, element_id: int) -> str:
+        return self.dom_state.get_selector_by_element_id(element_id)
     
-    def _get_element_by_interactive_id(self, interactive_id: int) -> str:
-        return self.dom_state.get_element_by_interactive_id(interactive_id)
-
+    def _get_element_by_id(self, element_id: int) -> str:
+        return self.dom_state.get_element_by_id(element_id)
 
     @abstractmethod
     def start(self, url: str):

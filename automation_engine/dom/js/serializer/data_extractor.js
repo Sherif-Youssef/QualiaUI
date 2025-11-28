@@ -59,7 +59,7 @@ export class ElementDataExtractor {
         let text = "";
         for (const node of element.childNodes) {
             if (node.nodeType === Node.TEXT_NODE) {
-                text += node.textContent;
+                text += node.textContent + " ";
             }
         }
         return text.trim();

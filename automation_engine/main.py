@@ -10,12 +10,12 @@ load_dotenv()
 #     model="gemini-2.5-flash",
 #     google_api_key=os.getenv("GEMINI_KEY"),
 # )
+
 llm = ChatOpenAI(
     model="x-ai/grok-4.1-fast:free",
     api_key=os.getenv("OPENROUTER_KEY"),
     base_url="https://openrouter.ai/api/v1",
 )
-
 
 browser = PlaywrightBrowser()
 
@@ -24,10 +24,10 @@ testingAgent = TestingAgent(
     browser=browser
 )
 
-# prompt = """
-# Login in as the standard user and buy a bike light. Use any random but believable info when checking out.
-# """
-prompt = "Login in as the standard user"
+prompt = """
+Login in as the standard user and buy a bike light. Use any random but believable info when checking out.
+"""
+# prompt = "Login in as the standard user"
 
 url = "https://www.saucedemo.com/"
 
