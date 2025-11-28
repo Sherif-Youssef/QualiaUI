@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from models import (
-    INTERACTION,
+    ACTION,
     Action,
     INTERACTION,
     InteractionAction,
     DOMElement,
+    DOMState,
     BrowserState,
     ClickInteractionAction,
     InputInteractionAction,
@@ -14,9 +15,13 @@ from models import (
     FocusInteractionAction,
     GoBackwardInteractionAction
 )
-from typing import Literal, List, Dict, Callable
+from types import MethodType
+from typing import Literal, List, Dict, Callable, Any, Type
+from dataclasses import dataclass
 
 class BaseBrowser(ABC):
+    action_registry: Dict[Type[Action], Callable[[Action], str]] = {}
+
     def __init__(
             self, 
             browser_engine: Literal['chromium', 'firefox', 'webkit'] = 'chromium', 
@@ -28,23 +33,22 @@ class BaseBrowser(ABC):
         self.browser_engine = browser_engine
         self.headless = headless
         self.executed_code_history: List[str] = []
-        self.action_map: Dict[INTERACTION, Callable] = self._initialize_action_map()
-    
-    def _initialize_action_map(self) -> Dict[INTERACTION, Callable]:
-        return {
-            INTERACTION.CLICK: self._action_click,
-            INTERACTION.INPUT: self._action_input,
-            INTERACTION.GO_BACKWARD: self._action_go_backward,
-            INTERACTION.DRAG: self._action_drag,
-            INTERACTION.HOVER: self._action_hover,
-            INTERACTION.FOCUS: self._action_focus,
-            INTERACTION.SELECT_OPTION: self._action_select_option,
-        }
-    
-    def execute_action(self, action: Action) -> bool:
-        action_method = self.action_map.get(action.interaction_action_type)
-        assert action_method is not None
+        self.dom_state: DOMState | None = None
+
+    @staticmethod
+    def register_action_function(action_registry) -> None:
+        def decorator(func):
+            action_type = func.__annotations__.get("action")
+            action_registry[action_type] = func.__name__
+            return func
         
+        return decorator
+
+    def execute_action(self, action: Action) -> bool:
+        action_func_name = self.action_registry.get(type(action))
+        assert action_func_name is not None
+
+        action_method = getattr(self, action_func_name)
         try:
             code = action_method(action)
             action.success = True
@@ -54,39 +58,50 @@ class BaseBrowser(ABC):
             action.success = False
             action.error = str(e)
             return False
-        
+    
+    def _get_selector_by_interactive_id(self, interactive_id: int) -> str:
+        return self.dom_state.get_selector_by_interactive_id(interactive_id)
+    
+    def _get_element_by_interactive_id(self, interactive_id: int) -> str:
+        return self.dom_state.get_element_by_interactive_id(interactive_id)
+
+
     @abstractmethod
     def start(self, url: str):
         pass
 
-    def close(self):
-        self.clear_code_history()
-    
     @abstractmethod
+    @register_action_function(action_registry)
     def _action_click(self, action: ClickInteractionAction) -> str:
         pass
     
     @abstractmethod
+    @register_action_function(action_registry)
     def _action_input(self, action: InputInteractionAction) -> str:
         pass
 
     @abstractmethod
+    @register_action_function(action_registry)
     def _action_drag(self, action: DragInteractionAction) -> str:
         pass
 
     @abstractmethod
+    @register_action_function(action_registry)
     def _action_hover(self, action: HoverInteractionAction) -> str:
         pass
 
     @abstractmethod
+    @register_action_function(action_registry)
     def _action_focus(self, action: FocusInteractionAction) -> str:
         pass
     
     @abstractmethod
+    @register_action_function(action_registry)
     def _action_go_backward(self, action: GoBackwardInteractionAction) -> str:
         pass
 
     @abstractmethod
+    @register_action_function(action_registry)
     def _action_select_option(self, action: SelectOptionInteractionAction) -> str:
         pass
     
@@ -98,14 +113,6 @@ class BaseBrowser(ABC):
 
     @abstractmethod
     def close(self):
-        pass
-
-    @abstractmethod
-    def _serialize(self) -> DOMElement:
-        pass
-
-    @abstractmethod
-    def _get_selector_by_interactive_id(self) -> str:
         pass
 
     @abstractmethod

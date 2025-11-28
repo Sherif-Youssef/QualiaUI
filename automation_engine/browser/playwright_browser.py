@@ -1,9 +1,10 @@
 from playwright.sync_api import sync_playwright, Page, Browser, BrowserContext, Playwright, Locator
-from .BaseBrowser import BaseBrowser
+from .base_browser import BaseBrowser
 from models import (
     INTERACTION,
     Action,
     DOMElement,
+    DOMState,
     BrowserState,
     ClickInteractionAction,
     InputInteractionAction,
@@ -17,6 +18,7 @@ from typing import Literal, Dict
 from dom.utils import get_js_serializer_file_path, IMPORTANT_EVENTS
 
 class PlaywrightBrowser(BaseBrowser):
+
     def __init__(self, browser_engine: Literal['chromium', 'firefox', 'webkit'] = 'chromium', headless: bool = False):
         super().__init__(browser_engine, headless)
         
@@ -24,7 +26,6 @@ class PlaywrightBrowser(BaseBrowser):
         self.page: Page | None = None
         self.playwright: Playwright | None = None
         self.browser: Browser | None = None
-        self.dom_elements: Dict[int, DOMElement] | None = None
         
     def start(self, url: str):
         if self.playwright is not None:
@@ -49,7 +50,6 @@ class PlaywrightBrowser(BaseBrowser):
         self.page.goto(url)
     
     def close(self):
-        super().close()
         if self.page:
             self.page.close()
             self.page = None
@@ -62,6 +62,8 @@ class PlaywrightBrowser(BaseBrowser):
         if self.playwright:
             self.playwright.stop()
             self.playwright = None
+        
+        self.clear_code_history()
 
     def _action_click(self, action: ClickInteractionAction) -> str:
         target_selector = self._get_selector_by_interactive_id(action.target_id)
@@ -71,15 +73,15 @@ class PlaywrightBrowser(BaseBrowser):
     
     def _action_input(self, action: InputInteractionAction) -> str:
         code = ""
-        for input in action.input:
-            target_selector = self._get_selector_by_interactive_id(input.target_id)
-            self.page.fill(target_selector, input.input)
-            code += f"page.fill({target_selector}, {input.input})\n"
+        for input_field in action.input:
+            target_selector = self._get_selector_by_interactive_id(input_field.target_id)
+            self.page.fill(target_selector, input_field.input)
+            code += f"page.fill({target_selector}, {input_field.input})\n"
         return code
     
     def _action_select_option(self, action: SelectOptionInteractionAction) -> str:        
         select_element = self._get_selector_by_interactive_id(action.select_element_id)
-        option_value = self.dom_elements[action.option_element_id].attributes['value']
+        option_value = self._get_element_by_interactive_id(action.option_element_id).attributes["value"]
         self.page.select_option(select_element, option_value)
         return f"page.select_option({select_element}, value={option_value})"
 
@@ -102,7 +104,7 @@ class PlaywrightBrowser(BaseBrowser):
     def _action_go_backward(self, action: GoBackwardInteractionAction) -> str:
         self.page.go_back()
         return f"page.go_back()"
-    
+
     def _get_event_listeners(self, locator: Locator) -> list[str]:
         element_handle = locator.element_handle()
         self.page.evaluate("(el) => { window.__tmpElement = el; }", element_handle)
@@ -121,11 +123,6 @@ class PlaywrightBrowser(BaseBrowser):
         events = set(self._get_event_listeners(locator))
         return not events.isdisjoint(self.IMPORTANT_EVENTS)
 
-    def _flatten_dom_elements(self, head: DOMElement):
-        self.dom_elements[head.interactive_id] = head
-        for child in head.children:
-            self._flatten_dom_elements(child)
-
     def _serialize(self) -> DOMElement:
         # for locator in self.page.locator("*").all():
             # if self._has_important_event_listeners(locator):
@@ -133,22 +130,14 @@ class PlaywrightBrowser(BaseBrowser):
 
         result: dict = self.page.evaluate(f"window.getSimplifiedDOMInJSON()")
         new_dom_head = DOMElement(**result)
-        self.dom_elements = {}
-        self._flatten_dom_elements(new_dom_head)
+        self.dom_state = DOMState(new_dom_head)
         return new_dom_head
-
-    def _get_selector_by_interactive_id(self, interactive_id: int) -> str:
-        return self.dom_elements[interactive_id].selector
 
     def get_browser_state(self) -> BrowserState:
         assert self.page
-
-        a = self._serialize()
-        with open(file='result.txt', mode='w', encoding='utf-8') as f:
-            f.write(self.page.content())
-
+        
         return BrowserState(
             current_url=self.page.title(),
             page_title=self.page.url,
-            parent=a
+            parent=self._serialize()
         )

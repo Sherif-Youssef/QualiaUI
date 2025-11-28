@@ -42,5 +42,6 @@ BrowserAction = Union[InteractionAction, AssertionAction, WaitingAction]
 
 from .browser_state import (
     BrowserState, 
-    DOMElement
+    DOMElement,
+    DOMState
 )
