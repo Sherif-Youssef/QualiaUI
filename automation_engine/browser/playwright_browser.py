@@ -12,7 +12,8 @@ from models import (
     DragInteractionAction,
     HoverInteractionAction,
     FocusInteractionAction,
-    GoBackwardInteractionAction
+    GoBackwardInteractionAction,
+    ExecuteJSCodeAssertionAction
 )
 from typing import Literal, Dict
 from dom.utils import get_js_serializer_file_path, IMPORTANT_EVENTS
@@ -104,6 +105,13 @@ class PlaywrightBrowser(BaseBrowser):
     def _action_go_backward(self, action: GoBackwardInteractionAction) -> str:
         self.page.go_back()
         return f"page.go_back()"
+
+
+    def _action_execute_js_code(self, action: ExecuteJSCodeAssertionAction) -> str:
+        ready_code = self._replace_placeholders(action.code)
+        result = self.page.evaluate(ready_code)
+        action.success, action.error = result.get('success'), result.get('error')
+        return ready_code
 
     def _get_event_listeners(self, locator: Locator) -> list[str]:
         element_handle = locator.element_handle()

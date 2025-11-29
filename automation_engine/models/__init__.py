@@ -25,12 +25,13 @@ from .interaction import (
     HoverInteractionAction, 
     FocusInteractionAction, 
     GoBackwardInteractionAction,
-    SelectOptionInteractionAction
+    SelectOptionInteractionAction,
 )
 
 from .assertion import (
     ASSERTION,
-    AssertionAction
+    AssertionAction,
+    ExecuteJSCodeAssertionAction
 )
 
 from .waiting import (

@@ -83,7 +83,7 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 
 0. SELECT_OPTION
     {{
-    "action_type": "INTERACTION"
+    "action_type": "INTERACTION",
     "interaction_action_type": "SELECT_OPTION",
     "select_element_id": int,
     "option_element_id": int
@@ -91,7 +91,7 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 
 1. CLICK
    {{
-   "action_type": "INTERACTION"
+   "action_type": "INTERACTION",
    "interaction_action_type": "CLICK",
    "target_id": int,
    "reasoning": "string"
@@ -99,7 +99,7 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 
 2. INPUT
    {{
-   "action_type": "INTERACTION"
+   "action_type": "INTERACTION",
    "interaction_action_type": "INPUT",
    "input": [{{"input": "text_to_input", "target_id": int}}],
    "reasoning": "string"
@@ -107,7 +107,7 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 
 3. DRAG
    {{
-   "action_type": "INTERACTION"
+   "action_type": "INTERACTION",
    "interaction_action_type": "DRAG",
    "source_id": int,
    "target_id": int,
@@ -116,7 +116,7 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 
 4. HOVER
    {{
-   "action_type": "INTERACTION"
+   "action_type": "INTERACTION",
    "interaction_action_type": "HOVER",
    "target_id": int,
    "reasoning": "string"
@@ -124,7 +124,7 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 
 5. FOCUS
    {{
-   "action_type": "INTERACTION"
+   "action_type": "INTERACTION",
    "interaction_action_type": "FOCUS",
    "target_id": int,
    "reasoning": "string"
@@ -132,25 +132,48 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 
 7. GO_BACKWARD
    {{
-   "action_type": "INTERACTION"
+   "action_type": "INTERACTION",
    "interaction_action_type": "GO_BACKWARD",
    "reasoning": "string"
    }}
 
 8. COMPLETED
    {{
-   "action_type": "TERMINATION"
+   "action_type": "TERMINATION",
    "termination_action_type": "COMPLETED",
    "reasoning": "string"
    }}
 
 9. FAILED
     {{
-    "action_type": "TERMINATION"
+    "action_type": "TERMINATION",
     "termination_action_type": "FAILED",
     "reasoning": "string",
-    "fail_reason": "string"
     }}
+10. ASSERTION
+   Use this action when you need to verify a condition, perform a test,
+   or assert that the page state meets expectations.
+   {{
+      "action_type": "ASSERTION",
+      "assertion_action_type": "EXECUTE_JS_CODE",
+      "reasoning": "string",
+      "code" : "string"
+   }}
+   JS code (use playwright if needed)
+   Code to exectue format: 
+    always return an object {{"success": "bool", "error": "why_the_test_failed_if_success_false"}}
+   Wrap the code in anonymous arrow function with no parameters i.e. () => {{/* code */ }}
+   **Selector Placeholder Format:**
+   - When referencing DOM elements, NEVER write the actual selector.
+   - Instead, use the placeholder format: {{{{ID_x}}}}
+     Example: document.querySelector({{{{ID_4}}}})
+   - These placeholders will be automatically replaced with the real CSS selectors at runtime.
+   - Do not wrap the placeholder in quotes — the system will insert the required quoting.
+   **General JS Guidance:**
+   - Always guard against null elements.
+   - Always compute values safely (parseFloat, trim, etc.).
+   - Never throw errors; instead, return success=false with a proper error message.
+   - Keep logic deterministic and side-effect free (no mutations or clicks).
 
 
 ## Examples (must be JSON-serializable strings; do not include explanatory text)
