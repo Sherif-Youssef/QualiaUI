@@ -3,8 +3,15 @@ from browser import PlaywrightBrowser
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 import os
+import logging
 from dotenv import load_dotenv
 load_dotenv()
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='{asctime} - {name} - Line {lineno} - {levelname} - {message}',
+    style='{'
+)
 
 # llm = ChatGoogleGenerativeAI(
 #     model="gemini-2.5-flash",
