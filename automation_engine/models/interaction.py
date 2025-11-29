@@ -51,11 +51,11 @@ class DragInteractionAction(InteractionAction):
 
 class HoverInteractionAction(InteractionAction):
     interaction_action_type: Literal[INTERACTION.HOVER]
-    target_id: str
+    target_id: int
 
 class FocusInteractionAction(InteractionAction):
     interaction_action_type: Literal[INTERACTION.FOCUS]
-    target_id: str
+    target_id: int
 
 class GoBackwardInteractionAction(InteractionAction):
     interaction_action_type: Literal[INTERACTION.GO_BACKWARD]
