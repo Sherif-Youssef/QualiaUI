@@ -19,11 +19,11 @@ formatter = logging.Formatter(
     style='{'
 )
 
-detailed_handler = logging.FileHandler( os.path.join(log_folder, "info.log") )
+detailed_handler = logging.FileHandler( os.path.join(log_folder, "debug.log") )
 detailed_handler.setLevel(logging.DEBUG)
 detailed_handler.setFormatter(formatter)
 
-concise_handler = logging.FileHandler(os.path.join(log_folder, "debug.log"))
+concise_handler = logging.FileHandler(os.path.join(log_folder, "info.log"))
 concise_handler.setLevel(logging.INFO)
 concise_handler.setFormatter(formatter)
 
