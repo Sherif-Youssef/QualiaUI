@@ -1,6 +1,6 @@
 from playwright.sync_api import sync_playwright
 from automation_engine.dom.utils import get_js_serializer_file_path
-from automation_engine.models.browser_state import DOMElement
+from automation_engine.models import DOMElement
 
 
 def main():
@@ -10,7 +10,7 @@ def main():
         # print(get_js_serializer_file_path())
         context.add_init_script(path=get_js_serializer_file_path())
         page = context.new_page()
-        page.goto("https://www.spoj.com/problems/QUEUEEZ/en/")
+        page.goto("https://infinite-scroll.com/demo/full-page/")
         # for _ in range(10):
         # print(_)
         # page.evaluate("window.getSimplifiedDOMInJSON()")
