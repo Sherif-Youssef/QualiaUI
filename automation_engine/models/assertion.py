@@ -7,9 +7,24 @@ from abc import ABC
 from .base_action import Action, ACTION
 
 class ASSERTION(str, Enum):
-    EQUAL = "EQUAL"
+    EXECUTE_JS_CODE = "EXECUTE_JS_CODE" 
 
 
 class AssertionAction(Action):
     action_type: Literal[ACTION.ASSERTION]
-    pass
+    @classmethod
+    def _parse_action(cls, obj):
+        return AssertionActionAdapter.validate_python(obj)
+
+class ExecuteJSCodeAssertionAction(AssertionAction):
+    assertion_action_type: Literal[ASSERTION.EXECUTE_JS_CODE]
+    code: str
+
+AssertionActionAdapter = TypeAdapter(
+    Annotated[
+        Union[
+            ExecuteJSCodeAssertionAction,
+        ], 
+        Field(discriminator='assertion_action_type')
+    ]
+)

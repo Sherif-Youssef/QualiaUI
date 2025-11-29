@@ -13,7 +13,8 @@ from models import (
     DragInteractionAction,
     HoverInteractionAction,
     FocusInteractionAction,
-    GoBackwardInteractionAction
+    GoBackwardInteractionAction,
+    ExecuteJSCodeAssertionAction
 )
 from types import MethodType
 from typing import Literal, List, Dict, Callable, Any, Type
@@ -105,6 +106,11 @@ class BaseBrowser(ABC):
     def _action_select_option(self, action: SelectOptionInteractionAction) -> str:
         pass
     
+    @abstractmethod
+    @register_action_function(action_registry)
+    def _action_execute_js_code(self, action: ExecuteJSCodeAssertionAction) -> str:
+        pass
+
     def get_executed_code_history(self) -> List[str]:
         return self.executed_code_history.copy()
     
@@ -118,3 +124,19 @@ class BaseBrowser(ABC):
     @abstractmethod
     def get_browser_state(self) -> BrowserState:
         pass
+
+    def _replace_placeholders(self, js_code: str) -> str:
+        import re
+        pattern = r"\{\{ID_(\d+)\}\}"
+
+        def replacer(match):
+            interactive_id = int(match.group(1))
+            try:
+                selector = self._get_selector_by_interactive_id(interactive_id)
+            except Exception:
+                raise KeyError(
+                    f"No selector found for interactive ID {interactive_id}"
+                )
+            return f"'{selector}'"
+
+        return re.sub(pattern, replacer, js_code)
