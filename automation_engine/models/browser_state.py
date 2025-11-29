@@ -194,12 +194,7 @@ class BrowserState(BaseModel):
     parent: DOMElement
 
     def to_llm_string(self) -> str:
-        return f"""
-            current_url: {self.current_url}
-            page_title: {self.page_title}
-            {self.parent.to_llm_string()}
-
-        """
+        return f"""current_url: {self.current_url}\npage_title: {self.page_title}\nElements:\n{self.parent.to_llm_string()}\n"""
 
 class DOMState:
     def __init__(self, root_element: DOMElement):
