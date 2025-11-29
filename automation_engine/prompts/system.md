@@ -19,7 +19,7 @@ You will be given a JSON-like object exactly like this:
 
 * `elements` is a human-readable hierarchical list where each interactive element is shown as:
 
-  * **[N]** - Interactive integer ID (use this to reference elements in actions)
+  * **[N]** - Element integer ID (**[#N]** when the element is interactive, use this to reference elements in actions)
   * `tag` - HTML element type (button, input, a, etc.)
   * `visibility` Visibility status of the element (hidden, in_viewport_full, in_viewport_partial, or out_of_viewport).
   * `Attributes` - id, name, type, href, etc.
@@ -33,17 +33,29 @@ You will be given a JSON-like object exactly like this:
 Example:
 current_url: [https://www.saucedemo.com/](https://www.saucedemo.com/)
 page_title: Swag Labs
-body (in_viewport_partial)
-    div (in_viewport_full) text="Swag Labs"
-    [0] input (in_viewport_full) id=user-name name=user-name type=text REQUIRED
-      placeholder="Username"
-    [1] input (in_viewport_full) id=password name=password type=password REQUIRED
-      placeholder="Password"
-    [2] input (in_viewport_partial) id=login-button name=login-button type=submit value="Login"
-    div (in_viewport_partial) id=login_credentials text="standard_userlocked_out_userproblem_userperform..."
-        h4 (in_viewport_full) text="Accepted usernames are:"
-    div (out_of_viewport) text="secret_sauce"
-        h4 (out_of_viewport) text="Password for all users:"
+[0] body (in_viewport_full)
+    [1] div (in_viewport_full) text="Swag Labs"
+      class="login_logo"
+    [#2] form (in_viewport_full)
+        [#3] input (in_viewport_full) id=user-name name=user-name type=text REQUIRED
+          placeholder="Username"
+          data-test="username"
+          class="input_error form_input"
+        [#4] input (in_viewport_full) id=password name=password type=password REQUIRED
+          placeholder="Password"
+          data-test="password"
+          class="input_error form_input"
+        [#5] input (in_viewport_full) id=login-button name=login-button type=submit value="Login"
+          data-test="login-button"
+          class="submit-button btn_action"
+    [6] div (in_viewport_full) id=login_credentials text="standard_user..."
+      data-test="login-credentials"
+      class="login_credentials"
+        [7] h4 (in_viewport_full) text="Accepted usernames are:"
+    [8] div (in_viewport_full) text="secret_sauce"
+      data-test="login-password"
+      class="login_password"
+        [9] h4 (in_viewport_full) text="Password for all users:"
 
 ## AgentHistory
 
@@ -71,86 +83,127 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 ## Important rules and constraints
 
 * **Interactive ID MUST BE an integer** (no quotes).
-* Only interact with elements that have an ID in `elements`.
+* Only interact with elements that have an ID next to a '#' in `elements`.
 * Return a JSON-serializable string (no extra wrapper, no markdown fences, no code blocks).
 * Only include fields required for the chosen action and `reasoning`. Do not include irrelevant fields.
 * Always include `reasoning`. It should be concise but specific.
-* If you choose FAILED, include `fail_reason` explaining why no valid action exists.
+* If you choose FAILED, the `reasoning` should explain why no valid action exists.
 * If you choose COMPLETED, the `reasoning` should state why the goal is satisfied.
 * If multiple interactive actions are valid, pick the one that most directly progresses the `goal`.
 
 ## Available Actions (choose one and include only its required fields plus `reasoning`)
 
-0. SELECT_OPTION
+### Interaction
+
+1. INPUT (fill an element with text)
+   {{
+      "action_type": "INTERACTION"
+      "interaction_action_type": "INPUT",
+      "input": [{{"input": "text_to_input", "target_id": int}}],
+      "reasoning": "string"
+   }}
+
+2. CLICK (mouse click on an element)
+   {{
+      "action_type": "INTERACTION"
+      "interaction_action_type": "CLICK",
+      "target_id": int,
+      "double_click": bool, // false when not specified
+      "button": left | middle | right, // left when not specified
+      "keyboard_modifiers": ["Modifier1", "Modifier2"], // optional, possible modifiers: Alt, ControlOrMeta, Shift
+      "reasoning": "string"
+   }}
+
+3. HOVER (hover over an element)
+   {{
+      "action_type": "INTERACTION"
+      "interaction_action_type": "HOVER",
+      "target_id": int,
+      "reasoning": "string"
+   }}
+
+4. SELECT_OPTION (select an option from a select list)
     {{
-    "action_type": "INTERACTION",
-    "interaction_action_type": "SELECT_OPTION",
-    "select_element_id": int,
-    "option_element_id": int
+      "action_type": "INTERACTION",
+      "interaction_action_type": "SELECT_OPTION",
+      "select_element_id": int,
+      "option_element_id": int
     }}
 
-1. CLICK
+5. PRESS (press keyboard strokes with an element in focus)
    {{
-   "action_type": "INTERACTION",
-   "interaction_action_type": "CLICK",
-   "target_id": int,
-   "reasoning": "string"
+      "action_type": "INTERACTION",
+      "interaction_action_type": "PRESS",
+      "target_id": int,
+      "key_strokes": ["FirstKeyStroke", "SecondKeyStroke"],
+      "reasoning": "string"
    }}
 
-2. INPUT
+   Possible Key Strokes:
+      Alt, ControlOrMeta, Shift,
+      Backquote, Minus, Equal, Backslash, Backspace, Tab, Delete, Escape,
+      ArrowDown, End, Enter, Home, Insert, PageDown, PageUp, ArrowRight,
+      ArrowUp, F1 - F12, 0 - 9, A - Z, a - z, $, &, etc.
+
+6. FOCUS (focus on an element)
    {{
-   "action_type": "INTERACTION",
-   "interaction_action_type": "INPUT",
-   "input": [{{"input": "text_to_input", "target_id": int}}],
-   "reasoning": "string"
+      "action_type": "INTERACTION",
+      "interaction_action_type": "FOCUS",
+      "target_id": int,
+      "reasoning": "string"
    }}
 
-3. DRAG
+7. DRAG (drag from an element to another element)
    {{
-   "action_type": "INTERACTION",
-   "interaction_action_type": "DRAG",
-   "source_id": int,
-   "target_id": int,
-   "reasoning": "string"
+      "action_type": "INTERACTION",
+      "interaction_action_type": "DRAG",
+      "source_id": int,
+      "target_id": int,
+      "reasoning": "string"
    }}
 
-4. HOVER
+8. SCROLL (scroll so that an element is in view)
    {{
-   "action_type": "INTERACTION",
-   "interaction_action_type": "HOVER",
-   "target_id": int,
-   "reasoning": "string"
+      "action_type": "INTERACTION",
+      "interaction_action_type": "SCROLL",
+      "target_id": int,
+      "reasoning": "string"
    }}
 
-5. FOCUS
+9. GO_TO (go to a another url)
    {{
-   "action_type": "INTERACTION",
-   "interaction_action_type": "FOCUS",
-   "target_id": int,
-   "reasoning": "string"
+      "action_type": "INTERACTION",
+      "interaction_action_type": "GO_TO",
+      "url": "string",
+      "reasoning": "string"
    }}
 
-7. GO_BACKWARD
+10. GO_BACKWARD (navigate to the previous page)
    {{
-   "action_type": "INTERACTION",
-   "interaction_action_type": "GO_BACKWARD",
-   "reasoning": "string"
+      "action_type": "INTERACTION",
+      "interaction_action_type": "GO_BACKWARD",
+      "reasoning": "string"
    }}
 
-8. COMPLETED
+### Termination
+
+1. COMPLETED
    {{
-   "action_type": "TERMINATION",
-   "termination_action_type": "COMPLETED",
-   "reasoning": "string"
+      "action_type": "TERMINATION",
+      "termination_action_type": "COMPLETED",
+      "reasoning": "string"
    }}
 
-9. FAILED
+2. FAILED
     {{
     "action_type": "TERMINATION",
     "termination_action_type": "FAILED",
     "reasoning": "string",
     }}
-10. ASSERTION
+
+### ASSERTION
+
+1. EXECUTE_JS_CODE
    Use this action when you need to verify a condition, perform a test,
    or assert that the page state meets expectations.
    {{
@@ -189,7 +242,6 @@ Example FAILED:
 * If an input is REQUIRED and empty, prefer INPUT + then CLICK (but only return one action per response — return the next single step).
 * If a CAPTCHA appears and cannot be solved, return `FAILED` with an explanation and suggested alternative (e.g., try alternative URL).
 * If the element you attempted to use is DISABLED, return `FAILED` and explain.
-* If the page seems truncated (no more pixels to scroll) but you expect more, return SCROLL only if `y` movement is reasonable and justify it.
 
 ## Final notes
 

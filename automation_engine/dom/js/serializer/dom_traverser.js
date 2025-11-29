@@ -9,39 +9,35 @@ export class DOMTraverser {
         this.extractor = new ElementDataExtractor(this.validator);
     }
 
-    traverse(node, selectorGen, depth = 0, root = true, interactiveId = 0) {
+    traverse(node, selectorGen, depth = 0, root = true, elementId = 0) {
         selectorGen.enter(node);
 
         const elementData = this.extractor.extract(node);
-        elementData.depth = depth;
-        elementData.selector = selectorGen.getSelector();
-
         const children = [];
         const interactive = this.validator.isInteractive(node);
         const semantic = this.validator.isSemantic(node);
-        const worthKeeping = interactive || 
-                            (semantic && this.extractor.hasImportantData(elementData)) || 
-                            root;
+        const worthKeeping = interactive || (semantic && this.extractor.hasImportantData(elementData)) || root;
+        
+        elementData.depth = depth;
+        elementData.selector = selectorGen.getSelector();
+        elementData.is_interactive = interactive;
+        elementData.element_id = elementId;
 
-        if (interactive) {
-            elementData.interactive_id = interactiveId;
-        }
-
-        let interactiveCount = interactive ? 1 : 0;
+        let elementCount = worthKeeping;
 
         // Traverse children
         selectorGen.enterLevel();
         for (const child of node.children) {
-            const [childInteractiveCount, childrenData] = this.traverse(
+            const [subtreeSize, childrenData] = this.traverse(
                 child,
                 selectorGen,
-                depth + (worthKeeping ? 1 : 0),
+                depth + worthKeeping,
                 false,
-                interactiveId + interactiveCount
+                elementId + elementCount
             );
 
+            elementCount += subtreeSize;
             if (childrenData.length > 0) {
-                interactiveCount += childInteractiveCount;
                 children.push(...childrenData);
             }
         }
@@ -54,9 +50,9 @@ export class DOMTraverser {
         selectorGen.exit();
 
         if (worthKeeping) {
-            return [interactiveCount, [elementData]];
+            return [elementCount, [elementData]];
         }
-        return [interactiveCount, children];
+        return [elementCount, children];
     }
 
     getSimplifiedDOM() {

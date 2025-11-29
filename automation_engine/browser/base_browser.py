@@ -7,14 +7,17 @@ from models import (
     DOMElement,
     DOMState,
     BrowserState,
-    ClickInteractionAction,
     InputInteractionAction,
-    SelectOptionInteractionAction,
-    DragInteractionAction,
+    ClickInteractionAction,
     HoverInteractionAction,
+    SelectOptionInteractionAction,
+    PressInteractionAction,
     FocusInteractionAction,
+    DragInteractionAction,
+    ScrollInteractionAction,
+    GoToInteractionAction,
     GoBackwardInteractionAction,
-    ExecuteJSCodeAssertionAction
+    ExecuteJSCodeAssertionAction,
 )
 from types import MethodType
 from typing import Literal, List, Dict, Callable, Any, Type
@@ -60,12 +63,11 @@ class BaseBrowser(ABC):
             action.error = str(e)
             return False
     
-    def _get_selector_by_interactive_id(self, interactive_id: int) -> str:
-        return self.dom_state.get_selector_by_interactive_id(interactive_id)
+    def _get_selector_by_element_id(self, element_id: int) -> str:
+        return self.dom_state.get_selector_by_element_id(element_id)
     
-    def _get_element_by_interactive_id(self, interactive_id: int) -> str:
-        return self.dom_state.get_element_by_interactive_id(interactive_id)
-
+    def _get_element_by_id(self, element_id: int) -> str:
+        return self.dom_state.get_element_by_id(element_id)
 
     @abstractmethod
     def start(self, url: str):
@@ -73,17 +75,12 @@ class BaseBrowser(ABC):
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_click(self, action: ClickInteractionAction) -> str:
-        pass
-    
-    @abstractmethod
-    @register_action_function(action_registry)
     def _action_input(self, action: InputInteractionAction) -> str:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_drag(self, action: DragInteractionAction) -> str:
+    def _action_click(self, action: ClickInteractionAction) -> str:
         pass
 
     @abstractmethod
@@ -93,22 +90,42 @@ class BaseBrowser(ABC):
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_focus(self, action: FocusInteractionAction) -> str:
-        pass
-    
-    @abstractmethod
-    @register_action_function(action_registry)
-    def _action_go_backward(self, action: GoBackwardInteractionAction) -> str:
-        pass
-
-    @abstractmethod
-    @register_action_function(action_registry)
     def _action_select_option(self, action: SelectOptionInteractionAction) -> str:
         pass
     
     @abstractmethod
     @register_action_function(action_registry)
+    def _action_press(self, action: PressInteractionAction) -> str:
+        pass
+    
+    @abstractmethod
+    @register_action_function(action_registry)
+    def _action_focus(self, action: FocusInteractionAction) -> str:
+        pass
+    
+    @abstractmethod
+    @register_action_function(action_registry)
+    def _action_drag(self, action: DragInteractionAction) -> str:
+        pass
+
+    @abstractmethod
+    @register_action_function(action_registry)
+    def _action_scroll(self, action: ScrollInteractionAction) -> str:
+        pass
+    
+    @abstractmethod
+    @register_action_function(action_registry)
     def _action_execute_js_code(self, action: ExecuteJSCodeAssertionAction) -> str:
+        pass
+
+    @abstractmethod
+    @register_action_function(action_registry)
+    def _action_go_to(self, action: GoToInteractionAction) -> str:
+        pass
+
+    @abstractmethod
+    @register_action_function(action_registry)
+    def _action_go_backward(self, action: GoBackwardInteractionAction) -> str:
         pass
 
     def get_executed_code_history(self) -> List[str]:

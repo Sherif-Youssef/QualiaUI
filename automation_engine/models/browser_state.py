@@ -4,7 +4,8 @@ from pydantic import BaseModel, Field
 
 
 class DOMElement(BaseModel):
-    interactive_id: Optional[int] = Field(default=None, description="ID for interactive element identification")
+    element_id: int = Field(description="ID for element identification")
+    is_interactive: bool = Field(description="True if the element is interactive")
     tag: str = Field(description="HTML tag name")
     text: Optional[str] = Field(default=None, description="Visible text content")
     position: ElementPosition = Field(description="Element position")
@@ -43,8 +44,8 @@ class DOMElement(BaseModel):
             secondary_info = []
             
             # 1. ID
-            if el.interactive_id is not None:
-                parts.append(f"[{el.interactive_id}]")
+            if el.element_id is not None:
+                parts.append(f"[{"#" if el.is_interactive else ""}{el.element_id}]")
             
             # 2. Tag & visibility
             parts.append(el.tag)
@@ -206,12 +207,12 @@ class DOMState:
         self._flatten_dom_elements(root_element)
 
     def _flatten_dom_elements(self, head: DOMElement):
-        self.dom_elements[head.interactive_id] = head
+        self.dom_elements[head.element_id] = head
         for child in head.children:
             self._flatten_dom_elements(child)
     
-    def get_element_by_interactive_id(self, interactive_id: int) -> DOMElement:
-        return self.dom_elements[interactive_id]
+    def get_element_by_id(self, element_id: int) -> DOMElement:
+        return self.dom_elements.get(element_id)
 
-    def get_selector_by_interactive_id(self, interactive_id: int) -> str:
-        return self.get_element_by_interactive_id(interactive_id).selector
+    def get_selector_by_element_id(self, element_id: int) -> str:
+        return self.get_element_by_id(element_id).selector

@@ -38,7 +38,7 @@ class TestingAgent:
             action = planning_agent.decide_next_action(browser_state, agent_history)
             if isinstance(action, BrowserAction):
                 self.browser.execute_action(action)
-
+            
                 time.sleep(2)
                 
                 browser_state = self.browser.get_browser_state()
