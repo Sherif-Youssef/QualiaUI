@@ -25,9 +25,8 @@ testingAgent = TestingAgent(
 )
 
 prompt = """
-Login in as the standard user and buy a bike light. Use any random but believable info when checking out.
+Login in as the standard user and add a bike light to your cart, then logout and login again, then checkout. Use any random but believable info when checking out.
 """
-# prompt = "Login in as the standard user"
 
 url = "https://www.saucedemo.com/"
 

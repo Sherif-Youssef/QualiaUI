@@ -7,12 +7,15 @@ from models import (
     DOMElement,
     DOMState,
     BrowserState,
-    ClickInteractionAction,
     InputInteractionAction,
-    SelectOptionInteractionAction,
-    DragInteractionAction,
+    ClickInteractionAction,
     HoverInteractionAction,
+    SelectOptionInteractionAction,
+    PressInteractionAction,
     FocusInteractionAction,
+    DragInteractionAction,
+    ScrollInteractionAction,
+    GoToInteractionAction,
     GoBackwardInteractionAction
 )
 from types import MethodType
@@ -71,17 +74,12 @@ class BaseBrowser(ABC):
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_click(self, action: ClickInteractionAction) -> str:
-        pass
-    
-    @abstractmethod
-    @register_action_function(action_registry)
     def _action_input(self, action: InputInteractionAction) -> str:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_drag(self, action: DragInteractionAction) -> str:
+    def _action_click(self, action: ClickInteractionAction) -> str:
         pass
 
     @abstractmethod
@@ -91,19 +89,39 @@ class BaseBrowser(ABC):
 
     @abstractmethod
     @register_action_function(action_registry)
+    def _action_select_option(self, action: SelectOptionInteractionAction) -> str:
+        pass
+    
+    @abstractmethod
+    @register_action_function(action_registry)
+    def _action_press(self, action: PressInteractionAction) -> str:
+        pass
+    
+    @abstractmethod
+    @register_action_function(action_registry)
     def _action_focus(self, action: FocusInteractionAction) -> str:
         pass
     
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_go_backward(self, action: GoBackwardInteractionAction) -> str:
+    def _action_drag(self, action: DragInteractionAction) -> str:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_select_option(self, action: SelectOptionInteractionAction) -> str:
+    def _action_scroll(self, action: ScrollInteractionAction) -> str:
         pass
-    
+
+    @abstractmethod
+    @register_action_function(action_registry)
+    def _action_go_to(self, action: GoToInteractionAction) -> str:
+        pass
+
+    @abstractmethod
+    @register_action_function(action_registry)
+    def _action_go_backward(self, action: GoBackwardInteractionAction) -> str:
+        pass
+
     def get_executed_code_history(self) -> List[str]:
         return self.executed_code_history.copy()
     

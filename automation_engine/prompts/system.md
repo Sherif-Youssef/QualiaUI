@@ -93,70 +93,108 @@ Use AgentHistory to understand previous attempts, progress, and remaining budget
 
 ## Available Actions (choose one and include only its required fields plus `reasoning`)
 
-0. SELECT_OPTION
+### Interaction
+
+1. INPUT (fill an element with text)
+   {{
+      "action_type": "INTERACTION"
+      "interaction_action_type": "INPUT",
+      "input": [{{"input": "text_to_input", "target_id": int}}],
+      "reasoning": "string"
+   }}
+
+2. CLICK (mouse click on an element)
+   {{
+      "action_type": "INTERACTION"
+      "interaction_action_type": "CLICK",
+      "target_id": int,
+      "double_click": bool, // false when not specified
+      "button": left | middle | right, // left when not specified
+      "keyboard_modifiers": ["Modifier1", "Modifier2"], // optional, possible modifiers: Alt, ControlOrMeta, Shift
+      "reasoning": "string"
+   }}
+
+3. HOVER (hover over an element)
+   {{
+      "action_type": "INTERACTION"
+      "interaction_action_type": "HOVER",
+      "target_id": int,
+      "reasoning": "string"
+   }}
+
+4. SELECT_OPTION (select an option from a select list)
     {{
-    "action_type": "INTERACTION"
-    "interaction_action_type": "SELECT_OPTION",
-    "select_element_id": int,
-    "option_element_id": int
+      "action_type": "INTERACTION"
+      "interaction_action_type": "SELECT_OPTION",
+      "select_element_id": int,
+      "option_element_id": int
     }}
 
-1. CLICK
+5. PRESS (press keyboard strokes with an element in focus)
    {{
-   "action_type": "INTERACTION"
-   "interaction_action_type": "CLICK",
-   "target_id": int,
-   "reasoning": "string"
+      "action_type": "INTERACTION"
+      "interaction_action_type": "PRESS",
+      "target_id": int,
+      "key_strokes": ["FirstKeyStroke", "SecondKeyStroke"],
+      "reasoning": "string"
    }}
 
-2. INPUT
+   Possible Key Strokes:
+      Alt, ControlOrMeta, Shift,
+      Backquote, Minus, Equal, Backslash, Backspace, Tab, Delete, Escape,
+      ArrowDown, End, Enter, Home, Insert, PageDown, PageUp, ArrowRight,
+      ArrowUp, F1 - F12, 0 - 9, A - Z, a - z, $, &, etc.
+
+6. FOCUS (focus on an element)
    {{
-   "action_type": "INTERACTION"
-   "interaction_action_type": "INPUT",
-   "input": [{{"input": "text_to_input", "target_id": int}}],
-   "reasoning": "string"
+      "action_type": "INTERACTION"
+      "interaction_action_type": "FOCUS",
+      "target_id": int,
+      "reasoning": "string"
    }}
 
-3. DRAG
+7. DRAG (drag from an element to another element)
    {{
-   "action_type": "INTERACTION"
-   "interaction_action_type": "DRAG",
-   "source_id": int,
-   "target_id": int,
-   "reasoning": "string"
+      "action_type": "INTERACTION"
+      "interaction_action_type": "DRAG",
+      "source_id": int,
+      "target_id": int,
+      "reasoning": "string"
    }}
 
-4. HOVER
+8. SCROLL (scroll so that an element is in view)
    {{
-   "action_type": "INTERACTION"
-   "interaction_action_type": "HOVER",
-   "target_id": int,
-   "reasoning": "string"
+      "action_type": "INTERACTION"
+      "interaction_action_type": "SCROLL",
+      "target_id": int,
+      "reasoning": "string"
    }}
 
-5. FOCUS
+9. GO_TO (go to a another url)
    {{
-   "action_type": "INTERACTION"
-   "interaction_action_type": "FOCUS",
-   "target_id": int,
-   "reasoning": "string"
+      "action_type": "INTERACTION"
+      "interaction_action_type": "GO_TO",
+      "url": "string",
+      "reasoning": "string"
    }}
 
-7. GO_BACKWARD
+10. GO_BACKWARD (navigate to the previous page)
    {{
-   "action_type": "INTERACTION"
-   "interaction_action_type": "GO_BACKWARD",
-   "reasoning": "string"
+      "action_type": "INTERACTION"
+      "interaction_action_type": "GO_BACKWARD",
+      "reasoning": "string"
    }}
 
-8. COMPLETED
+### Termination
+
+1. COMPLETED
    {{
-   "action_type": "TERMINATION"
-   "termination_action_type": "COMPLETED",
-   "reasoning": "string"
+      "action_type": "TERMINATION"
+      "termination_action_type": "COMPLETED",
+      "reasoning": "string"
    }}
 
-9. FAILED
+2. FAILED
     {{
     "action_type": "TERMINATION"
     "termination_action_type": "FAILED",

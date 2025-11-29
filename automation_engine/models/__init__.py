@@ -19,13 +19,17 @@ from .termination import (
 from .interaction import (
     INTERACTION,
     InteractionAction,
-    ClickInteractionAction, 
-    InputInteractionAction, 
-    DragInteractionAction, 
-    HoverInteractionAction, 
-    FocusInteractionAction, 
+    InputInteractionAction,
+    ClickInteractionAction,
+    HoverInteractionAction,
+    SelectOptionInteractionAction,
+    PressInteractionAction,
+    FocusInteractionAction,
+    DragInteractionAction,
+    ScrollInteractionAction,
+    GoToInteractionAction,
     GoBackwardInteractionAction,
-    SelectOptionInteractionAction
+    RawEventInteractionAction
 )
 
 from .assertion import (
