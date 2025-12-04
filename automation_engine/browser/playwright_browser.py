@@ -1,4 +1,4 @@
-from playwright.sync_api import sync_playwright, Page, Browser, BrowserContext, Playwright, Locator
+from playwright.sync_api import sync_playwright, Page, Browser, BrowserContext, Playwright, Locator, Error
 from .base_browser import BaseBrowser
 from models import (
     DOMElement,
@@ -12,9 +12,14 @@ from models import (
     FocusInteractionAction,
     DragInteractionAction,
     ScrollInteractionAction,
-    GoToInteractionAction,
-    GoBackwardInteractionAction,
+    ExecuteJSCodeInteractionAction,
+    
+    AIEvalAssersionAction,
     ExecuteJSCodeAssertionAction,
+
+    TimeoutWaitingAction,
+    StateWaitingAction,
+    ExecuteJSCodeWaitingAction
 )
 from typing import Literal
 from dom.utils import get_js_serializer_file_path, IMPORTANT_EVENTS
@@ -29,6 +34,18 @@ class PlaywrightBrowser(BaseBrowser):
         self.playwright: Playwright | None = None
         self.browser: Browser | None = None
         
+    def pause_time(self) -> None:
+        return
+        self.cdp_session.send('Emulation.setVirtualTimePolicy', {
+            'policy': 'pause'
+        })
+    
+    def resume_time(self) -> None:
+        return
+        self.cdp_session.send('Emulation.setVirtualTimePolicy', {
+            'policy': 'advance',
+        })
+
     def start(self, url: str):
         if self.playwright is not None:
             raise RuntimeError("Browser already started.")
@@ -50,6 +67,7 @@ class PlaywrightBrowser(BaseBrowser):
         self.cdp_session.send("DOM.enable")
 
         self.page.goto(url)
+        self.pause_time()
     
     def close(self):
         if self.page:
@@ -65,70 +83,77 @@ class PlaywrightBrowser(BaseBrowser):
             self.playwright.stop()
             self.playwright = None
         
-        self.clear_code_history()
-
-    def _action_input(self, action: InputInteractionAction) -> str:
-        code = ""
+    def _action_input(self, action: InputInteractionAction) -> None:
         for input_field in action.input:
             target_selector = self._get_selector_by_element_id(input_field.target_id)
             self.page.fill(target_selector, input_field.input)
-            code += f"page.fill({target_selector}, {input_field.input})\n"
-        return code
 
-    def _action_click(self, action: ClickInteractionAction) -> str:
+    def _action_click(self, action: ClickInteractionAction) -> None:
         target_selector = self._get_selector_by_element_id(action.target_id)
         method_name = "dblclick" if action.double_click else "click"
         getattr(self.page, method_name)(target_selector, button=action.button, modifiers=action.keyboard_modifiers)
-        code = f"page.{method_name}('{target_selector}', button='{action.button}', modifiers={action.keyboard_modifiers})"
-        return code
     
-    def _action_select_option(self, action: SelectOptionInteractionAction) -> str:        
+    def _action_select_option(self, action: SelectOptionInteractionAction) -> None:        
         select_element = self._get_selector_by_element_id(action.select_element_id)
         option_value = self._get_element_by_id(action.option_element_id).attributes["value"]
         self.page.select_option(select_element, option_value)
-        return f"page.select_option({select_element}, value={option_value})"
 
-    def _action_drag(self, action: DragInteractionAction) -> str:
+    def _action_drag(self, action: DragInteractionAction) -> None:
         target_selector = self._get_selector_by_element_id(action.target_id)
         source_selector = self._get_selector_by_element_id(action.source_id)
         self.page.locator(source_selector).dragTo(self.page.locator(target_selector))
-        return f"page.locator({source_selector}).dragTo(page.locator({target_selector}))"
     
-    def _action_hover(self, action: HoverInteractionAction) -> str:
+    def _action_hover(self, action: HoverInteractionAction) -> None:
         target_selector = self._get_selector_by_element_id(action.target_id)
         self.page.locator(target_selector).hover()
-        return f"page.locator({target_selector}).hover()"
 
-    def _action_focus(self, action: FocusInteractionAction) -> str:
+    def _action_focus(self, action: FocusInteractionAction) -> None:
         target_selector = self._get_selector_by_element_id(action.target_id)
         self.page.locator(target_selector).focus()
-        return f"page.locator({target_selector}).focus()"
 
-    def _action_press(self, action: PressInteractionAction):
+    def _action_press(self, action: PressInteractionAction) -> None:
         target_selector = self._get_selector_by_element_id(action.target_id)
         key_str = "+".join(action.key_strokes)
         self.page.locator(target_selector).press(key_str)
-        return f"self.page.locator('{target_selector}').press('{key_str}')"
 
-    def _action_scroll(self, action: ScrollInteractionAction):
+    def _action_scroll(self, action: ScrollInteractionAction) -> None:
         target_selector = self._get_selector_by_element_id(action.target_id)
         self.page.locator(target_selector).scroll_into_view_if_needed()
-        return f"self.page.locator('{target_selector}').scroll_into_view_if_needed()"
 
-    def _action_go_to(self, action: GoToInteractionAction):
-        self.page.goto(action.url)
-        return f"page.goto('{action.url}')"
+    def _action_execute_js_code(self, action: ExecuteJSCodeInteractionAction):
+        ready_code = self._replace_placeholders(action.code)
+        try:
+            self.page.evaluate(ready_code)
+        except Error as e:
+            if "Execution context was destroyed" not in str(e):
+                raise
+    
 
-    def _action_go_backward(self, action: GoBackwardInteractionAction) -> str:
-        self.page.go_back()
-        return f"page.go_back()"
-
-
-    def _action_execute_js_code(self, action: ExecuteJSCodeAssertionAction) -> str:
+    def _action_js_code_assert(self, action: ExecuteJSCodeAssertionAction) -> None:
         ready_code = self._replace_placeholders(action.code)
         result = self.page.evaluate(ready_code)
         action.success, action.error = result.get('success'), result.get('error')
-        return ready_code
+
+    def _action_ai_eval_assert(self, action: AIEvalAssersionAction):
+        action.success = action.eval_result
+
+
+    def _action_timeout_wait(self, action: TimeoutWaitingAction) -> None:
+        self.page.wait_for_timeout(action.timeout_miliseconds)
+
+    def _action_state_wait(self, action: StateWaitingAction) -> None:
+        target_selector = self._get_selector_by_element_id(action.target_id)
+        self.page.wait_for_selector(target_selector, timeout=action.timeout_miliseconds, state=action.target_state)
+
+    def _action_js_code_wait(self, action: ExecuteJSCodeWaitingAction) -> None:
+        ready_code = self._replace_placeholders(action.code)
+        try:
+            self.page.wait_for_function(f"const testFunc = {ready_code}; testFunc()['success']", timeout=action.timeout_miliseconds)
+        except TimeoutError:
+            pass
+        result = self.page.evaluate(ready_code)
+        action.success, action.error = result.get('success'), result.get('error')
+        
 
     # def _get_event_listeners(self, locator: Locator) -> list[str]:
     #     element_handle = locator.element_handle()
@@ -160,6 +185,7 @@ class PlaywrightBrowser(BaseBrowser):
         self.dom_state = DOMState(new_dom_head)
         return new_dom_head
 
+    @BaseBrowser.unfreeze_time
     def get_browser_state(self) -> BrowserState:
         assert self.page
 

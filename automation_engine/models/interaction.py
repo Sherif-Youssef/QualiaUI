@@ -15,9 +15,7 @@ class INTERACTION(str, Enum):
     FOCUS = "FOCUS"
     DRAG = "DRAG"
     SCROLL = "SCROLL"
-    GO_TO = "GO_TO"
-    GO_BACKWARD = "GO_BACKWARD"
-    RAW_EVENT = "RAW_EVENT"
+    EXECUTE_JS_CODE = "EXECUTE_JS_CODE"
 
 InteractionActionAdapter: TypeAdapter | None  = None
 
@@ -70,17 +68,9 @@ class ScrollInteractionAction(InteractionAction):
     interaction_action_type: Literal[INTERACTION.SCROLL]
     target_id: int
 
-class GoToInteractionAction(InteractionAction):
-    interaction_action_type: Literal[INTERACTION.GO_TO]
-    url: str
-
-class GoBackwardInteractionAction(InteractionAction):
-    interaction_action_type: Literal[INTERACTION.GO_BACKWARD]
-
-class RawEventInteractionAction(InteractionAction):
-    interaction_action_type: Literal[INTERACTION.RAW_EVENT]
-    target_id: int
-    event_type: str
+class ExecuteJSCodeInteractionAction(InteractionAction):
+    interaction_action_type: Literal[INTERACTION.EXECUTE_JS_CODE]
+    code: str
 
 InteractionActionAdapter = TypeAdapter(
     Annotated[
@@ -93,9 +83,7 @@ InteractionActionAdapter = TypeAdapter(
             FocusInteractionAction,
             DragInteractionAction,
             ScrollInteractionAction,
-            GoToInteractionAction,
-            GoBackwardInteractionAction,
-            RawEventInteractionAction
+            ExecuteJSCodeInteractionAction,
         ],
         Field(discriminator='interaction_action_type')
     ]

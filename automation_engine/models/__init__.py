@@ -27,20 +27,23 @@ from .interaction import (
     FocusInteractionAction,
     DragInteractionAction,
     ScrollInteractionAction,
-    GoToInteractionAction,
-    GoBackwardInteractionAction,
     SelectOptionInteractionAction,
+    ExecuteJSCodeInteractionAction
 )
 
 from .assertion import (
     ASSERTION,
     AssertionAction,
+    AIEvalAssersionAction,
     ExecuteJSCodeAssertionAction
 )
 
 from .waiting import (
     WAITING,
-    WaitingAction
+    WaitingAction,
+    TimeoutWaitingAction,
+    StateWaitingAction,
+    ExecuteJSCodeWaitingAction
 )
 
 BrowserAction = Union[InteractionAction, AssertionAction, WaitingAction]

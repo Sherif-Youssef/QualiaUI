@@ -1,3 +1,4 @@
+import functools
 from abc import ABC, abstractmethod
 from models import (
     ACTION,
@@ -15,13 +16,16 @@ from models import (
     FocusInteractionAction,
     DragInteractionAction,
     ScrollInteractionAction,
-    GoToInteractionAction,
-    GoBackwardInteractionAction,
+    ExecuteJSCodeInteractionAction,
+
+    AIEvalAssersionAction,
     ExecuteJSCodeAssertionAction,
+
+    TimeoutWaitingAction,
+    StateWaitingAction,
+    ExecuteJSCodeWaitingAction
 )
-from types import MethodType
 from typing import Literal, List, Dict, Callable, Any, Type
-from dataclasses import dataclass
 
 class BaseBrowser(ABC):
     action_registry: Dict[Type[Action], Callable[[Action], str]] = {}
@@ -36,7 +40,6 @@ class BaseBrowser(ABC):
 
         self.browser_engine = browser_engine
         self.headless = headless
-        self.executed_code_history: List[str] = []
         self.dom_state: DOMState | None = None
 
     @staticmethod
@@ -47,16 +50,35 @@ class BaseBrowser(ABC):
             return func
         
         return decorator
+    
+    @abstractmethod
+    def pause_time(self) -> None:
+        pass
 
+    @abstractmethod
+    def resume_time(self) -> None:
+        pass
+
+    @staticmethod
+    def unfreeze_time(func):
+        @functools.wraps(func)
+        def wrapper(self: "BaseBrowser", *args, **kwargs):
+            try:
+                self.resume_time()
+                return func(self, *args, **kwargs)
+            finally:
+                self.pause_time()
+        return wrapper
+
+    @unfreeze_time
     def execute_action(self, action: Action) -> bool:
         action_func_name = self.action_registry.get(type(action))
         assert action_func_name is not None
 
         action_method = getattr(self, action_func_name)
         try:
-            code = action_method(action)
+            action_method(action)
             action.success = True
-            self.executed_code_history.append(code)
             return True
         except Exception as e:
             action.success = False
@@ -75,69 +97,82 @@ class BaseBrowser(ABC):
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_input(self, action: InputInteractionAction) -> str:
+    def _action_input(self, action: InputInteractionAction) -> None:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_click(self, action: ClickInteractionAction) -> str:
+    def _action_click(self, action: ClickInteractionAction) -> None:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_hover(self, action: HoverInteractionAction) -> str:
+    def _action_hover(self, action: HoverInteractionAction) -> None:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_select_option(self, action: SelectOptionInteractionAction) -> str:
+    def _action_select_option(self, action: SelectOptionInteractionAction) -> None:
         pass
     
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_press(self, action: PressInteractionAction) -> str:
+    def _action_press(self, action: PressInteractionAction) -> None:
         pass
     
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_focus(self, action: FocusInteractionAction) -> str:
+    def _action_focus(self, action: FocusInteractionAction) -> None:
         pass
     
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_drag(self, action: DragInteractionAction) -> str:
+    def _action_drag(self, action: DragInteractionAction) -> None:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_scroll(self, action: ScrollInteractionAction) -> str:
+    def _action_scroll(self, action: ScrollInteractionAction) -> None:
         pass
+
+    @abstractmethod
+    @register_action_function(action_registry)
+    def _action_execute_js_code(self, action: ExecuteJSCodeInteractionAction) -> None:
+        pass
+
     
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_execute_js_code(self, action: ExecuteJSCodeAssertionAction) -> str:
+    def _action_ai_eval_assert(self, action: AIEvalAssersionAction):
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_go_to(self, action: GoToInteractionAction) -> str:
+    def _action_js_code_assert(self, action: ExecuteJSCodeAssertionAction) -> None:
+        pass
+
+
+    @abstractmethod
+    @register_action_function(action_registry)
+    def _action_timeout_wait(self, action: TimeoutWaitingAction) -> None:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_go_backward(self, action: GoBackwardInteractionAction) -> str:
+    def _action_state_wait(self, action: StateWaitingAction) -> None:
         pass
 
-    def get_executed_code_history(self) -> List[str]:
-        return self.executed_code_history.copy()
+    @abstractmethod
+    @register_action_function(action_registry)
+    def _action_js_code_wait(self, action: ExecuteJSCodeWaitingAction) -> None:
+        pass
     
-    def clear_code_history(self) -> None:
-        self.executed_code_history.clear()
 
     @abstractmethod
     def close(self):
         pass
-
+    
+    @unfreeze_time
     @abstractmethod
     def get_browser_state(self) -> BrowserState:
         pass
@@ -156,4 +191,7 @@ class BaseBrowser(ABC):
                 )
             return f"'{selector}'"
 
-        return re.sub(pattern, replacer, js_code)
+        code = re.sub(pattern, replacer, js_code)
+        with open("code.txt", "a") as f:
+            f.write(code)
+        return code
