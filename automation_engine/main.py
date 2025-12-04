@@ -18,8 +18,14 @@ logging.basicConfig(
 #     google_api_key=os.getenv("GEMINI_KEY"),
 # )
 
+# llm = ChatOpenAI(
+#     model="x-ai/grok-4.1-fast:free",
+#     api_key=os.getenv("OPENROUTER_KEY"),
+#     base_url="https://openrouter.ai/api/v1",
+# )
+
 llm = ChatOpenAI(
-    model="x-ai/grok-4.1-fast:free",
+    model="tngtech/deepseek-r1t2-chimera:free",
     api_key=os.getenv("OPENROUTER_KEY"),
     base_url="https://openrouter.ai/api/v1",
 )
@@ -32,9 +38,9 @@ testingAgent = TestingAgent(
 )
 
 prompt = """
-Login in as the standard user and add a bike light to your cart, then logout and login again, then checkout. Use any random but believable info when checking out.
+Login in as the standard user and add a bike light to your cart, then logout and login again. Make sure the item you added is still in the cart. Then checkout, use any random but believable info when checking out.
 """
 
 url = "https://www.saucedemo.com/"
 
-code, success = testingAgent.start(prompt, url)
+testingAgent.start(prompt, url)
