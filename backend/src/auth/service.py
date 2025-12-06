@@ -92,14 +92,14 @@ class AuthService:
         user = self.user_repository.get_by_username_or_email(username_or_email)
         
         if not user:
+            PasswordService.verify_password(
+                "password", "846325781ee9cdd27eccb7c40e73ab1d8c67726727e4dccb1df5abf2d98435cba118faaa82c9e0a59b794b982dc86dac6806c4e7f672a8201581d774c8f8b447"
+            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid credentials",
             )
         if not PasswordService.verify_password(password, user.hashed_password):
-            PasswordService.verify_password(
-                "tamerelgayar", "846325781ee9cdd27eccb7c40e73ab1d8c67726727e4dccb1df5abf2d98435cba118faaa82c9e0a59b794b982dc86dac6806c4e7f672a8201581d774c8f8b447"
-            )
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid credentials",
