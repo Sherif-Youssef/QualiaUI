@@ -1,3 +1,4 @@
+import asyncio
 from testing_agent import TestingAgent
 from browser import PlaywrightBrowser
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -43,4 +44,8 @@ Login in as the standard user and add a bike light to your cart, then logout and
 
 url = "https://www.saucedemo.com/"
 
-testingAgent.start(prompt, url)
+async def main():
+    await testingAgent.start(prompt, url)
+
+if __name__ == "__main__":
+    asyncio.run(main())
