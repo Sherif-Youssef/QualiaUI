@@ -13,4 +13,12 @@ def get_session():
 SessionDep = Annotated[Session, Depends(get_session)]
 
 def create_all():
+    from src.auth.models import User
+    from src.projects.models import Project, UserProjectLink
+    from src.testsuites.models import TestSuite
+    User.model_rebuild()
+    Project.model_rebuild()
+    UserProjectLink.model_rebuild()
+    TestSuite.model_rebuild()
+    
     SQLModel.metadata.create_all(engine)
