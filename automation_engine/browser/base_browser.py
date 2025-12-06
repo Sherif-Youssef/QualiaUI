@@ -52,32 +52,32 @@ class BaseBrowser(ABC):
         return decorator
     
     @abstractmethod
-    def pause_time(self) -> None:
+    async def pause_time(self) -> None:
         pass
 
     @abstractmethod
-    def resume_time(self) -> None:
+    async def resume_time(self) -> None:
         pass
 
     @staticmethod
     def unfreeze_time(func):
         @functools.wraps(func)
-        def wrapper(self: "BaseBrowser", *args, **kwargs):
+        async def wrapper(self: "BaseBrowser", *args, **kwargs):
             try:
-                self.resume_time()
-                return func(self, *args, **kwargs)
+                await self.resume_time()
+                return await func(self, *args, **kwargs)
             finally:
-                self.pause_time()
+                await self.pause_time()
         return wrapper
 
     @unfreeze_time
-    def execute_action(self, action: Action) -> bool:
+    async def execute_action(self, action: Action) -> bool:
         action_func_name = self.action_registry.get(type(action))
         assert action_func_name is not None
 
         action_method = getattr(self, action_func_name)
         try:
-            action_method(action)
+            await action_method(action)
             action.success = True
             return True
         except Exception as e:
@@ -92,89 +92,89 @@ class BaseBrowser(ABC):
         return self.dom_state.get_element_by_id(element_id)
 
     @abstractmethod
-    def start(self, url: str):
+    async def start(self, url: str):
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_input(self, action: InputInteractionAction) -> None:
+    async def _action_input(self, action: InputInteractionAction) -> None:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_click(self, action: ClickInteractionAction) -> None:
+    async def _action_click(self, action: ClickInteractionAction) -> None:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_hover(self, action: HoverInteractionAction) -> None:
+    async def _action_hover(self, action: HoverInteractionAction) -> None:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_select_option(self, action: SelectOptionInteractionAction) -> None:
+    async def _action_select_option(self, action: SelectOptionInteractionAction) -> None:
         pass
     
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_press(self, action: PressInteractionAction) -> None:
+    async def _action_press(self, action: PressInteractionAction) -> None:
         pass
     
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_focus(self, action: FocusInteractionAction) -> None:
+    async def _action_focus(self, action: FocusInteractionAction) -> None:
         pass
     
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_drag(self, action: DragInteractionAction) -> None:
+    async def _action_drag(self, action: DragInteractionAction) -> None:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_scroll(self, action: ScrollInteractionAction) -> None:
+    async def _action_scroll(self, action: ScrollInteractionAction) -> None:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_execute_js_code(self, action: ExecuteJSCodeInteractionAction) -> None:
+    async def _action_execute_js_code(self, action: ExecuteJSCodeInteractionAction) -> None:
         pass
 
     
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_ai_eval_assert(self, action: AIEvalAssersionAction):
+    async def _action_ai_eval_assert(self, action: AIEvalAssersionAction):
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_js_code_assert(self, action: ExecuteJSCodeAssertionAction) -> None:
+    async def _action_js_code_assert(self, action: ExecuteJSCodeAssertionAction) -> None:
         pass
 
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_timeout_wait(self, action: TimeoutWaitingAction) -> None:
+    async def _action_timeout_wait(self, action: TimeoutWaitingAction) -> None:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_state_wait(self, action: StateWaitingAction) -> None:
+    async def _action_state_wait(self, action: StateWaitingAction) -> None:
         pass
 
     @abstractmethod
     @register_action_function(action_registry)
-    def _action_js_code_wait(self, action: ExecuteJSCodeWaitingAction) -> None:
+    async def _action_js_code_wait(self, action: ExecuteJSCodeWaitingAction) -> None:
         pass
     
 
     @abstractmethod
-    def close(self):
+    async def close(self):
         pass
     
     @unfreeze_time
     @abstractmethod
-    def get_browser_state(self) -> BrowserState:
+    async def get_browser_state(self) -> BrowserState:
         pass
 
     def _replace_placeholders(self, js_code: str) -> str:

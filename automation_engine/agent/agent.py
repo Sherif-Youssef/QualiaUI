@@ -14,7 +14,7 @@ class PlanningAgent:
     def _format_context(self, browser_state: BrowserState, agent_history: AgentHistory):
         return f"""Browser State:\n{browser_state.to_llm_string()}\nAgent History:\n{str(agent_history.to_llm_string())}\n"""
 
-    def decide_next_action(
+    async def decide_next_action(
         self, 
         browser_state: BrowserState, 
         agent_history: AgentHistory
@@ -37,7 +37,7 @@ class PlanningAgent:
         )
         
         try:
-            response = self.llm.invoke(prompt)
+            response = await self.llm.ainvoke(prompt)
         except Exception as e:
             pass
         

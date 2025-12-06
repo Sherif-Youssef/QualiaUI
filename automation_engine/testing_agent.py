@@ -15,7 +15,7 @@ class TestingAgent:
         self.llm = llm
         self.browser = browser
     
-    def start(
+    async def start(
         self, 
         prompt: str, 
         url: str
@@ -24,21 +24,21 @@ class TestingAgent:
 
         planning_agent = PlanningAgent(self.llm)
 
-        self.browser.start(url)
+        await self.browser.start(url)
 
-        browser_state = self.browser.get_browser_state()
+        browser_state = await self.browser.get_browser_state()
         agent_history = AgentHistory(
             goal=prompt,
             max_actions=MAX_ACTIONS,
         )
 
         while not agent_history.is_finished() or agent_history.has_reached_limit():
-            action = planning_agent.decide_next_action(browser_state, agent_history)
+            action = await planning_agent.decide_next_action(browser_state, agent_history)
             if isinstance(action, BrowserAction):
-                self.browser.execute_action(action)             
-                browser_state = self.browser.get_browser_state()
+                await self.browser.execute_action(action)             
+                browser_state = await self.browser.get_browser_state()
             agent_history.add_action(action)
 
-        self.browser.close()
+        await self.browser.close()
         
         return agent_history
