@@ -67,7 +67,7 @@ class AuthService:
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User with this email already exists"
+                detail="User with this username already exists"
             )
         
         if self.user_repository.exists_by_email(
@@ -75,7 +75,7 @@ class AuthService:
         ):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="User with this username already exists"
+                detail="User with this email already exists"
             )
         
         user = User(

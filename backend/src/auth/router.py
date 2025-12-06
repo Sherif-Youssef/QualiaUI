@@ -7,12 +7,12 @@ from .config import auth_settings
 from .service import AuthService
 
 router = APIRouter(
-    prefix="/api/auth",
+    prefix="/auth",
     tags=["auth"]
 )
 
 
-@router.post("/tokens", response_model=TokensResponse)
+@router.post("/tokens", response_model=TokensResponse, name="token")
 async def login(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
     response: Response,
@@ -37,7 +37,7 @@ async def login(
     return tokens
         
     
-@router.post("/tokens/refresh")
+@router.post("/tokens/refresh", name="refresh_token")
 async def refresh_tokens(
     auth_service: Annotated[AuthService, Depends()],
     refresh_token: Annotated[str, Cookie()], 

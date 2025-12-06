@@ -1,4 +1,4 @@
-from sqlmodel import Session, select
+from sqlmodel import Session, select, col
 from src.database import SessionDep
 from .models import User
 
@@ -18,6 +18,11 @@ class UserRepository:
         )
         return self.session.exec(statement).first()
     
+    def get_by_ids(self, ids: list[int]) -> list[User]:
+        return self.session.exec(
+            select(User).where(col(User.id).in_(ids))
+        ).all()
+
     def exists_by_username(self, username: str) -> bool:
         statement = select(User).where(
             User.username == username

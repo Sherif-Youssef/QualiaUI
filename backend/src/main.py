@@ -1,11 +1,18 @@
-from fastapi import FastAPI
-from .auth.router import router as users_router
+from fastapi import FastAPI, APIRouter
 from dotenv import load_dotenv
-from .database import create_all
-load_dotenv()
+from src.database import create_all
+from src.auth.router import router as users_router
+from src.projects.router import router as projects_router
+from src.testsuites.router import router as testsuites_router
 
+load_dotenv()
 create_all()
 
 app = FastAPI()
 
-app.include_router(users_router)
+api_router = APIRouter(prefix="/api/v1")
+api_router.include_router(users_router)
+api_router.include_router(projects_router)
+api_router.include_router(testsuites_router)
+
+app.include_router(api_router)

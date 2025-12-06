@@ -1,0 +1,5 @@
+pyjwt
+pydantic_settings
+fastapi[standard]
+sqlmodel
+passlib

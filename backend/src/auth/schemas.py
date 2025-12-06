@@ -9,18 +9,23 @@ class TokenType(str, Enum):
     ACCESS = "ACCESS"
     REFRESH = "REFRESH"
 
+
 class TokenPayload(BaseModel):
     user_id: int
     exp: datetime
     iat: datetime
     type: TokenType
 
+
 class TokensResponse(BaseModel):
     access_token: str
     refresh_token: str
+    token_type: str = "bearer"
+
 
 class RefreshTokenResponse(BaseModel):
     access_token: str
+
 
 # User
 
@@ -29,7 +34,6 @@ class UserBase(BaseModel):
     last_name: str
     username: str
     email: EmailStr
-
 
 
 class UserCreate(UserBase):
@@ -61,4 +65,3 @@ class UserRead(UserBase):
     is_admin: bool
     
     model_config = ConfigDict(from_attributes=True)
-
