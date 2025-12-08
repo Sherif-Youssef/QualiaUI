@@ -1,15 +1,18 @@
-from .agent import PlanningAgent
+from .planning import PlanningAgent
+from .testing import TestingAgent
 
 __all__ = [
-    'PlanningAgent'
+    'PlanningAgent',
+    'TestingAgent'
 ]
 
-import logging
-from datetime import datetime
 import os
+import logging
+from pathlib import Path
+from datetime import datetime
 
 timestamp = datetime.now().isoformat().replace(":", "-")
-log_folder = f"logs/{timestamp}"
+log_folder = str(Path(__file__).parents[2].resolve() / "data" / "logs" / timestamp)
 os.makedirs(log_folder, exist_ok=True)
 
 logger = logging.getLogger(__name__)

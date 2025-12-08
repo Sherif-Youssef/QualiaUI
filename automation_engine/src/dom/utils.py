@@ -77,4 +77,4 @@ KEY_ATTRIBUTES = {
 }
 
 def get_js_serializer_file_path() -> str:
-    return str(Path(__file__).parent.resolve() / "js" / "dom_serializer.bundle.js")
+    return str(Path(__file__).parent.resolve() / "js" / "assets" / "dom_serializer.bundle.js")
