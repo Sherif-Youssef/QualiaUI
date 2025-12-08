@@ -1,11 +1,12 @@
-import asyncio
-from testing_agent import TestingAgent
-from browser import PlaywrightBrowser
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_openai import ChatOpenAI
 import os
 import logging
+import asyncio
 from dotenv import load_dotenv
+from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+from agent import TestingAgent
+from browser import PlaywrightBrowser
+
 load_dotenv()
 
 logging.basicConfig(
@@ -31,12 +32,6 @@ llm = ChatOpenAI(
     base_url="https://openrouter.ai/api/v1",
 )
 
-browser = PlaywrightBrowser()
-
-testingAgent = TestingAgent(
-    llm=llm,
-    browser=browser
-)
 
 prompt = """
 Login in as the standard user and add a bike light to your cart, then logout and login again. Make sure the item you added is still in the cart. Then checkout, use any random but believable info when checking out.
@@ -44,8 +39,15 @@ Login in as the standard user and add a bike light to your cart, then logout and
 
 url = "https://www.saucedemo.com/"
 
+
 async def main():
-    await testingAgent.start(prompt, url)
+    browser = PlaywrightBrowser()
+    testing_agent = TestingAgent(llm=llm, browser=browser)
+    await testing_agent.start(url)
+    
+    async for action in testing_agent.run_generic(prompt):
+        print(action.recreation_prompt)
+    await testing_agent.close()
 
 if __name__ == "__main__":
     asyncio.run(main())

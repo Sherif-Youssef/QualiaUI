@@ -1,10 +1,9 @@
 from sqlmodel import Session, select, col
 from src.database import SessionDep
+from src.base.repository import BaseRepository
 from .models import User
 
-class UserRepository:
-    def __init__(self, session: SessionDep):
-        self.session = session
+class UserRepository(BaseRepository):
 
     def get_by_username_or_email(self, username_or_email: str) -> User | None:
         statement = select(User).where(
@@ -34,9 +33,3 @@ class UserRepository:
             User.email == email
         )
         return self.session.exec(statement).first() is not None
-    
-    def save(self, user: User) -> User:
-        self.session.add(user)
-        self.session.commit()
-        self.session.refresh(user)
-        return user

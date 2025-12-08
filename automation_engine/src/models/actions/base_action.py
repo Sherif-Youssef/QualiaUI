@@ -18,6 +18,7 @@ class Action(BaseModel, ABC):
     reasoning: Optional[str] = Field(default=None)
     success: Optional[bool] = Field(default=None)
     error: Optional[str] = Field(default=None)
+    recreation_prompt: Optional[str] = Field(default=None)
 
     @classmethod
     @abstractmethod

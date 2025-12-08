@@ -1,9 +1,5 @@
 from typing import Union
 
-from .agent_history import (
-    AgentHistory,
-)
-
 from .base_action import (
     ACTION,
     Action,
@@ -48,8 +44,43 @@ from .waiting import (
 
 BrowserAction = Union[InteractionAction, AssertionAction, WaitingAction]
 
-from .browser_state import (
-    BrowserState, 
-    DOMElement,
-    DOMState
-)
+__all__ = [
+    # base_action
+    "ACTION",
+    "Action",
+
+    # termination
+    "TERMINATION",
+    "TerminationAction",
+    "CompletedTerminationAction",
+    "FailedTerminationAction",
+
+    # interaction
+    "INTERACTION",
+    "InteractionAction",
+    "InputInteractionAction",
+    "ClickInteractionAction",
+    "HoverInteractionAction",
+    "SelectOptionInteractionAction",
+    "PressInteractionAction",
+    "FocusInteractionAction",
+    "DragInteractionAction",
+    "ScrollInteractionAction",
+    "ExecuteJSCodeInteractionAction",
+
+    # assertion
+    "ASSERTION",
+    "AssertionAction",
+    "AIEvalAssersionAction",
+    "ExecuteJSCodeAssertionAction",
+
+    # waiting
+    "WAITING",
+    "WaitingAction",
+    "TimeoutWaitingAction",
+    "StateWaitingAction",
+    "ExecuteJSCodeWaitingAction",
+
+    # union type
+    "BrowserAction",
+]
