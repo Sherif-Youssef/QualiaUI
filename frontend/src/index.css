@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-border: 210 15% 92%;
+    --color-input: 210 15% 92%;
+    --color-ring: 190 100% 40%;
+    --color-background: 210 20% 98%;
+    --color-foreground: 210 15% 20%;
+    --color-primary: 190 100% 45%;
+    --color-primary-foreground: 0 0% 100%;
+    --color-secondary: 190 80% 35%;
+    --color-secondary-foreground: 0 0% 100%;
+    --color-tertiary: 270 60% 50%;
+    --color-tertiary-foreground: 0 0% 100%;
+    --color-neutral: 210 20% 98%;
+    --color-neutral-foreground: 210 15% 20%;
+    --color-success: 155 55% 45%;
+    --color-success-foreground: 0 0% 100%;
+    --color-warning: 35 90% 55%;
+    --color-warning-foreground: 0 0% 100%;
+    --color-failure: 0 75% 55%;
+    --color-failure-foreground: 0 0% 100%;
+    --color-idle: 210 10% 70%;
+    --color-idle-foreground: 210 15% 20%;
+    --color-muted: 210 15% 96%;
+    --color-muted-foreground: 210 15% 20%;
+    --color-accent: 190 100% 45%;
+    --color-accent-foreground: 0 0% 100%;
+    --color-destructive: 0 75% 55%;
+    --color-destructive-foreground: 0 0% 100%;
+    --color-card: 0 0% 100%;
+    --color-card-foreground: 210 15% 20%;
+    --color-popover: 0 0% 100%;
+    --color-popover-foreground: 210 15% 20%;
+    --color-gray-50: 210 20% 98%;
+    --color-gray-100: 210 15% 96%;
+    --color-gray-200: 210 15% 92%;
+    --color-gray-300: 210 10% 82%;
+    --color-gray-400: 210 8% 65%;
+    --color-gray-500: 210 7% 50%;
+    --color-gray-600: 210 7% 40%;
+    --color-gray-700: 210 8% 30%;
+    --color-gray-800: 210 10% 20%;
+    --color-gray-900: 210 15% 10%;
+    
+    --font-sans: "DM Sans", sans-serif;
+    --font-body: "Inter", sans-serif;
+    
+    --radius-lg: 12px;
+    --radius-md: 10px;
+    --radius-sm: 8px;
+  }
+
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body {
+    @apply bg-background text-foreground font-body;
+    font-size: 16px;
+    min-height: 100vh;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-sans text-foreground;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
