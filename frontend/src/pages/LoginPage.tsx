@@ -15,7 +15,7 @@ export const LoginPage: React.FC = () => {
     const [password, setPassword] = useState('');
     const handleLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        navigate('/');// should be handled latter 
+        navigate('/');// should be handled later 
     };
 
     return (
