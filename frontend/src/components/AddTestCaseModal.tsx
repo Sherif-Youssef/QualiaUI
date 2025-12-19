@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
+import { BaseInput } from './ui/Baseinput';
 import { Label } from '../components/ui/label';
 import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
@@ -171,7 +171,7 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
             <Label htmlFor="name" className="text-body-lg font-body font-medium text-foreground">
               Test Case Name <span className="text-failure">*</span>
             </Label>
-            <Input
+            <BaseInput
               id="name"
               type="text"
               value={name}
@@ -185,7 +185,7 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
             <Label htmlFor="url" className="text-body-lg font-body font-medium text-foreground">
               Website URL for this test case <span className="text-failure">*</span>
             </Label>
-            <Input
+            <BaseInput
               id="url"
               type="url"
               value={url}
@@ -209,7 +209,7 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
                       Do (Plain English)
                     </Label>
                     {mode === 'do' && (
-                      <Input
+                      <BaseInput
                         value={instruction}
                         onChange={(e) => setInstruction(e.target.value)}
                         placeholder="e.g., Add a red shirt to the basket"
@@ -248,7 +248,7 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
                               </SelectContent>
                             </Select>
                             
-                            <Input
+                            <BaseInput
                               value={step.description}
                               onChange={(e) => handleStepDescriptionChange(step.id, e.target.value)}
                               placeholder="Enter step description..."
