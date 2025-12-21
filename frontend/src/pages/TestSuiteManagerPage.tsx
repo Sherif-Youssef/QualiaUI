@@ -1,207 +1,153 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { TestSuiteManager } from '../components/TestSuiteManager';
 import { ScreenshotViewer } from '../components/ScreenshotViewer';
 import { TopMenuBar } from '../components/TopMenuBar';
 import { AddTestCaseModal } from '../components/AddTestCaseModal';
-import { TestCase, ActionStep, StepType } from '../types';
-import screenshotimg from '../assets/Images/image.png';
+import { TestCase, ActionStep } from '../types';
+
+interface BackendAction {
+  timestamp: string;
+  reasoning?: string;
+  success?: boolean;
+  error?: string;
+  recreation_prompt?: string;
+  screenshot?: string;
+}
 
 export const TestSuiteManagerPage: React.FC = () => {
-
-  const [testCases, setTestCases] = useState<TestCase[]>([
-    {
-      id: '1',
-      name: 'Homepage Verification',
-      instruction: 'Navigate to homepage and verify hero section',
-      status: 'idle',
-      url: 'https://example.com',
-      steps: [
-        { id: '1-1', number: 1, text: 'Open homepage', screenshot: screenshotimg },
-        { id: '1-2', number: 2, text: 'Verify hero section is visible', screenshot: '' },
-        { id: '1-3', number: 3, text: 'Check CTA button exists', screenshot: '' },
-      ],
-    },
-    {
-      id: '2',
-      name: 'Login Flow Test',
-      instruction: 'Test login flow with valid credentials',
-      status: 'success',
-      url: 'https://example.com/login',
-      steps: [
-        { id: '2-1', number: 1, text: 'Navigate to login page', screenshot: '' },
-        { id: '2-2', number: 2, text: 'Enter username', screenshot: '' },
-        { id: '2-3', number: 3, text: 'Enter password', screenshot: '' },
-        { id: '2-4', number: 4, text: 'Click login button', screenshot: '' },
-      ],
-    },
-    {
-      id: '3',
-      name: 'Product Search',
-      instruction: 'Verify product search functionality',
-      status: 'failure',
-      url: 'https://xyz.com/search',
-      steps: [
-        { id: '3-1', number: 1, text: 'Open search bar', screenshot: '' },
-        { id: '3-2', number: 2, text: 'Type product name', screenshot: '' },
-        { id: '3-3', number: 3, text: 'Submit search', screenshot: '' },
-      ],
-    },
-  ]);
-
-  const [currentScreenshot, setCurrentScreenshot] = useState<string>('');
-  const [currentUrl, setCurrentUrl] = useState<string>('https://abc.com');
-  const [zoomLevel, setZoomLevel] = useState<number>(100);
+  const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [currentScreenshot, setCurrentScreenshot] = useState('');
+  const [currentUrl, setCurrentUrl] = useState('');
+  const [zoomLevel, setZoomLevel] = useState(100);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingTestCase, setEditingTestCase] = useState<TestCase | null>(null);
 
-  const handleAddTestCase = () => {
-    setEditingTestCase(null);
-    setIsModalOpen(true);
-  };
+  const socketRef = useRef<WebSocket | null>(null);
 
-  const handleEditTestCase = (testCase: TestCase) => {
-    setEditingTestCase(testCase);
-    setIsModalOpen(true);
-  };
+  /* WebSocket lifecycle*/
+  useEffect(() => {
+    const socket = new WebSocket('ws://backend-url/ws');
+    socketRef.current = socket;
 
-  const handleCreateTestCase = (data: {
-    name: string;
-    url: string;
-    mode: 'do' | 'step-based';
-    instruction?: string;
-    steps?: Array<{ id: string; type: StepType; description: string; screenshot?: string }>;
-  }) => {
-    if (editingTestCase) {
-      setTestCases(testCases.map(tc =>
-        tc.id === editingTestCase.id
-          ? {
-              ...tc,
-              name: data.name,
-              instruction: data.mode === 'do' ? data.instruction! : tc.instruction,
-              url: data.url,
-              mode: data.mode,
-            }
-          : tc
-      ));
-    } else {
-      const newTestCase: TestCase = {
-        id: Date.now().toString(),
+    socket.onmessage = (event) => {
+      const data: { test_id: string; action: BackendAction } = JSON.parse(event.data);
+
+      setTestCases(prev =>
+        prev.map(tc => {
+          if (tc.id !== data.test_id) return tc;
+
+          const newStep: ActionStep = {
+            id: crypto.randomUUID(),
+            number: tc.steps.length + 1,
+            text: data.action.reasoning || data.action.recreation_prompt || 'No description',
+            screenshot: data.action.screenshot ? `data:image/png;base64,${data.action.screenshot}` : '',
+            type: 'do',
+          };
+
+          const updatedStatus =
+            data.action.success === undefined
+              ? 'running'
+              : data.action.success
+              ? 'success'
+              : 'failure';
+
+          if (newStep.screenshot) setCurrentScreenshot(newStep.screenshot);
+          setCurrentUrl(tc.url);
+
+          return {
+            ...tc,
+            status: updatedStatus,
+            steps: [...tc.steps, newStep],
+          };
+        })
+      );
+    };
+
+    return () => socket.close();
+  }, []);
+
+
+  const handleAddTestCase = () => setIsModalOpen(true);
+
+  const handleCreateTestCase = (data: { name: string; url: string; instruction: string }) => {
+    const id = crypto.randomUUID();
+    setTestCases(prev => [
+      ...prev,
+      {
+        id,
         name: data.name,
-        instruction: data.mode === 'do' ? data.instruction! : 'Step-based test case',
-        status: 'idle',
         url: data.url,
-        mode: data.mode,
-        steps:
-          data.mode === 'step-based' && data.steps
-            ? data.steps.map((step, index) => ({
-                id: step.id,
-                number: index + 1,
-                text: `${step.type.toUpperCase()}: ${step.description}`,
-                screenshot: step.screenshot || '.png',
-                type: step.type,
-              }))
-            : [
-                {
-                  id: `${Date.now()}-1`,
-                  number: 1,
-                  text: data.instruction!,
-                  screenshot: data.steps?.[0]?.screenshot || 'png',
-                },
-              ],
-      };
-      setTestCases([...testCases, newTestCase]);
-    }
+        prompt: data.instruction,
+        status: 'idle',
+        steps: [] as ActionStep[],
+      },
+    ]);
     setIsModalOpen(false);
-    setEditingTestCase(null);
   };
 
-  const handleRunAllTests = () => {
-    setTestCases(testCases.map(tc => ({ ...tc, status: 'running' })));
-    
-    setTimeout(() => {
-      setTestCases(testCases.map(tc => ({
-        ...tc,
-        status: Math.random() > 0.3 ? 'success' : 'failure',
-      })));
-    }, 2000);
-  };
 
-  const handleRunSingleTest = (testId: string) => {
-    setTestCases(testCases.map(tc =>
-      tc.id === testId ? { ...tc, status: 'running' } : tc
-    ));
+  const handleRunAllTests = async () => {
+    const idleTests = testCases.filter(tc => tc.status === 'idle');
 
-    setTimeout(() => {
-      setTestCases(testCases.map(tc =>
-        tc.id === testId
-          ? { ...tc, status: Math.random() > 0.5 ? 'success' : 'failure' }
-          : tc
-      ));
-    }, 1500);
+    for (const tc of idleTests) {
+      setTestCases(prev =>
+        prev.map(t => (t.id === tc.id ? { ...t, status: 'running', steps: [] } : t))
+      );
+
+      await fetch('api/v1/execute', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: tc.url,
+          prompt: tc.prompt,
+        }),
+      });
+    }
   };
 
   const handleStepClick = (step: ActionStep, testCase: TestCase) => {
-    setCurrentScreenshot(step.screenshot || '.png');
-    setCurrentUrl(testCase.url || 'https://example.com/test-page');
+    setCurrentScreenshot(step.screenshot || '');
+    setCurrentUrl(testCase.url || '');
   };
 
-  const handleInstructionChange = (testId: string, newInstruction: string) => {
-    setTestCases(testCases.map(tc =>
-      tc.id === testId ? { ...tc, instruction: newInstruction } : tc
-    ));
-  };
+  const handleZoomIn = () => setZoomLevel(z => Math.min(z + 25, 200));
+  const handleZoomOut = () => setZoomLevel(z => Math.max(z - 25, 50));
+  const handleResetZoom = () => setZoomLevel(100);
 
-  const handleStepTextChange = (testId: string, stepId: string, newText: string) => {
-    setTestCases(testCases.map(tc =>
-      tc.id === testId
-        ? {
-            ...tc,
-            steps: tc.steps.map(step =>
-              step.id === stepId ? { ...step, text: newText } : step
-            ),
-          }
-        : tc
-    ));
-  };
-
-  const handleZoomIn = () => {
-    setZoomLevel(prev => Math.min(prev + 25, 200));
-  };
-
-  const handleZoomOut = () => {
-    setZoomLevel(prev => Math.max(prev - 25, 50));
-  };
-
-  const handleResetZoom = () => {
-    setZoomLevel(100);
-  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <TopMenuBar/>
-      
+      <TopMenuBar />
+
       <AddTestCaseModal
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingTestCase(null);
-        }}
+        onClose={() => setIsModalOpen(false)}
         onCreateTestCase={handleCreateTestCase}
-        editingTestCase={editingTestCase}
       />
-      
+
       <main className="flex h-[calc(100vh-64px)]">
         <TestSuiteManager
           testCases={testCases}
           onAddTestCase={handleAddTestCase}
           onRunAllTests={handleRunAllTests}
-          onRunSingleTest={handleRunSingleTest}
-          onEditTestCase={handleEditTestCase}
+          onRunSingleTest={(testId) => console.log('Run single test', testId)}
+          onEditTestCase={(tc) => console.log('Edit test case', tc)}
+          onInstructionChange={(testId, newInstruction) =>
+            setTestCases(prev =>
+              prev.map(tc => (tc.id === testId ? { ...tc, prompt: newInstruction } : tc))
+            )
+          }
+          onStepTextChange={(testId, stepId, newText) =>
+            setTestCases(prev =>
+              prev.map(tc =>
+                tc.id === testId
+                  ? { ...tc, steps: tc.steps.map(s => (s.id === stepId ? { ...s, text: newText } : s)) }
+                  : tc
+              )
+            )
+          }
           onStepClick={handleStepClick}
-          onInstructionChange={handleInstructionChange}
-          onStepTextChange={handleStepTextChange}
         />
-        
+
         <ScreenshotViewer
           screenshot={currentScreenshot}
           url={currentUrl}

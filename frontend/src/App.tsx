@@ -5,7 +5,7 @@ import {LoginPage}  from './pages/LoginPage';
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/login" replace/>,
+    element: <Navigate to="/test-suite-manager" replace/>,
   },
   {
     path: '/login',
