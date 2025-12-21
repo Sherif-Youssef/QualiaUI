@@ -17,8 +17,8 @@ export const IconInput:React.FC<IconInputProps> = ({label, icon:Icon, className=
                 </span>
             )}
             
-            <BaseInput {...props} className="w-full h-[50px] bg-transparent border-0 shadow-none focus-visible:ring-0 rounded-none px-1 pr-[35px] text-gray-900 text-[1em] placeholder-transparent peer" />
-            <Label className="absolute left-[5px] top-1/2 text-gray-500 -translate-y-1/2 text-[1em] pointer-events-none transition-all duration-300 peer-focus:-top-[5px] peer-focus:text-sm peer-focus:text-gray-800 peer-not-placeholder-shown:-top-[5px] peer-not-placeholder-shown:text-sm peer-not-placeholder-shown:text-gray-800">
+            <BaseInput {...props} placeholder=" " className="w-full h-[50px] bg-transparent border-0 shadow-none focus-visible:ring-0 rounded-none px-1 pr-[35px] text-gray-900 text-[1em] placeholder-transparent peer" />
+            <Label className="absolute left-[5px] top-1/2 text-gray-500 -translate-y-1/2 text-[1em] pointer-events-none transition-all duration-300 peer-focus:-top-[5px] peer-focus:text-sm peer-focus:text-gray-800 peer-[:not(:placeholder-shown)]:-top-[5px] peer-[:not(:placeholder-shown)]:text-sm peer-[:not(:placeholder-shown)]:text-gray-800">
                 {label}
             </Label>
         </div>
