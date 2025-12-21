@@ -13,9 +13,9 @@ export interface ActionStep {
 export interface TestCase {
   id: string;
   name: string;
-  instruction: string;
+  url: string;
+  prompt: string;       
   status: TestStatus;
   steps: ActionStep[];
-  url?: string;
-  mode?: 'do' | 'step-based';
 }
+
