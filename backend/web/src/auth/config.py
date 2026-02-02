@@ -5,7 +5,5 @@ class AuthSettings(BaseSettings):
     JWT_ALGORITHM: str
     JWT_ACCESS_TOKEN_EXPIRATION_MINUTES: int
     JWT_REFRESH_TOKEN_EXPIRATION_MINUTES: int
-    
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 auth_settings = AuthSettings()
