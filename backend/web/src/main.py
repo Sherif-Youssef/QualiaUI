@@ -1,11 +1,9 @@
 from fastapi import FastAPI, APIRouter
-from dotenv import load_dotenv
 from src.database import create_all
 from src.auth.router import router as users_router
 from src.projects.router import router as projects_router
 from src.testsuites.router import router as testsuites_router
-
-load_dotenv()
+ 
 create_all()
 
 app = FastAPI()
