@@ -84,7 +84,10 @@ module.exports = {
       fontFamily: {
         sans: ['"DM Sans"', 'sans-serif'],
         body: ['"Inter"', 'sans-serif'],
-        fancy:['"Fira Sans"', 'sans-serif'],
+        fancy: ['"Fira Sans"', 'sans-serif'],
+        georama: ['var(--font-georama)', 'sans-serif'],
+        roboto: ['var(--font-roboto)', 'monospace'],
+        symbols: ['"Material Symbols Outlined"', 'sans-serif'],
       },
       fontSize: {
         'headline-xl': ['36px', { lineHeight: '1.2', letterSpacing: '-0.025em' }],
