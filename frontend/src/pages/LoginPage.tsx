@@ -4,7 +4,7 @@ import { Mail, Lock } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
 import bgImage from '../assets/Images/Login2.jpg';
 import { IconInput } from '@/components/ui/IconInput';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { GlassCard } from '@/components/login/GlassCard';
 import { BaseInput } from '@/components/ui/Baseinput';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';

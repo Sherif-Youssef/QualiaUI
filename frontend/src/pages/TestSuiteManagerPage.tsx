@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { TestSuiteManager } from '../components/TestSuiteManager';
 import { ScreenshotViewer } from '../components/ScreenshotViewer';
-import { TopMenuBar } from '../components/TopMenuBar';
 import { AddTestCaseModal } from '../components/AddTestCaseModal';
 import { TestCase, ActionStep } from '../types';
 
@@ -47,8 +46,8 @@ export const TestSuiteManagerPage: React.FC = () => {
             data.action.success === undefined
               ? 'running'
               : data.action.success
-              ? 'success'
-              : 'failure';
+                ? 'success'
+                : 'failure';
 
           if (newStep.screenshot) setCurrentScreenshot(newStep.screenshot);
           setCurrentUrl(tc.url);
@@ -115,48 +114,44 @@ export const TestSuiteManagerPage: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <TopMenuBar />
-
+    <div className="flex flex-col lg:flex-row h-full overflow-y-auto lg:overflow-hidden animate-in fade-in duration-500">
       <AddTestCaseModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onCreateTestCase={handleCreateTestCase}
       />
 
-      <main className="flex h-[calc(100vh-64px)]">
-        <TestSuiteManager
-          testCases={testCases}
-          onAddTestCase={handleAddTestCase}
-          onRunAllTests={handleRunAllTests}
-          onRunSingleTest={(testId) => console.log('Run single test', testId)}
-          onEditTestCase={(tc) => console.log('Edit test case', tc)}
-          onInstructionChange={(testId, newInstruction) =>
-            setTestCases(prev =>
-              prev.map(tc => (tc.id === testId ? { ...tc, prompt: newInstruction } : tc))
+      <TestSuiteManager
+        testCases={testCases}
+        onAddTestCase={handleAddTestCase}
+        onRunAllTests={handleRunAllTests}
+        onRunSingleTest={(testId) => console.log('Run single test', testId)}
+        onEditTestCase={(tc) => console.log('Edit test case', tc)}
+        onInstructionChange={(testId, newInstruction) =>
+          setTestCases(prev =>
+            prev.map(tc => (tc.id === testId ? { ...tc, prompt: newInstruction } : tc))
+          )
+        }
+        onStepTextChange={(testId, stepId, newText) =>
+          setTestCases(prev =>
+            prev.map(tc =>
+              tc.id === testId
+                ? { ...tc, steps: tc.steps.map(s => (s.id === stepId ? { ...s, text: newText } : s)) }
+                : tc
             )
-          }
-          onStepTextChange={(testId, stepId, newText) =>
-            setTestCases(prev =>
-              prev.map(tc =>
-                tc.id === testId
-                  ? { ...tc, steps: tc.steps.map(s => (s.id === stepId ? { ...s, text: newText } : s)) }
-                  : tc
-              )
-            )
-          }
-          onStepClick={handleStepClick}
-        />
+          )
+        }
+        onStepClick={handleStepClick}
+      />
 
-        <ScreenshotViewer
-          screenshot={currentScreenshot}
-          url={currentUrl}
-          zoomLevel={zoomLevel}
-          onZoomIn={handleZoomIn}
-          onZoomOut={handleZoomOut}
-          onResetZoom={handleResetZoom}
-        />
-      </main>
+      <ScreenshotViewer
+        screenshot={currentScreenshot}
+        url={currentUrl}
+        zoomLevel={zoomLevel}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onResetZoom={handleResetZoom}
+      />
     </div>
   );
 };

@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Mail } from 'lucide-react';
 import { Section } from '@/components/ui/Section';
-import { GlassCard } from '@/components/ui/GlassCard';
+import { GlassCard } from '@/components/login/GlassCard';
 import { IconInput } from '@/components/ui/IconInput';
 import { Button } from '@/components/ui/button';
 import bgImage from '../assets/Images/Login2.jpg';

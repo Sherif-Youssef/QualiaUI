@@ -1,12 +1,11 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
-import { TestSuiteManagerPage } from './pages/TestSuiteManagerPage';
-import { LoginPage } from './pages/LoginPage';
-import { ForgotPassword } from './pages/ForgotPassword';
+import { TestSuiteManagerPage, LoginPage, ForgotPassword, AdminDashboard } from './pages/PagesExporter';
+import { MainLayout } from './components/MainLayout';
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Navigate to="/test-suite-manager" replace />,
+    element: <Navigate to="/dashboard" replace />,
   },
   {
     path: '/login',
@@ -17,10 +16,20 @@ const router = createBrowserRouter([
     element: <ForgotPassword />,
   },
   {
-    path: '/test-suite-manager',
-    element: <TestSuiteManagerPage />,
+    element: <MainLayout />,
+    children: [
+      {
+        path: '/test-suite-manager',
+        element: <TestSuiteManagerPage />,
+      },
+      {
+        path: '/dashboard',
+        element: <AdminDashboard />,
+      },
+    ]
   }
 ]);
+
 function App() {
   return (
     <RouterProvider router={router} />
