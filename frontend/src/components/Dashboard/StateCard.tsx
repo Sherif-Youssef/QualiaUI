@@ -1,3 +1,5 @@
+import React from 'react';
+
 interface StateCardProps {
     title: string;
     value: string;

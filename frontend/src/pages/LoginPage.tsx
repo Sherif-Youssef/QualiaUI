@@ -3,22 +3,42 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import { authService } from '@/services/auth';
 
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSignIn = (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate('/projects');
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await authService.login(username, password);
+      if (response && response.access_token) {
+        localStorage.setItem('token', response.access_token);
+        navigate('/projects');
+      }
+      else {
+        setError('Login was successful, but no security token was received.');
+      }
+    } catch (error: any) {
+      const apiErrorMessage = error.response?.data?.detail
+        || (error.response?.status === 401 ? "Invalid username or password" : "Connection failed. Please check if the server is running.");
+      setError(apiErrorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSocialLogin = (provider: string) => {
     navigate('/projects');
   };
 
-    return (
+  return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8">
@@ -28,6 +48,11 @@ export const LoginPage: React.FC = () => {
             <p className="text-sm text-gray-500">Sign in to your account</p>
           </div>
 
+          {error && (
+            <div className="bg-failure/10 border border-failure/20 text-failure px-4 py-2 rounded-lg text-sm mb-4">
+              {error}
+            </div>
+          )}
           {/* Login Form */}
           <form onSubmit={handleSignIn} className="space-y-5">
             <div className="space-y-2">
@@ -44,8 +69,8 @@ export const LoginPage: React.FC = () => {
                 required
               />
             </div>
-        
-         <div className="space-y-2">
+
+            <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium text-gray-700">
                 Password
               </Label>
@@ -58,10 +83,11 @@ export const LoginPage: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 required
               />
-                        </div>
-        
-         <Button
+            </div>
+
+            <Button
               type="submit"
+              disabled={isLoading}
               className="w-full bg-primary hover:bg-primary/90 text-white py-2.5 rounded-lg font-medium shadow-sm transition-all"
             >
               Sign In
@@ -77,7 +103,7 @@ export const LoginPage: React.FC = () => {
               <span className="px-4 bg-white text-gray-500">Or continue with</span>
             </div>
           </div>
-            {/* Social Login */}
+          {/* Social Login */}
           <div className="space-y-3">
             <Button
               type="button"
@@ -104,8 +130,8 @@ export const LoginPage: React.FC = () => {
                 />
               </svg>
               <span className="text-gray-700 font-medium">Continue with Google</span>
-                        </Button>
-         <Button
+            </Button>
+            <Button
               type="button"
               onClick={() => handleSocialLogin('github')}
               variant="outline"

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Plus, Trash2, Pencil } from 'lucide-react';
 import { TopNav } from '../components/TopNav';
 import { SearchBar } from '../components/SearchBar';
@@ -11,6 +11,7 @@ import { TestSuite } from '../types';
 
 export const ProjectPage: React.FC = () => {
   const navigate = useNavigate();
+  const { projectId } = useParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,7 +28,7 @@ export const ProjectPage: React.FC = () => {
     { id: '6', projectId: 'proj-1', name: 'Admin Dashboard', description: 'Admin panel functionality', createdAt: '2024-01-20' },
     { id: '7', projectId: 'proj-1', name: 'Notification System', description: 'Email and push notifications', createdAt: '2024-01-21' },
   ]);
-const filteredSuites = testSuites.filter(suite =>
+  const filteredSuites = testSuites.filter(suite =>
     suite.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -56,7 +57,7 @@ const filteredSuites = testSuites.filter(suite =>
   };
 
   const handleEditTestSuite = (id: string, data: { name: string; description: string }) => {
-    setTestSuites(testSuites.map(suite => 
+    setTestSuites(testSuites.map(suite =>
       suite.id === id ? { ...suite, name: data.name, description: data.description } : suite
     ));
     setIsModalOpen(false);
@@ -79,7 +80,7 @@ const filteredSuites = testSuites.filter(suite =>
   return (
     <div className="min-h-screen bg-gray-50">
       <TopNav />
-      
+
       <main className="max-w-7xl mx-auto px-8 py-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl font-sans font-semibold text-gray-800">Test Suites</h2>
@@ -99,12 +100,12 @@ const filteredSuites = testSuites.filter(suite =>
             placeholder="Search Test Suite..."
           />
         </div>
-    
-    <div className="space-y-3">
+
+        <div className="space-y-3">
           {paginatedSuites.map((suite) => (
             <div
               key={suite.id}
-              onClick={() => navigate(`/project/proj-1/suite/${suite.id}`)}
+              onClick={() => navigate(`/project/${projectId}/suite/${suite.id}`)}
               className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-md hover:border-primary/30 transition-all duration-200 cursor-pointer group"
             >
               <div className="flex items-center justify-between">
@@ -116,7 +117,7 @@ const filteredSuites = testSuites.filter(suite =>
                     <p className="text-sm text-gray-500 mt-1">{suite.description}</p>
                   )}
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <button
                     onClick={(e) => handleEdit(suite, e)}
@@ -128,7 +129,7 @@ const filteredSuites = testSuites.filter(suite =>
                     onClick={(e) => handleDelete(suite.id, suite.name, e)}
                     className="p-2 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
                   >
-             <Trash2 className="w-5 h-5" strokeWidth={1.5} />
+                    <Trash2 className="w-5 h-5" strokeWidth={1.5} />
                   </button>
                 </div>
               </div>
@@ -141,7 +142,7 @@ const filteredSuites = testSuites.filter(suite =>
             No test suites found
           </div>
         )}
- {filteredSuites.length > 0 && (
+        {filteredSuites.length > 0 && (
           <Pagination
             currentPage={currentPage}
             totalPages={totalPages}
@@ -151,8 +152,8 @@ const filteredSuites = testSuites.filter(suite =>
           />
         )}
       </main>
-    
-     <AddTestSuiteModal
+
+      <AddTestSuiteModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);

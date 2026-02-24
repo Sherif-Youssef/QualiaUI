@@ -36,13 +36,13 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
     { id: '1', type: 'do', description: '' },
   ]);
 
-   useEffect(() => {
+  useEffect(() => {
     if (editingTestCase) {
       setName(editingTestCase.name);
       setUrl(editingTestCase.url);
-      setMode(editingTestCase.mode);
+      setMode(editingTestCase.mode || 'plain');
       setPlainText(editingTestCase.plainText || '');
-      setSteps(editingTestCase.steps || [{ id: '1', type: 'do', description: '' }]);
+      setSteps((editingTestCase.steps as TestCaseStep[]) || [{ id: '1', type: 'do', description: '' }]);
     } else {
       setName('');
       setUrl('');
@@ -70,7 +70,7 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
     setSteps(steps.map(s => (s.id === stepId ? { ...s, description } : s)));
   };
 
-   const handleSubmit = () => {
+  const handleSubmit = () => {
     if (!name.trim()) {
       alert('Please enter a test case name');
       return;
@@ -96,8 +96,8 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
       steps: mode === 'step-based' ? steps : undefined,
     });
   };
-    if (!isOpen) return null;
- return (
+  if (!isOpen) return null;
+  return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col border border-gray-200">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -112,7 +112,7 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           <div>
             <Label htmlFor="name" className="text-sm font-medium text-gray-700 mb-1.5">
-              Test Case Name <span className="text-red-500">*</span>
+              Test Case Name <span className="text-failure">*</span>
             </Label>
             <Input
               id="name"
@@ -121,10 +121,10 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
               placeholder="e.g., Login with valid credentials"
               className="mt-1"
             />
-         </div>
-    <div>
+          </div>
+          <div>
             <Label htmlFor="url" className="text-sm font-medium text-gray-700 mb-1.5">
-              Website URL for this Test Case <span className="text-red-500">*</span>
+              Website URL for this Test Case <span className="text-failure">*</span>
             </Label>
             <Input
               id="url"
@@ -134,10 +134,10 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
               placeholder="https://example.com"
               className="mt-1"
             />
-         </div>
-   <div className="space-y-4">
+          </div>
+          <div className="space-y-4">
             <Label className="text-sm font-medium text-gray-700">
-              Test Definition Method <span className="text-red-500">*</span>
+              Test Definition Method <span className="text-failure">*</span>
             </Label>
 
             <RadioGroup value={mode} onValueChange={(value) => setMode(value as 'plain' | 'step-based')}>
@@ -157,9 +157,9 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
                       />
                     )}
                   </div>
-               </div>
-   
-   <div className="flex items-start space-x-3">
+                </div>
+
+                <div className="flex items-start space-x-3">
                   <RadioGroupItem value="step-based" id="mode-step-based" className="mt-1" />
                   <div className="flex-1 space-y-3">
                     <Label htmlFor="mode-step-based" className="text-sm font-medium text-gray-700 cursor-pointer">
@@ -173,7 +173,7 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
                             <span className="text-sm font-medium text-gray-600 mt-2 flex-shrink-0">
                               {index + 1}.
                             </span>
- <Select
+                            <Select
                               value={step.type}
                               onValueChange={(value) => handleStepTypeChange(step.id, value as 'do' | 'check' | 'wait')}
                             >
@@ -193,7 +193,7 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
                               placeholder="Enter step description..."
                               className="flex-1"
                             />
-          <Button
+                            <Button
                               onClick={() => handleRemoveStep(step.id)}
                               variant="ghost"
                               size="icon"

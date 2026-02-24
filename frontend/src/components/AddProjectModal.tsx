@@ -13,17 +13,17 @@ interface AddProjectModalProps {
   onEdit?: (id: string, data: { name: string; description: string }) => void;
 }
 
-export const AddProjectModal: React.FC<AddProjectModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onAdd, 
+export const AddProjectModal: React.FC<AddProjectModalProps> = ({
+  isOpen,
+  onClose,
+  onAdd,
   editingProject,
-  onEdit 
+  onEdit
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
 
-    React.useEffect(() => {
+  React.useEffect(() => {
     if (editingProject) {
       setName(editingProject.name);
       setDescription(editingProject.description);
@@ -38,18 +38,18 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
       alert('Please enter a project name');
       return;
     }
-    
+
     if (editingProject && onEdit) {
       onEdit(editingProject.id, { name, description });
     } else {
       onAdd({ name, description });
     }
-    
+
     setName('');
     setDescription('');
-    };
-    
-     if (!isOpen) return null;
+  };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
@@ -61,12 +61,12 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
           <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
             <X className="w-5 h-5 text-gray-500" strokeWidth={1.5} />
           </button>
-              </div>
-      
-       <div className="p-6 space-y-4">
+        </div>
+
+        <div className="p-6 space-y-4">
           <div>
             <Label htmlFor="name" className="text-sm font-medium text-gray-700 mb-1.5">
-              Project Name <span className="text-red-500">*</span>
+              Project Name <span className="text-failure">*</span>
             </Label>
             <Input
               id="name"
@@ -75,9 +75,9 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
               placeholder="e.g., E-commerce Platform"
               className="mt-1"
             />
-                  </div>
-      
-        <div>
+          </div>
+
+          <div>
             <Label htmlFor="description" className="text-sm font-medium text-gray-700 mb-1.5">
               Project Description
             </Label>

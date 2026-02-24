@@ -43,7 +43,7 @@ export const EditStepModal: React.FC<EditStepModalProps> = ({
         <div className="p-6 space-y-4">
           <div>
             <Label htmlFor="step-text" className="text-sm font-medium text-gray-700 mb-1.5">
-              Step Text <span className="text-red-500">*</span>
+              Step Text <span className="text-failure">*</span>
             </Label>
             <Textarea
               id="step-text"
@@ -55,7 +55,7 @@ export const EditStepModal: React.FC<EditStepModalProps> = ({
             />
           </div>
         </div>
-     <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-xl">
           <Button onClick={onCancel} variant="outline" className="border-gray-300">
             Cancel
           </Button>

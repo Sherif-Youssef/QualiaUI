@@ -22,7 +22,7 @@ export const SearchBar = ({ searchBackageRef, searchInputRef, isSearchMobileOpen
     return (
         <div ref={searchBackageRef} className={`flex-1 max-w-md ${isSearchMobileOpen ? 'flex' : 'hidden md:block'}`}>
             <div className="relative group w-full">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={18} />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={18} />
                 <input
                     ref={searchInputRef}
                     type="text"
@@ -31,24 +31,24 @@ export const SearchBar = ({ searchBackageRef, searchInputRef, isSearchMobileOpen
                     onKeyDown={handleKeyDown}
                     onFocus={() => searchQuery.length >= 2 && setShowSuggestions(true)}
                     value={searchQuery}
-                    className="w-full bg-gray-50 border-transparent border focus:bg-white focus:border-blue-100 focus:ring-4 focus:ring-blue-50/50 rounded-2xl py-2.5 pl-10 pr-4 text-sm outline-none transition-all placeholder:text-gray-400"
+                    className="w-full bg-gray-50 border-transparent border focus:bg-white focus:border-primary/20 focus:ring-4 focus:ring-primary/5 rounded-2xl py-2.5 pl-10 pr-4 text-sm outline-none transition-all placeholder:text-gray-400"
                 />
                 {showSuggestions && (suggestions.length > 0 || error || isLoading) && (
-                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl shadow-blue-900/10 overflow-hidden z-50">
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-xl shadow-primary/10 overflow-hidden z-50">
                         <div className="max-h-80 overflow-y-auto p-1">
                             {isLoading && suggestions.length === 0 && (
                                 <div className="p-4 text-center text-sm text-gray-500 flex items-center justify-center gap-2">
-                                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                    <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
                                     Fetching suggestions...
                                 </div>
                             )}
 
                             {error && (
                                 <div className="p-4 text-center mx-1">
-                                    <p className="text-sm text-red-500 bg-red-50 p-2 rounded-lg mb-2">{error}</p>
+                                    <p className="text-sm text-failure bg-failure/10 p-2 rounded-lg mb-2">{error}</p>
                                     <button
                                         onClick={() => retryFetch()}
-                                        className="text-xs font-bold text-blue-600 hover:text-blue-700 underline"
+                                        className="text-xs font-bold text-primary hover:text-primary/80 underline"
                                     >
                                         Try reloading data
                                     </button>
@@ -69,7 +69,7 @@ export const SearchBar = ({ searchBackageRef, searchInputRef, isSearchMobileOpen
                                         setShowSuggestions(false);
                                     }}
                                     className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-left transition-colors rounded-xl
-                                        ${index === activeIndex ? 'bg-blue-50 text-blue-600' : 'text-gray-600 hover:bg-gray-50'}`}
+                                        ${index === activeIndex ? 'bg-primary/10 text-primary' : 'text-gray-600 hover:bg-gray-50'}`}
                                 >
                                     <Search size={14} className="text-gray-300" />
                                     <span className="flex-1 font-medium truncate">{item}</span>

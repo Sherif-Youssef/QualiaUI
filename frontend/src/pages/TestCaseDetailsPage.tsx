@@ -24,7 +24,7 @@ export const TestCaseDetailsPage: React.FC = () => {
 
   useEffect(() => {
     if (!caseId) return;
-    
+
     const loadedTestCase = getTestCaseById(caseId);
     if (!loadedTestCase) {
       console.error('Test case not found');
@@ -35,11 +35,11 @@ export const TestCaseDetailsPage: React.FC = () => {
     setTestCase(loadedTestCase);
     const executionSteps = loadedTestCase.executionSteps || [];
     setSteps(executionSteps);
-    
+
     if (loadedTestCase.status === 'passed' || loadedTestCase.status === 'failed') {
       setFinalStatus(loadedTestCase.status);
     }
-    
+
     if (executionSteps.length > 0 && !selectedStepId) {
       setSelectedStepId(executionSteps[0].id);
     }
@@ -49,18 +49,18 @@ export const TestCaseDetailsPage: React.FC = () => {
 
   const handleRunTestCase = async () => {
     if (!testCase) return;
-    
+
     setIsRunning(true);
     setFinalStatus(null);
     setSteps([]);
     setSelectedStepId('');
-    
+
     const allTestCases = loadTestCases() || [];
     const updatedTestCases = allTestCases.map(tc =>
       tc.id === testCase.id ? { ...tc, status: 'running' as const, executionSteps: [] } : tc
     );
     saveTestCases(updatedTestCases);
-    
+
     const mockSteps: TestStep[] = [
       { id: `${testCase.id}-1`, caseId: testCase.id, number: 1, text: 'Navigate to the page', screenshot: AmazonScreenshot, status: 'running' },
       { id: `${testCase.id}-2`, caseId: testCase.id, number: 2, text: 'Perform action', screenshot: talabatScreenshot, status: 'idle' },
@@ -70,15 +70,15 @@ export const TestCaseDetailsPage: React.FC = () => {
 
     for (let i = 0; i < mockSteps.length; i++) {
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       const currentSteps = mockSteps.slice(0, i + 1).map((step, idx) => ({
         ...step,
         status: idx === i ? 'running' as const : 'passed' as const,
       }));
-      
+
       setSteps(currentSteps);
       setSelectedStepId(currentSteps[i].id);
-      
+
       const allCases = loadTestCases() || [];
       const updated = allCases.map(tc =>
         tc.id === testCase.id ? { ...tc, executionSteps: currentSteps, status: 'running' as const } : tc
@@ -90,7 +90,7 @@ export const TestCaseDetailsPage: React.FC = () => {
     const finalSteps = mockSteps.map(step => ({ ...step, status: 'passed' as const }));
     setSteps(finalSteps);
     setFinalStatus('passed');
-    
+
     const allCases = loadTestCases() || [];
     const finalUpdate = allCases.map(tc =>
       tc.id === testCase.id ? { ...tc, executionSteps: finalSteps, status: 'passed' as const } : tc
@@ -106,13 +106,13 @@ export const TestCaseDetailsPage: React.FC = () => {
 
   const confirmDeleteStep = () => {
     if (!deleteConfirmation || !testCase) return;
-    
+
     const updatedSteps = steps.filter(s => s.id !== deleteConfirmation.id).map((step, index) => ({
       ...step,
       number: index + 1,
     }));
     setSteps(updatedSteps);
-    
+
     const allTestCases = loadTestCases() || [];
     const updatedTestCases = allTestCases.map(tc =>
       tc.id === testCase.id ? { ...tc, executionSteps: updatedSteps } : tc
@@ -122,7 +122,7 @@ export const TestCaseDetailsPage: React.FC = () => {
     if (selectedStepId === deleteConfirmation.id && updatedSteps.length > 0) {
       setSelectedStepId(updatedSteps[0].id);
     }
-    
+
     setDeleteConfirmation(null);
   };
 
@@ -137,7 +137,7 @@ export const TestCaseDetailsPage: React.FC = () => {
         s.id === editingStep.id ? { ...s, text: updatedText } : s
       );
       setSteps(updatedSteps);
-      
+
       const allTestCases = loadTestCases() || [];
       const updatedTestCases = allTestCases.map(tc =>
         tc.id === testCase.id ? { ...tc, executionSteps: updatedSteps } : tc
@@ -150,7 +150,7 @@ export const TestCaseDetailsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <TopNav />
-      
+
       <main className="flex h-[calc(100vh-64px)]">
         <aside className="w-[450px] bg-white border-r border-gray-200 flex flex-col">
           <div className="p-6 border-b border-gray-200">
@@ -159,8 +159,8 @@ export const TestCaseDetailsPage: React.FC = () => {
                 <div className="flex items-center gap-3 mb-1">
                   <h2 className="text-lg font-semibold text-gray-800">{testCase?.name || 'Test Case'}</h2>
                   {isRunning && <Loader2 className="w-5 h-5 text-primary animate-spin" />}
-                  {!isRunning && finalStatus === 'passed' && <CheckCircle2 className="w-5 h-5 text-green-500" />}
-                  {!isRunning && finalStatus === 'failed' && <XCircle className="w-5 h-5 text-red-500" />}
+                  {!isRunning && finalStatus === 'passed' && <CheckCircle2 className="w-5 h-5 text-success" />}
+                  {!isRunning && finalStatus === 'failed' && <XCircle className="w-5 h-5 text-failure" />}
                 </div>
                 <p className="text-sm text-gray-500">Run Version: {testCase?.runVersion || 'N/A'}</p>
               </div>
@@ -182,9 +182,8 @@ export const TestCaseDetailsPage: React.FC = () => {
                 <div
                   key={step.id}
                   onClick={() => setSelectedStepId(step.id)}
-                  className={`p-4 rounded-lg border transition-all cursor-pointer group ${
-                    selectedStepId === step.id ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white border-gray-200'
-                  }`}
+                  className={`p-4 rounded-lg border transition-all cursor-pointer group ${selectedStepId === step.id ? 'bg-primary/5 border-primary shadow-sm' : 'bg-white border-gray-200'
+                    }`}
                 >
                   <div className="flex items-start gap-3">
                     <span className="flex-shrink-0 w-7 h-7 rounded-full bg-primary/10 text-primary text-sm font-semibold flex items-center justify-center">

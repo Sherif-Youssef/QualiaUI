@@ -26,13 +26,13 @@ export const TestSuitePage: React.FC = () => {
   const itemsPerPage = 5;
 
   const defaultTestCases: TestCase[] = [
-    { 
-      id: '2', 
-      suiteId: suiteId!, 
-      name: 'Login failure test', 
-      status: 'failed', 
-      runVersion: 'v1.0', 
-      createdAt: '2024-01-15', 
+    {
+      id: '2',
+      suiteId: suiteId!,
+      name: 'Login failure test',
+      status: 'failed',
+      runVersion: 'v1.0',
+      createdAt: '2024-01-15',
       url: 'https://example.com/login',
       mode: 'plain',
       plainText: 'Try to login with incorrect password',
@@ -43,14 +43,14 @@ export const TestSuitePage: React.FC = () => {
         { id: '2-4', caseId: '2', number: 4, text: 'Verify error message appears', screenshot: talabatScreenshot, status: 'passed' },
       ]
     },
-    { 
-      id: '3', 
-      suiteId: suiteId!, 
-      name: 'Forgot password flow', 
-      status: 'idle', 
-      runVersion: 'v1.0', 
-      createdAt: '2024-01-16', 
-      url: 'https://example.com/forgot-password', 
+    {
+      id: '3',
+      suiteId: suiteId!,
+      name: 'Forgot password flow',
+      status: 'idle',
+      runVersion: 'v1.0',
+      createdAt: '2024-01-16',
+      url: 'https://example.com/forgot-password',
       mode: 'step-based',
       steps: [
         { id: 's1', type: 'do', description: 'Click forgot password link' },
@@ -105,7 +105,7 @@ export const TestSuitePage: React.FC = () => {
   const handleRunAll = () => {
     setIsRunningAll(true);
     setTestCases(testCases.map(tc => ({ ...tc, status: 'running', runVersion })));
-    
+
     setTimeout(() => {
       setTestCases(prev => prev.map(tc => ({
         ...tc,
@@ -120,8 +120,8 @@ export const TestSuitePage: React.FC = () => {
     switch (status) {
       case 'idle': return <Circle className="w-5 h-5 text-gray-400" />;
       case 'running': return <Loader2 className="w-5 h-5 text-primary animate-spin" />;
-      case 'passed': return <CheckCircle2 className="w-5 h-5 text-green-500" />;
-      case 'failed': return <XCircle className="w-5 h-5 text-red-500" />;
+      case 'passed': return <CheckCircle2 className="w-5 h-5 text-success" />;
+      case 'failed': return <XCircle className="w-5 h-5 text-failure" />;
       default: return null;
     }
   };
@@ -130,20 +130,20 @@ export const TestSuitePage: React.FC = () => {
     if (editingTestCase) {
       setTestCases(testCases.map(tc =>
         tc.id === editingTestCase.id
-          ? { 
-              ...tc, 
-              ...data,
-              executionSteps: data.mode === 'step-based' && data.steps
-                ? data.steps.map((step: any, index: number) => ({
-                    id: `${tc.id}-${index + 1}`,
-                    caseId: tc.id,
-                    number: index + 1,
-                    text: `${step.type.toUpperCase()}: ${step.description}`,
-                    screenshot: AmazonScreenshot,
-                    status: 'idle' as const,
-                  }))
-                : tc.executionSteps
-            }
+          ? {
+            ...tc,
+            ...data,
+            executionSteps: data.mode === 'step-based' && data.steps
+              ? data.steps.map((step: any, index: number) => ({
+                id: `${tc.id}-${index + 1}`,
+                caseId: tc.id,
+                number: index + 1,
+                text: `${step.type.toUpperCase()}: ${step.description}`,
+                screenshot: AmazonScreenshot,
+                status: 'idle' as const,
+              }))
+              : tc.executionSteps
+          }
           : tc
       ));
     } else {
@@ -157,21 +157,21 @@ export const TestSuitePage: React.FC = () => {
         createdAt: new Date().toISOString().split('T')[0],
         executionSteps: data.mode === 'step-based' && data.steps
           ? data.steps.map((step: any, index: number) => ({
-              id: `${newCaseId}-${index + 1}`,
-              caseId: newCaseId,
-              number: index + 1,
-              text: `${step.type.toUpperCase()}: ${step.description}`,
-              screenshot: AmazonScreenshot,
-              status: 'idle' as const,
-            }))
+            id: `${newCaseId}-${index + 1}`,
+            caseId: newCaseId,
+            number: index + 1,
+            text: `${step.type.toUpperCase()}: ${step.description}`,
+            screenshot: AmazonScreenshot,
+            status: 'idle' as const,
+          }))
           : [{
-              id: `${newCaseId}-1`,
-              caseId: newCaseId,
-              number: 1,
-              text: data.plainText || 'Test step',
-              screenshot: AmazonScreenshot,
-              status: 'idle' as const,
-            }],
+            id: `${newCaseId}-1`,
+            caseId: newCaseId,
+            number: 1,
+            text: data.plainText || 'Test step',
+            screenshot: AmazonScreenshot,
+            status: 'idle' as const,
+          }],
       };
       setTestCases([...testCases, newCase]);
     }
@@ -197,8 +197,8 @@ export const TestSuitePage: React.FC = () => {
               </SelectContent>
             </Select>
             <Button onClick={handleRunAll} disabled={isRunningAll} variant="outline">
-               {isRunningAll ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Play className="w-5 h-5 mr-2" />}
-               Run All
+              {isRunningAll ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Play className="w-5 h-5 mr-2" />}
+              Run All
             </Button>
             <Button onClick={() => { setEditingTestCase(null); setIsModalOpen(true); }} className="bg-primary text-white">
               <Plus className="w-5 h-5 mr-2" /> Add Test Case
@@ -236,7 +236,7 @@ export const TestSuitePage: React.FC = () => {
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
                       <button onClick={(e) => handleEdit(testCase, e)} className="p-2 text-gray-400 hover:text-primary"><Pencil className="w-4 h-4" /></button>
-                      <button onClick={(e) => handleDelete(testCase.id, testCase.name, e)} className="p-2 text-gray-400 hover:text-red-500"><Trash2 className="w-4 h-4" /></button>
+                      <button onClick={(e) => handleDelete(testCase.id, testCase.name, e)} className="p-2 text-gray-400 hover:text-failure"><Trash2 className="w-4 h-4" /></button>
                     </div>
                   </td>
                 </tr>

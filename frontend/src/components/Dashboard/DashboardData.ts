@@ -15,6 +15,6 @@ export const executionTrendData = [
 ];
 
 export const globalSuccessData = [
-    { name: 'Success', value: 85, color: '#10b981' }, // success
-    { name: 'Failure', value: 15, color: '#ef4444' }, // failure
+    { name: 'Success', value: 85, color: '#33b281' }, // success
+    { name: 'Failure', value: 15, color: '#f22626' }, // failure
 ];

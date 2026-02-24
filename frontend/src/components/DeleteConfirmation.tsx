@@ -21,21 +21,21 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
   const handleConfirm = () => {
     onConfirm();
     onClose();
-    };
-    
-    return (
-    <div 
+  };
+
+  return (
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm"
       onClick={onClose}
     >
-      <div 
+      <div
         className="bg-white rounded-xl shadow-2xl w-full max-w-md border border-gray-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">
           <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
-              <AlertTriangle className="w-6 h-6 text-red-500" strokeWidth={2} />
+            <div className="w-12 h-12 rounded-full bg-failure/10 flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-6 h-6 text-failure" strokeWidth={2} />
             </div>
             <div>
               <h2 className="text-xl font-semibold text-gray-800">Confirm Deletion</h2>
@@ -50,13 +50,13 @@ export const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = (
           </p>
         </div>
 
-<div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50 rounded-b-xl">
           <Button onClick={onClose} variant="outline" className="border-gray-300">
             Cancel
           </Button>
-          <Button 
-            onClick={handleConfirm} 
-            className="bg-red-500 hover:bg-red-600 text-white"
+          <Button
+            onClick={handleConfirm}
+            className="bg-failure hover:bg-failure/90 text-white"
           >
             Delete
           </Button>

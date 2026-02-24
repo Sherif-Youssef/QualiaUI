@@ -111,9 +111,9 @@ const Dashboard = () => {
                             config={{
                                 xAxisKey: 'projectName',
                                 bars: [
-                                    { key: 'passed', color: '#10b981', label: 'Passed' },
-                                    { key: 'failed', color: '#ef4444', label: 'Failed' },
-                                    { key: 'error', color: '#f59e0b', label: 'Error' }
+                                    { key: 'passed', color: '#33b281', label: 'Passed' },
+                                    { key: 'failed', color: '#f22626', label: 'Failed' },
+                                    { key: 'error', color: '#faa01f', label: 'Error' }
                                 ]
                             }}
                         />

@@ -13,16 +13,16 @@ interface AddTestSuiteModalProps {
   onEdit?: (id: string, data: { name: string; description: string }) => void;
 }
 
-export const AddTestSuiteModal: React.FC<AddTestSuiteModalProps> = ({ 
-  isOpen, 
-  onClose, 
+export const AddTestSuiteModal: React.FC<AddTestSuiteModalProps> = ({
+  isOpen,
+  onClose,
   onAdd,
   editingSuite,
-  onEdit 
+  onEdit
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-   React.useEffect(() => {
+  React.useEffect(() => {
     if (editingSuite) {
       setName(editingSuite.name);
       setDescription(editingSuite.description);
@@ -38,18 +38,18 @@ export const AddTestSuiteModal: React.FC<AddTestSuiteModalProps> = ({
       return;
     }
 
-      if (editingSuite && onEdit) {
+    if (editingSuite && onEdit) {
       onEdit(editingSuite.id, { name, description });
     } else {
       onAdd({ name, description });
     }
-    
+
     setName('');
     setDescription('');
   };
 
   if (!isOpen) return null;
- return (
+  return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg border border-gray-200">
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -64,7 +64,7 @@ export const AddTestSuiteModal: React.FC<AddTestSuiteModalProps> = ({
         <div className="p-6 space-y-4">
           <div>
             <Label htmlFor="name" className="text-sm font-medium text-gray-700 mb-1.5">
-              Test Suite Name <span className="text-red-500">*</span>
+              Test Suite Name <span className="text-failure">*</span>
             </Label>
             <Input
               id="name"
@@ -73,8 +73,8 @@ export const AddTestSuiteModal: React.FC<AddTestSuiteModalProps> = ({
               placeholder="e.g., Authentication Tests"
               className="mt-1"
             />
-         </div>
-   <div>
+          </div>
+          <div>
             <Label htmlFor="description" className="text-sm font-medium text-gray-700 mb-1.5">
               Description
             </Label>

@@ -27,7 +27,7 @@ export const ForgotPassword: React.FC = () => {
                         <form className="w-full">
                             <IconInput label="Email Address" type="email" icon={Mail} required />
 
-                            <Button className="w-full h-[45px] bg-gray-900 rounded-[40px] mt-4">
+                            <Button className="w-full h-[45px] bg-primary hover:bg-primary/90 text-white rounded-[40px] mt-4 transition-all shadow-lg shadow-primary/20">
                                 Send Reset Link
                             </Button>
                         </form>
