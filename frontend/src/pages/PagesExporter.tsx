@@ -1,11 +1,15 @@
-import { TestSuiteManagerPage } from './TestSuiteManagerPage';
 import { LoginPage } from './LoginPage';
-import { ForgotPassword } from './ForgotPassword';
-import AdminDashboard from './Dashboard';
+import { ProjectsPage } from './ProjectsPage';
+import { ProjectPage } from './ProjectPage';
+import { TestSuitePage } from './TestSuitePage';
+import { TestCaseDetailsPage } from './TestCaseDetailsPage';
+import { ProfilePage } from './Profile';
 
 export {
-    TestSuiteManagerPage,
     LoginPage,
-    ForgotPassword,
-    AdminDashboard
+    ProjectPage,
+    ProjectsPage,
+    TestSuitePage,
+    TestCaseDetailsPage,
+    ProfilePage
 }
