@@ -106,6 +106,15 @@ export const LoginPage: React.FC = () => {
                 className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                 required
               />
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => navigate('/forgot-password')}
+                  className="text-xs font-semibold text-primary hover:text-primary/80 transition-all"
+                >
+                  Forgot password?
+                </button>
+              </div>
             </div>
 
             <Button

@@ -17,4 +17,14 @@ export const passwordService = {
             throw error;
         }
     },
+
+    forgotPassword: async (email: string): Promise<string> => {
+        try {
+            await api.post('/forgot-password', { email });
+            return 'If the email exists, a reset password link will be sent to it.';
+        } catch (error) {
+            console.error("Error forgot password:", error);
+            throw error;
+        }
+    },
 };

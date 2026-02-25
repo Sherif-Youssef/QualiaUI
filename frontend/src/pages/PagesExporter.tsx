@@ -5,6 +5,7 @@ import { TestSuitePage } from './TestSuitePage';
 import { TestCaseDetailsPage } from './TestCaseDetailsPage';
 import { ProfilePage } from './Profile';
 import { AuthCallbackPage } from './AuthCallbackPage';
+import { ForgotPasswordPage } from './ForgotPasswordPage';
 
 export {
     LoginPage,
@@ -13,5 +14,6 @@ export {
     TestSuitePage,
     TestCaseDetailsPage,
     ProfilePage,
-    AuthCallbackPage
+    AuthCallbackPage,
+    ForgotPasswordPage
 }
