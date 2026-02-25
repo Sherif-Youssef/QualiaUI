@@ -34,8 +34,31 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    navigate('/projects');
+  const handleSocialLogin = async (provider: 'google' | 'github') => {
+    try {
+      setLoading(true);
+      setError(null);
+      let redirctUrl = null;
+      if (provider === 'google') {
+        const data = await authService.loginWithGoogle();
+        if (data.url)
+          redirctUrl = data.url;
+      }
+      else if (provider === 'github') {
+        const data = await authService.loginWithGithub();
+        if (data.url)
+          redirctUrl = data.url;
+      }
+      if (redirctUrl)
+        window.location.href = redirctUrl;
+      else {
+        setLoading(false);
+        setError(`Login service for ${provider} is currently unavailable.`);
+      }
+    } catch (err) {
+      setError(`Failed to initialize ${provider} login.`);
+      setLoading(false);
+    }
   };
 
   return (

@@ -12,4 +12,16 @@ export const authService = {
         });
         return response.data;
     },
+    loginWithGoogle: async () => {
+        const response = await api.get('/auth/google');
+        return response.data;
+    },
+    loginWithGithub: async () => {
+        const response = await api.get('/auth/github');
+        return response.data;
+    },
+    verifySocialLogin: async (provider: "google" | "github", code: string) => {
+        const response = await api.post(`/auth/verify/${provider}`, { code });
+        return response.data;
+    },
 };

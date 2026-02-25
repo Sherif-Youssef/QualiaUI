@@ -4,6 +4,7 @@ import { ProjectPage } from './ProjectPage';
 import { TestSuitePage } from './TestSuitePage';
 import { TestCaseDetailsPage } from './TestCaseDetailsPage';
 import { ProfilePage } from './Profile';
+import { AuthCallbackPage } from './AuthCallbackPage';
 
 export {
     LoginPage,
@@ -11,5 +12,6 @@ export {
     ProjectsPage,
     TestSuitePage,
     TestCaseDetailsPage,
-    ProfilePage
+    ProfilePage,
+    AuthCallbackPage
 }

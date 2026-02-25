@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { LoginPage, ProjectPage, ProfilePage, ProjectsPage, TestCaseDetailsPage, TestSuitePage } from './pages/PagesExporter';
+import { LoginPage, ProjectPage, ProfilePage, ProjectsPage, TestCaseDetailsPage, TestSuitePage, AuthCallbackPage } from './pages/PagesExporter';
 
 function App() {
   return (
@@ -12,6 +12,7 @@ function App() {
         <Route path="/project/:projectId/suite/:suiteId" element={<TestSuitePage />} />
         <Route path="/project/:projectId/suite/:suiteId/case/:caseId" element={<TestCaseDetailsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/auth/callback" element={<AuthCallbackPage />} />
       </Routes>
     </Router>
   );
