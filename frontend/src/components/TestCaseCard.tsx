@@ -3,7 +3,7 @@ import { ChevronDown, ChevronRight, RotateCw, Camera, Circle, CheckCircle2, XCir
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { TestCase, ActionStep } from '../types';
-import { EditStepModal } from './EditStepModal';
+import { EditStepModal } from './Modal/EditStepModal';
 import gsap from 'gsap';
 
 interface TestCaseCardProps {
@@ -56,7 +56,7 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
         return newSet;
       });
     }
-    
+
     setEditingStep(step);
   };
 
@@ -108,13 +108,13 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
         <div className="flex-shrink-0" aria-label={`Test status: ${testCase.status}`}>
           {getStatusIcon()}
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <h3 className="text-body-lg font-body font-semibold text-foreground truncate">
             {testCase.name}
           </h3>
         </div>
-        
+
         <div className="flex items-center gap-1 flex-shrink-0">
           <Button
             onClick={() => onRunTest(testCase.id)}
@@ -125,7 +125,7 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
           >
             <RotateCw className="w-4 h-4" strokeWidth={1.5} />
           </Button>
-          
+
           <Button
             onClick={() => onEditTest(testCase)}
             variant="ghost"
@@ -135,7 +135,7 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
           >
             <Pencil className="w-4 h-4" strokeWidth={1.5} />
           </Button>
-          
+
           <Button
             onClick={() => setIsExpanded(!isExpanded)}
             variant="ghost"
@@ -151,7 +151,7 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
           </Button>
         </div>
       </div>
-      
+
       <div
         ref={stepsRef}
         className="overflow-hidden"
@@ -175,21 +175,19 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
               <span className="text-body-md font-body font-medium text-muted-foreground flex-shrink-0">
                 {step.number}.
               </span>
-              
+
               <div className="flex-shrink-0">
-                <div className={`w-8 h-8 rounded flex items-center justify-center ${
-                  step.screenshot ? 'bg-primary/10' : 'bg-muted'
-                }`}>
-                  <Camera className={`w-4 h-4 ${
-                    step.screenshot ? 'text-primary' : 'text-muted-foreground'
-                  }`} strokeWidth={1.5} />
+                <div className={`w-8 h-8 rounded flex items-center justify-center ${step.screenshot ? 'bg-primary/10' : 'bg-muted'
+                  }`}>
+                  <Camera className={`w-4 h-4 ${step.screenshot ? 'text-primary' : 'text-muted-foreground'
+                    }`} strokeWidth={1.5} />
                 </div>
               </div>
-              
+
               <span className="flex-1 text-body-md font-body text-foreground min-w-0">
                 {collapsedSteps.has(step.id) ? getPreviewText(step.text) : step.text}
               </span>
-              
+
               <div className="flex items-center gap-1 flex-shrink-0">
                 <Button
                   onClick={(e) => {
@@ -203,7 +201,7 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
                 >
                   <ChevronsUpDown className="w-4 h-4" strokeWidth={1.5} />
                 </Button>
-                
+
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -220,7 +218,7 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
             </div>
           ))}
         </div>
-        
+
         {editingStep && (
           <EditStepModal
             step={editingStep}

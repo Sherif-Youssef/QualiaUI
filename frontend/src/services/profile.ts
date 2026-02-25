@@ -9,6 +9,7 @@ const mapDTOToProfile = (data: UserDTO): UserProfile => ({
     role: data.role || "User",
     isAdmin: data.is_admin,
     emailNotifications: data.email_notifications ?? true,
+    twoFactorEnabled: data.two_factor_enabled ?? false,
 });
 
 const mapProfileToDTO = (profile: Partial<UserProfile>): Partial<UserDTO> => {
@@ -19,6 +20,7 @@ const mapProfileToDTO = (profile: Partial<UserProfile>): Partial<UserDTO> => {
         dto.first_name = names[0] || "";
         dto.last_name = names.length > 1 ? names.slice(1).join(" ") : "";
     }
+
     if (profile.email !== undefined) dto.email = profile.email;
     if (profile.avatarUrl !== undefined) dto.avatar_url = profile.avatarUrl;
     if (profile.bannerUrl !== undefined) dto.banner_url = profile.bannerUrl;
@@ -36,7 +38,6 @@ export const profileService = {
             return mapDTOToProfile(response.data);
         }
         catch (error) {
-            console.error("Error fetching profile:", error);
             throw error;
         }
     },
@@ -47,7 +48,6 @@ export const profileService = {
             return mapDTOToProfile(response.data);
         }
         catch (error) {
-            console.error("Error updating profile:", error);
             throw error;
         }
     },
@@ -62,7 +62,6 @@ export const profileService = {
             return response.data;
         }
         catch (error) {
-            console.error("Error updating avatar:", error);
             throw error;
         }
     },
@@ -77,7 +76,6 @@ export const profileService = {
             return response.data;
         }
         catch (error) {
-            console.error("Error updating banner:", error);
             throw error;
         }
     }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Lock, Eye, EyeOff, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff } from 'lucide-react';
 import { passwordService } from '@/services/password';
+import { ModalHeader, ErrorMessage, SuccessMessage } from '@/components/GeneralComponents';
 
 interface Props {
     onClose: () => void;
@@ -62,38 +63,17 @@ export const UpdatePasswordModal: React.FC<Props> = ({ onClose }) => {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-300">
             <div className="bg-card w-full max-w-md rounded-[2rem] shadow-2xl border border-border overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
-                <div className="px-8 py-6 border-b border-border flex items-center justify-between bg-muted/20">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                            <Lock className="w-5 h-5" />
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-lg text-foreground">Update Password</h3>
-                            <p className="text-xs text-muted-foreground">Secure your account with a new password</p>
-                        </div>
-                    </div>
-                    <button
-                        onClick={onClose}
-                        className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground"
-                    >
-                        <X className="w-5 h-5" />
-                    </button>
-                </div>
+                <ModalHeader
+                    title="Update Password"
+                    subtitle="Secure your account with a new password"
+                    icon={Lock}
+                    onClose={onClose}
+                />
 
                 <form onSubmit={handleUpdate} className="p-8 space-y-5">
                     {/* Status Messages */}
-                    {error && (
-                        <div className="p-4 rounded-xl bg-failure/10 border border-failure/20 flex items-center gap-3 text-failure text-sm animate-in slide-in-from-top-2">
-                            <AlertCircle className="w-4 h-4 shrink-0" />
-                            {error}
-                        </div>
-                    )}
-                    {success && (
-                        <div className="p-4 rounded-xl bg-success/10 border border-success/20 flex items-center gap-3 text-success text-sm animate-in slide-in-from-top-2">
-                            <ShieldCheck className="w-4 h-4 shrink-0" />
-                            {success}
-                        </div>
-                    )}
+                    {error && <ErrorMessage message={error} />}
+                    {success && <SuccessMessage message={success} />}
 
                     {/* Fields */}
                     <div className="space-y-4">
@@ -172,29 +152,6 @@ export const UpdatePasswordModal: React.FC<Props> = ({ onClose }) => {
                                                 />
                                             ))}
                                         </div>
-                                        {/* show the met requirements */}
-                                        {/* <div className="flex flex-wrap gap-2 px-0.5">
-                                            {requirements.map((req, i) => {
-                                                const isMet = req.test(newPassword);
-                                                return (
-                                                    <div
-                                                        key={i}
-                                                        className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all duration-300 ${isMet
-                                                            ? 'bg-success/5 border-success/20 text-success'
-                                                            : 'bg-muted/30 border-transparent text-muted-foreground/60'
-                                                            }`}
-                                                    >
-                                                        <div className={`w-3.5 h-3.5 rounded-full flex items-center justify-center transition-all duration-500 ${isMet ? 'bg-success text-white scale-110' : 'bg-muted-foreground/20'
-                                                            }`}>
-                                                            {isMet ? <ShieldCheck className="w-2.5 h-2.5" /> : <div className="w-1 h-1 rounded-full bg-current" />}
-                                                        </div>
-                                                        <span className="text-[10px] font-bold whitespace-nowrap">
-                                                            {req.label}
-                                                        </span>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div> */}
                                     </div>
                                 </div>
                             </div>

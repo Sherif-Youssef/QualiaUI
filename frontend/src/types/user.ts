@@ -7,6 +7,7 @@ export interface UserProfile {
     role: string;
     isAdmin: boolean;
     emailNotifications: boolean;
+    twoFactorEnabled: boolean;
 }
 
 export interface UserDTO {
@@ -18,6 +19,7 @@ export interface UserDTO {
     role?: string;
     is_admin: boolean;
     email_notifications: boolean;
+    two_factor_enabled: boolean;
 }
 
 

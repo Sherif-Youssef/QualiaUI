@@ -12,8 +12,7 @@ export const passwordService = {
     updatePassword: async (form: UpdatePasswordForm): Promise<void> => {
         try {
             await api.put('/profile/password', mapPasswordToDTO(form));
-        } catch (error) {
-            console.error("Error updating password:", error);
+        } catch (error: any) {
             throw error;
         }
     },
@@ -22,8 +21,7 @@ export const passwordService = {
         try {
             await api.post('/forgot-password', { email });
             return 'If the email exists, a reset password link will be sent to it.';
-        } catch (error) {
-            console.error("Error forgot password:", error);
+        } catch (error: any) {
             throw error;
         }
     },

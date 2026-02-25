@@ -1,19 +1,23 @@
-import { LoginPage } from './LoginPage';
-import { ProjectsPage } from './ProjectsPage';
-import { ProjectPage } from './ProjectPage';
-import { TestSuitePage } from './TestSuitePage';
-import { TestCaseDetailsPage } from './TestCaseDetailsPage';
-import { ProfilePage } from './Profile';
-import { AuthCallbackPage } from './AuthCallbackPage';
-import { ForgotPasswordPage } from './ForgotPasswordPage';
+import { LoginPage } from './Auth/LoginPage';
+import { DashboardPage } from './Dashboard/DashboardPage';
+import { ProjectsPage } from './Projects/ProjectsPage';
+import { ProjectPage } from './Project/ProjectPage';
+import { TestSuitePage } from './TestSuite/TestSuitePage';
+import { TestCaseDetailsPage } from './TestCaseDetails/TestCaseDetailsPage';
+import { TestSuiteManagerPage } from './TestSuiteManager/TestSuiteManagerPage';
+import { ProfilePage } from './Profile/Profile';
+import { AuthCallbackPage } from './Auth/AuthCallbackPage';
+import { ForgotPasswordPage } from './Auth/ForgotPasswordPage';
 
 export {
     LoginPage,
+    DashboardPage,
     ProjectPage,
     ProjectsPage,
     TestSuitePage,
     TestCaseDetailsPage,
     ProfilePage,
     AuthCallbackPage,
-    ForgotPasswordPage
+    ForgotPasswordPage,
+    TestSuiteManagerPage
 }
