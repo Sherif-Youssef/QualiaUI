@@ -1,35 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { SearchBar } from '@/components/SearchBar';
 import { Pagination } from '@/components/Pagination';
 import { AddTestSuiteModal } from '@/components/Modal/AddTestSuiteModal';
 import { DeleteConfirmationModal } from '@/components/DeleteConfirmation';
-import { TestSuite } from '@/types';
+import { TestSuite } from '@/types/test-suit';
+import { testSuiteService } from '@/services/testSuiteService';
 
-// Sub-components
 import { ProjectLayout } from './ProjectLayout';
 import { ProjectHeader } from './ProjectHeader';
 import { TestSuiteList } from './TestSuiteList';
+import { ErrorMessage } from '@/components/GeneralComponents';
+import { TestSuitEmptyState } from './TestSuitEmptyState';
 
 export const ProjectPage: React.FC = () => {
     const navigate = useNavigate();
-    const { projectId } = useParams();
+    const { projectId } = useParams<{ projectId: string }>();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSuite, setEditingSuite] = useState<TestSuite | null>(null);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
+    const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
+
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [modalLoading, setModalLoading] = useState(false);
+    const [modalError, setModalError] = useState<string | null>(null);
+
     const itemsPerPage = 6;
 
-    const [testSuites, setTestSuites] = useState<TestSuite[]>([
-        { id: '1', projectId: 'proj-1', name: 'Authentication Test Suite', description: 'Tests for login and signup flows', createdAt: '2024-01-15' },
-        { id: '2', projectId: 'proj-1', name: 'E-commerce Checkout', description: 'End-to-end checkout process', createdAt: '2024-01-16' },
-        { id: '3', projectId: 'proj-1', name: 'User Profile Management', description: 'Profile editing and settings', createdAt: '2024-01-17' },
-        { id: '4', projectId: 'proj-1', name: 'Search Functionality', description: 'Product search and filters', createdAt: '2024-01-18' },
-        { id: '5', projectId: 'proj-1', name: 'Payment Integration', description: 'Payment gateway tests', createdAt: '2024-01-19' },
-        { id: '6', projectId: 'proj-1', name: 'Admin Dashboard', description: 'Admin panel functionality', createdAt: '2024-01-20' },
-        { id: '7', projectId: 'proj-1', name: 'Notification System', description: 'Email and push notifications', createdAt: '2024-01-21' },
-    ]);
+    useEffect(() => {
+        const fetchTestSuites = async () => {
+            if (!projectId) return;
+
+            setIsLoading(true);
+            setError(null);
+            try {
+                const data = await testSuiteService.getTestSuites(projectId);
+                setTestSuites(data);
+            } catch (err: any) {
+                setError(err.response?.data?.detail || 'Failed to load test suites.');
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchTestSuites();
+    }, [projectId]);
 
     const filteredSuites = testSuites.filter(suite =>
         suite.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -43,65 +61,108 @@ export const ProjectPage: React.FC = () => {
 
     const handleDeleteClick = (id: string, name: string, e: React.MouseEvent) => {
         e.stopPropagation();
+        setModalError(null);
         setDeleteConfirmation({ id, name });
     };
 
-    const confirmDelete = () => {
-        if (deleteConfirmation) {
+    const confirmDelete = async () => {
+        if (!deleteConfirmation) return;
+
+        setModalLoading(true);
+        setModalError(null);
+        try {
+            await testSuiteService.deleteTestSuite(deleteConfirmation.id);
             setTestSuites(testSuites.filter(suite => suite.id !== deleteConfirmation.id));
             setDeleteConfirmation(null);
+        } catch (err: any) {
+            setModalError(err.response?.data?.detail || 'Failed to delete test suite.');
+        } finally {
+            setModalLoading(false);
         }
     };
 
     const handleEditClick = (suite: TestSuite, e: React.MouseEvent) => {
         e.stopPropagation();
         setEditingSuite(suite);
+        setModalError(null);
         setIsModalOpen(true);
     };
 
-    const handleEditTestSuite = (id: string, data: { name: string; description: string }) => {
-        setTestSuites(testSuites.map(suite =>
-            suite.id === id ? { ...suite, name: data.name, description: data.description } : suite
-        ));
-        setIsModalOpen(false);
-        setEditingSuite(null);
+    const handleEditTestSuite = async (id: string, data: { name: string; description: string }) => {
+        setModalLoading(true);
+        setModalError(null);
+        try {
+            const updatedSuite = await testSuiteService.updateTestSuite(id, data);
+            setTestSuites(testSuites.map(suite =>
+                suite.id === id ? updatedSuite : suite
+            ));
+            setIsModalOpen(false);
+            setEditingSuite(null);
+        } catch (err: any) {
+            setModalError(err.response?.data?.detail || 'Failed to update test suite.');
+        } finally {
+            setModalLoading(false);
+        }
     };
 
-    const handleAddTestSuite = (data: { name: string; description: string }) => {
-        const newSuite: TestSuite = {
-            id: Date.now().toString(),
-            projectId: projectId || 'default',
-            name: data.name,
-            description: data.description,
-            createdAt: new Date().toISOString().split('T')[0],
-        };
-        setTestSuites([...testSuites, newSuite]);
-        setIsModalOpen(false);
-        setEditingSuite(null);
-    };
+    const handleAddTestSuite = async (data: { name: string; description: string }) => {
+        if (!projectId) return;
 
+        setModalLoading(true);
+        setModalError(null);
+        try {
+            const newSuite = await testSuiteService.createTestSuite(projectId, data);
+            setTestSuites([...testSuites, newSuite]);
+            setIsModalOpen(false);
+            setEditingSuite(null);
+        } catch (err: any) {
+            setModalError(err.response?.data?.detail || 'Failed to create test suite.');
+        } finally {
+            setModalLoading(false);
+        }
+    };
+    const isEmpty = testSuites.length === 0 && !isLoading;
     return (
         <ProjectLayout
-            header={<ProjectHeader onAddSuite={() => setIsModalOpen(true)} />}
-            searchBar={
+            header={!isEmpty && <ProjectHeader onAddSuite={() => {
+                setModalError(null);
+                setIsModalOpen(true);
+            }} />}
+            searchBar={!isEmpty && (
                 <SearchBar
                     value={searchQuery}
                     onChange={setSearchQuery}
                     placeholder="Search Test Suite..."
                 />
-            }
+            )}
             content={
                 <>
-                    <TestSuiteList
-                        suites={paginatedSuites}
-                        onNavigate={(suiteId) => navigate(`/project/${projectId}/suite/${suiteId}`)}
-                        onEdit={handleEditClick}
-                        onDelete={handleDeleteClick}
-                    />
-                    {filteredSuites.length === 0 && (
-                        <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
-                            <p className="text-gray-500 font-medium">No test suites match your search.</p>
+                    {error && <div className="mb-6"><ErrorMessage message={error} /></div>}
+
+                    {isLoading && testSuites.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                            <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
+                            <p className="text-gray-500 font-medium">Loading test suites...</p>
                         </div>
+                    ) : isEmpty ? (
+                        <TestSuitEmptyState onCreate={() => {
+                            setModalError(null);
+                            setIsModalOpen(true);
+                        }} />
+                    ) : (
+                        <>
+                            <TestSuiteList
+                                suites={paginatedSuites}
+                                onNavigate={(suiteId) => navigate(`/project/${projectId}/suite/${suiteId}`)}
+                                onEdit={handleEditClick}
+                                onDelete={handleDeleteClick}
+                            />
+                            {filteredSuites.length === 0 && !isLoading && (
+                                <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
+                                    <p className="text-gray-500 font-medium">No test suites match your search.</p>
+                                </div>
+                            )}
+                        </>
                     )}
                 </>
             }
@@ -121,17 +182,25 @@ export const ProjectPage: React.FC = () => {
                         onClose={() => {
                             setIsModalOpen(false);
                             setEditingSuite(null);
+                            setModalError(null);
                         }}
                         onAdd={handleAddTestSuite}
                         editingSuite={editingSuite}
                         onEdit={handleEditTestSuite}
+                        error={modalError}
+                        isLoading={modalLoading}
                     />
 
                     <DeleteConfirmationModal
                         isOpen={deleteConfirmation !== null}
-                        onClose={() => setDeleteConfirmation(null)}
+                        onClose={() => {
+                            setDeleteConfirmation(null);
+                            setModalError(null);
+                        }}
                         onConfirm={confirmDelete}
                         itemName={deleteConfirmation?.name}
+                        error={modalError}
+                        isLoading={modalLoading}
                     />
                 </>
             }

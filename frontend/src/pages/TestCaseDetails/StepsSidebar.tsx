@@ -1,7 +1,7 @@
 import React from 'react';
 import { Camera, Pencil, Trash2, Play, Loader2, CheckCircle2, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TestStep, TestCase } from '@/types';
+import { TestStep, TestCase } from '@/types/test-case';
 
 interface StepsSidebarProps {
     testCase: TestCase | null;
@@ -9,7 +9,7 @@ interface StepsSidebarProps {
     selectedStepId: string;
     onSelectStep: (id: string) => void;
     isRunning: boolean;
-    onRun: () => void;
+    // onRun: () => void;
     finalStatus: 'passed' | 'failed' | null;
     onEditStep: (step: TestStep, e: React.MouseEvent) => void;
     onDeleteStep: (id: string, text: string, e: React.MouseEvent) => void;
@@ -21,7 +21,7 @@ export const StepsSidebar: React.FC<StepsSidebarProps> = ({
     selectedStepId,
     onSelectStep,
     isRunning,
-    onRun,
+    // onRun,
     finalStatus,
     onEditStep,
     onDeleteStep
@@ -45,7 +45,7 @@ export const StepsSidebar: React.FC<StepsSidebarProps> = ({
                     </div>
                 </div>
                 <Button
-                    onClick={onRun}
+                    // onClick={onRun}
                     disabled={isRunning}
                     className="w-full h-11 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                 >
@@ -75,8 +75,8 @@ export const StepsSidebar: React.FC<StepsSidebarProps> = ({
                             key={step.id}
                             onClick={() => onSelectStep(step.id)}
                             className={`p-4 rounded-xl border transition-all cursor-pointer group relative overflow-hidden ${selectedStepId === step.id
-                                    ? 'bg-primary/[0.03] border-primary shadow-sm'
-                                    : 'bg-white border-gray-100 hover:border-gray-300'
+                                ? 'bg-primary/[0.03] border-primary shadow-sm'
+                                : 'bg-white border-gray-100 hover:border-gray-300'
                                 }`}
                         >
                             <div className="flex items-start gap-4">

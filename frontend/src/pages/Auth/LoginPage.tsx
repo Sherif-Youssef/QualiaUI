@@ -5,13 +5,11 @@ import { authService } from '@/services/auth/auth';
 import { twoFactorAuthService } from '@/services/auth/2Fauth';
 import { ErrorMessage } from '@/components/GeneralComponents';
 
-// Normalized Components
 import {
   AuthHeader,
   AuthForm,
   MfaVerification,
   SocialAuth,
-  AuthFooter,
   AuthLayout
 } from './index';
 
@@ -21,7 +19,6 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
   const [isMfaRequired, setIsMfaRequired] = useState(false);
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [totpCode, setTotpCode] = useState('');
@@ -106,7 +103,7 @@ export const LoginPage: React.FC = () => {
                 id: 'password',
                 label: 'Password',
                 type: 'password',
-                placeholder: '••••••••',
+                placeholder: 'Enter your password',
                 value: password,
                 onChange: setPassword,
                 rightElement: (
@@ -133,12 +130,6 @@ export const LoginPage: React.FC = () => {
           onBackToLogin={() => setIsMfaRequired(false)}
         />
       )}
-
-      <AuthFooter
-        mainText="Don't have an account?"
-        actionText="Sign up for free"
-        onAction={() => navigate('/register')}
-      />
     </AuthLayout>
   );
 };

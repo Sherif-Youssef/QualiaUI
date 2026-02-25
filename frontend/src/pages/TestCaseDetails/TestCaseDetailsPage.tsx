@@ -2,12 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { EditStepModal } from '@/components/Modal/EditStepModal';
 import { DeleteConfirmationModal } from '@/components/DeleteConfirmation';
-import { TestStep, TestCase } from '@/types';
-import { getTestCaseById, loadTestCases, saveTestCases } from '@/utils/testCaseStorage';
-
-// Assets
-import AmazonScreenshot from '@/assets/Images/image.png'
-import talabatScreenshot from '@/assets/Images/image2.png'
+import { TestStep, TestCase } from '@/types/test-case';
+import { testCaseService } from '@/services/testCase/testCaseService';
+import { ErrorMessage } from '@/components/GeneralComponents';
 
 // Sub-components
 import { TestCaseDetailsLayout } from './TestCaseDetailsLayout';
@@ -15,7 +12,7 @@ import { StepsSidebar } from './StepsSidebar';
 import { ScreenshotViewer } from './ScreenshotViewer';
 
 export const TestCaseDetailsPage: React.FC = () => {
-    const { caseId } = useParams();
+    const { caseId } = useParams<{ caseId: string }>();
     const navigate = useNavigate();
     const [testCase, setTestCase] = useState<TestCase | null>(null);
     const [selectedStepId, setSelectedStepId] = useState<string>('');
@@ -25,131 +22,137 @@ export const TestCaseDetailsPage: React.FC = () => {
     const [steps, setSteps] = useState<TestStep[]>([]);
     const [isRunning, setIsRunning] = useState(false);
     const [finalStatus, setFinalStatus] = useState<'passed' | 'failed' | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [actionLoading, setActionLoading] = useState(false);
+    const [actionError, setActionError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!caseId) return;
+        const fetchTestCase = async () => {
+            if (!caseId) return;
 
-        const loadedTestCase = getTestCaseById(caseId);
-        if (!loadedTestCase) {
-            console.error('Test case not found');
-            navigate(-1);
-            return;
-        }
+            setIsLoading(true);
+            setError(null);
+            try {
+                const data = await testCaseService.getTestCaseById(caseId);
+                setTestCase(data);
+                const executionSteps = data.executionSteps || [];
+                setSteps(executionSteps);
+                if (data.status === 'passed' || data.status === 'failed') {
+                    setFinalStatus(data.status);
+                }
 
-        setTestCase(loadedTestCase);
-        const executionSteps = loadedTestCase.executionSteps || [];
-        setSteps(executionSteps);
+                if (executionSteps.length > 0 && !selectedStepId) {
+                    setSelectedStepId(executionSteps[0].id);
+                }
+            } catch (err: any) {
+                setError(err.response?.data?.detail || 'Failed to load test case details.');
+                console.error('Test case fetch error:', err);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-        if (loadedTestCase.status === 'passed' || loadedTestCase.status === 'failed') {
-            setFinalStatus(loadedTestCase.status);
-        }
-
-        if (executionSteps.length > 0 && !selectedStepId) {
-            setSelectedStepId(executionSteps[0].id);
-        }
-    }, [caseId, navigate, selectedStepId]);
+        fetchTestCase();
+    }, [caseId]);
 
     const selectedStep = steps.find(s => s.id === selectedStepId);
+    // removing the run as api endpoint is not ready yet
+    // const handleRunTestCase = async () => {
+    //     if (!testCase || !caseId) return;
 
-    const handleRunTestCase = async () => {
-        if (!testCase) return;
+    //     setIsRunning(true);
+    //     setFinalStatus(null);
+    //     try {
+    //         console.log("Mocking execution for case:", caseId);
+    //         setTimeout(() => {
+    //             setFinalStatus('passed');
+    //             setIsRunning(false);
+    //         }, 3000);
 
-        setIsRunning(true);
-        setFinalStatus(null);
-        setSteps([]);
-        setSelectedStepId('');
-
-        const allTestCases = loadTestCases() || [];
-        const updatedTestCases = allTestCases.map(tc =>
-            tc.id === testCase.id ? { ...tc, status: 'running' as const, executionSteps: [] } : tc
-        );
-        saveTestCases(updatedTestCases);
-
-        const mockSteps: TestStep[] = [
-            { id: `${testCase.id}-1`, caseId: testCase.id, number: 1, text: 'Navigate to the page', screenshot: AmazonScreenshot, status: 'running' },
-            { id: `${testCase.id}-2`, caseId: testCase.id, number: 2, text: 'Perform action', screenshot: talabatScreenshot, status: 'idle' },
-            { id: `${testCase.id}-3`, caseId: testCase.id, number: 3, text: 'Verify result', screenshot: AmazonScreenshot, status: 'idle' },
-            { id: `${testCase.id}-4`, caseId: testCase.id, number: 4, text: 'Complete test', screenshot: talabatScreenshot, status: 'idle' },
-        ];
-
-        for (let i = 0; i < mockSteps.length; i++) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            const currentSteps = mockSteps.slice(0, i + 1).map((step, idx) => ({
-                ...step,
-                status: idx === i ? 'running' as const : 'passed' as const,
-            }));
-
-            setSteps(currentSteps);
-            setSelectedStepId(currentSteps[i].id);
-
-            const allCases = loadTestCases() || [];
-            const updated = allCases.map(tc =>
-                tc.id === testCase.id ? { ...tc, executionSteps: currentSteps, status: 'running' as const } : tc
-            );
-            saveTestCases(updated);
-        }
-
-        await new Promise(resolve => setTimeout(resolve, 500));
-        const finalSteps = mockSteps.map(step => ({ ...step, status: 'passed' as const }));
-        setSteps(finalSteps);
-        setFinalStatus('passed');
-
-        const allCases = loadTestCases() || [];
-        const finalUpdate = allCases.map(tc =>
-            tc.id === testCase.id ? { ...tc, executionSteps: finalSteps, status: 'passed' as const } : tc
-        );
-        saveTestCases(finalUpdate);
-        setIsRunning(false);
-    };
+    //     } catch (err) {
+    //         console.error("Execution failed", err);
+    //         setIsRunning(false);
+    //     }
+    // };
 
     const handleDeleteStepClick = (stepId: string, stepText: string, e: React.MouseEvent) => {
         e.stopPropagation();
+        setActionError(null);
         setDeleteConfirmation({ id: stepId, text: stepText });
     };
 
-    const confirmDeleteStep = () => {
-        if (!deleteConfirmation || !testCase) return;
+    const confirmDeleteStep = async () => {
+        if (!deleteConfirmation || !testCase || !caseId) return;
 
-        const updatedSteps = steps.filter(s => s.id !== deleteConfirmation.id).map((step, index) => ({
-            ...step,
-            number: index + 1,
-        }));
-        setSteps(updatedSteps);
+        setActionLoading(true);
+        setActionError(null);
+        try {
+            const updatedSteps = steps.filter(s => s.id !== deleteConfirmation.id).map((step, index) => ({
+                ...step,
+                number: index + 1,
+            }));
 
-        const allTestCases = loadTestCases() || [];
-        const updatedTestCases = allTestCases.map(tc =>
-            tc.id === testCase.id ? { ...tc, executionSteps: updatedSteps } : tc
-        );
-        saveTestCases(updatedTestCases);
+            await testCaseService.updateTestCase(caseId, { executionSteps: updatedSteps });
 
-        if (selectedStepId === deleteConfirmation.id && updatedSteps.length > 0) {
-            setSelectedStepId(updatedSteps[0].id);
+            setSteps(updatedSteps);
+            if (selectedStepId === deleteConfirmation.id && updatedSteps.length > 0) {
+                setSelectedStepId(updatedSteps[0].id);
+            }
+            setDeleteConfirmation(null);
+        } catch (err: any) {
+            setActionError(err.response?.data?.detail || 'Failed to delete step.');
+        } finally {
+            setActionLoading(false);
         }
-
-        setDeleteConfirmation(null);
     };
 
     const handleEditStepClick = (step: TestStep, e: React.MouseEvent) => {
         e.stopPropagation();
+        setActionError(null);
         setEditingStep(step);
     };
 
-    const handleSaveStep = (updatedText: string) => {
-        if (editingStep && testCase) {
-            const updatedSteps = steps.map(s =>
-                s.id === editingStep.id ? { ...s, text: updatedText } : s
-            );
-            setSteps(updatedSteps);
+    const handleSaveStep = async (updatedText: string) => {
+        if (editingStep && testCase && caseId) {
+            setActionLoading(true);
+            setActionError(null);
+            try {
 
-            const allTestCases = loadTestCases() || [];
-            const updatedTestCases = allTestCases.map(tc =>
-                tc.id === testCase.id ? { ...tc, executionSteps: updatedSteps } : tc
-            );
-            saveTestCases(updatedTestCases);
-            setEditingStep(null);
+                const updatedSteps = steps.map(s =>
+                    s.id === editingStep.id ? { ...s, text: updatedText } : s
+                );
+                await testCaseService.updateTestCase(caseId, { executionSteps: updatedSteps });
+
+                setSteps(updatedSteps);
+                setEditingStep(null);
+            } catch (err: any) {
+                setActionError(err.response?.data?.detail || 'Failed to update step.');
+            } finally {
+                setActionLoading(false);
+            }
         }
     };
+
+    if (isLoading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+                <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
+                <p className="text-gray-500 font-medium font-sans">Loading Test Case Details...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-8">
+                <ErrorMessage message={error} />
+                <button onClick={() => navigate(-1)} className="mt-4 text-primary font-medium hover:underline">
+                    &larr; Go Back
+                </button>
+            </div>
+        );
+    }
 
     return (
         <TestCaseDetailsLayout
@@ -160,7 +163,7 @@ export const TestCaseDetailsPage: React.FC = () => {
                     selectedStepId={selectedStepId}
                     onSelectStep={setSelectedStepId}
                     isRunning={isRunning}
-                    onRun={handleRunTestCase}
+                    // onRun={/*{handleRunTestCase}*/}
                     finalStatus={finalStatus}
                     onEditStep={handleEditStepClick}
                     onDeleteStep={handleDeleteStepClick}
@@ -181,14 +184,21 @@ export const TestCaseDetailsPage: React.FC = () => {
                             step={editingStep}
                             onSave={handleSaveStep}
                             onCancel={() => setEditingStep(null)}
+                            isLoading={actionLoading}
+                            error={actionError}
                         />
                     )}
 
                     <DeleteConfirmationModal
                         isOpen={deleteConfirmation !== null}
-                        onClose={() => setDeleteConfirmation(null)}
+                        onClose={() => {
+                            setDeleteConfirmation(null);
+                            setActionError(null);
+                        }}
                         onConfirm={confirmDeleteStep}
                         itemName={deleteConfirmation?.text || ""}
+                        isLoading={actionLoading}
+                        error={actionError}
                     />
                 </>
             }

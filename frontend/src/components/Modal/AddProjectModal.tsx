@@ -12,6 +12,8 @@ interface AddProjectModalProps {
   onAdd: (data: { name: string; description: string }) => void;
   editingProject?: { id: string; name: string; description: string } | null;
   onEdit?: (id: string, data: { name: string; description: string }) => void;
+  error?: string | null;
+  isLoading?: boolean;
 }
 
 export const AddProjectModal: React.FC<AddProjectModalProps> = ({
@@ -19,7 +21,9 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
   onClose,
   onAdd,
   editingProject,
-  onEdit
+  onEdit,
+  error,
+  isLoading
 }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -35,19 +39,13 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
   }, [editingProject, isOpen]);
 
   const handleSubmit = () => {
-    if (!name.trim()) {
-      alert('Please enter a project name');
-      return;
-    }
+    if (!name.trim()) return;
 
     if (editingProject && onEdit) {
       onEdit(editingProject.id, { name, description });
     } else {
       onAdd({ name, description });
     }
-
-    setName('');
-    setDescription('');
   };
 
   if (!isOpen) return null;
@@ -63,6 +61,13 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
         />
 
         <div className="p-6 space-y-4">
+          {error && (
+            <div className="p-3.5 bg-failure/10 border border-failure/20 rounded-xl flex items-center gap-3 text-failure text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
+              <span className="w-1.5 h-1.5 rounded-full bg-failure animate-pulse"></span>
+              {error}
+            </div>
+          )}
+
           <div>
             <Label htmlFor="name" className="text-sm font-medium text-gray-700 mb-1.5 ml-1">
               Project Name <span className="text-failure">*</span>
@@ -73,6 +78,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., E-commerce Platform"
               className="mt-1 rounded-2xl h-12"
+              disabled={isLoading}
             />
           </div>
 
@@ -86,16 +92,28 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Brief description of this project..."
               className="mt-1 min-h-[120px] rounded-2xl"
+              disabled={isLoading}
             />
           </div>
         </div>
 
         <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50/50 rounded-b-xl">
-          <Button onClick={onClose} variant="outline" className="h-12 px-6 rounded-xl border-gray-300 font-bold">
+          <Button onClick={onClose} variant="outline" className="h-12 px-6 rounded-xl border-gray-300 font-bold" disabled={isLoading}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} className="bg-primary hover:bg-primary/90 text-white h-12 px-8 rounded-xl font-bold shadow-lg shadow-primary/20">
-            {editingProject ? 'Save Changes' : 'Create Project'}
+          <Button
+            onClick={handleSubmit}
+            className="bg-primary hover:bg-primary/90 text-white h-12 px-8 rounded-xl font-bold shadow-lg shadow-primary/20 disabled:opacity-50"
+            disabled={isLoading || !name.trim()}
+          >
+            {isLoading ? (
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <span>{editingProject ? 'Saving...' : 'Creating...'}</span>
+              </div>
+            ) : (
+              editingProject ? 'Save Changes' : 'Create Project'
+            )}
           </Button>
         </div>
       </div>

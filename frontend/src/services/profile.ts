@@ -1,41 +1,12 @@
 import api from "@/lib/api";
-import { UserProfile, UserDTO, UpdatePasswordForm } from "@/types";
-
-const mapDTOToProfile = (data: UserDTO): UserProfile => ({
-    fullName: `${data.first_name} ${data.last_name}`,
-    email: data.email,
-    avatarUrl: data.avatar_url,
-    bannerUrl: data.banner_url,
-    role: data.role || "User",
-    isAdmin: data.is_admin,
-    emailNotifications: data.email_notifications ?? true,
-    twoFactorEnabled: data.two_factor_enabled ?? false,
-});
-
-const mapProfileToDTO = (profile: Partial<UserProfile>): Partial<UserDTO> => {
-    const dto: Partial<UserDTO> = {};
-
-    if (profile.fullName !== undefined) {
-        const names = profile.fullName.trim().split(/\s+/);
-        dto.first_name = names[0] || "";
-        dto.last_name = names.length > 1 ? names.slice(1).join(" ") : "";
-    }
-
-    if (profile.email !== undefined) dto.email = profile.email;
-    if (profile.avatarUrl !== undefined) dto.avatar_url = profile.avatarUrl;
-    if (profile.bannerUrl !== undefined) dto.banner_url = profile.bannerUrl;
-    if (profile.role !== undefined) dto.role = profile.role;
-    if (profile.isAdmin !== undefined) dto.is_admin = profile.isAdmin;
-    if (profile.emailNotifications !== undefined) dto.email_notifications = profile.emailNotifications;
-
-    return dto;
-};
+import { UserProfile, UserDTO } from "@/types";
+import { mapUserToViewModel, mapProfileToDTO } from "@/utils/mappers";
 
 export const profileService = {
     getProfile: async (): Promise<UserProfile> => {
         try {
             const response = await api.get<UserDTO>('/profile');
-            return mapDTOToProfile(response.data);
+            return mapUserToViewModel(response.data);
         }
         catch (error) {
             throw error;
@@ -45,7 +16,7 @@ export const profileService = {
     updateProfile: async (profile: Partial<UserProfile>): Promise<UserProfile> => {
         try {
             const response = await api.put<UserDTO>('/profile', mapProfileToDTO(profile));
-            return mapDTOToProfile(response.data);
+            return mapUserToViewModel(response.data);
         }
         catch (error) {
             throw error;

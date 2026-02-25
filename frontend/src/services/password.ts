@@ -1,11 +1,6 @@
 import api from "@/lib/api";
-import { UpdatePasswordForm, PasswordDTO } from "@/types";
-
-const mapPasswordToDTO = (form: UpdatePasswordForm): PasswordDTO => ({
-    current_password: form.currentPassword,
-    new_password: form.newPassword,
-    confirm_password: form.confirmPassword,
-});
+import { UpdatePasswordForm } from "@/types";
+import { mapPasswordToDTO } from "@/utils/mappers";
 
 export const passwordService = {
 

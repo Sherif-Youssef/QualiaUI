@@ -39,6 +39,7 @@
     "axios": "^1.13.5",
     "class-variance-authority": "0.7.0",
     "clsx": "^2.0.0",
+    "framer-motion": "^12.34.3",
     "gsap": "^3.13.0",
     "lucide-react": "^0.544.0",
     "qrcode.react": "^4.2.0",

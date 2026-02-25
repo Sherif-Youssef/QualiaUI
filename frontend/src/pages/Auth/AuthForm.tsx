@@ -44,21 +44,16 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                         value={field.value}
                         onChange={(e) => field.onChange(e.target.value)}
                         required={field.required !== false}
-                        className="h-12 border-gray-300 focus:ring-primary/20 focus:border-primary rounded-xl transition-all shadow-sm"
+                        className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                     />
                 </div>
             ))}
             <Button
                 type="submit"
-                className="w-full h-12 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98] mt-2"
+                className="w-full bg-primary hover:bg-primary/75 text-white py-2.5 rounded-lg font-medium shadow-sm transition-all"
                 disabled={isLoading}
             >
-                {isLoading ? (
-                    <div className="flex items-center gap-2">
-                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                        Processing...
-                    </div>
-                ) : submitLabel}
+                {isLoading ? "Processing..." : submitLabel}
             </Button>
         </form>
     );
