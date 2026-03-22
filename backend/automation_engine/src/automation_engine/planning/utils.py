@@ -1,7 +1,7 @@
-from typing import Type, Dict, Any
+from typing import Type, Any
 from pydantic import BaseModel
 
-def schema_to_string(schema: Dict[str, Any], refs: Dict[str, Any], indent: int = 0) -> str:
+def schema_to_string(schema: dict[str, Any], refs: dict[str, Any], indent: int = 0) -> str:
     if "properties" in schema:
         properties = schema.get("properties")     
         base_indent_str = "  " * indent
