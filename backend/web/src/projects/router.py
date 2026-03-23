@@ -1,42 +1,60 @@
-from typing import Annotated
-from fastapi import APIRouter, Depends, Path, Body, Query, status
+from fastapi import APIRouter, Depends, status
+
 from src.auth.dependencies import UserDep
 from src.database import SessionDep
-from .schemas import ProjectRead, ProjectCreate, ProjectUpdate
-from .models import Project, UserProjectLink
-from .dependencies import AccessableProjectDep, EditableProjectDep, OwnedProjectDep, ValidLinksDep, ProjectRepositoryDep
+from src.base.schemas import Page, PaginationParams
 
-router = APIRouter(
-    prefix="/projects",
-    tags=["projects"]
-)
+from .schemas import ProjectCreate, ProjectRead, ProjectSummaryRead, ProjectUpdate
+from .service import create_project, delete_project, get_project, list_projects, update_project
 
 
-@router.get("", response_model=list[ProjectRead])
-def list_projects(user: UserDep) -> list[Project]:
-    return user.projects
+router = APIRouter(prefix="/projects", tags=["projects"])
 
 
 @router.get("/{project_id}", response_model=ProjectRead)
-def get_project(project: AccessableProjectDep) -> Project:
-    return project
+async def get_project_route(
+	session: SessionDep,
+	user: UserDep,
+	project_id: int,
+):
+	return get_project(session=session, user=user, project_id=project_id)
 
 
-@router.post("", response_model=ProjectRead)
-def create_project(project_info: Annotated[ProjectCreate, Body()], links: ValidLinksDep, repo: ProjectRepositoryDep) -> Project:
-    project = Project.model_validate(project_info)
-    project.users_links.extend(links)
-    return repo.save(project)
+@router.get("", response_model=Page[ProjectSummaryRead])
+async def list_projects_route(
+	session: SessionDep,
+	user: UserDep,
+	pagination_params: PaginationParams = Depends(),
+):
+	return list_projects(session=session, user=user, pagination_params=pagination_params)
 
+@router.post("", status_code=status.HTTP_201_CREATED, response_model=ProjectRead)
+async def create_project_route(
+	session: SessionDep,
+	user: UserDep,
+	project_create: ProjectCreate,
+):
+	return create_project(session=session, user=user, project_create=project_create)
 
 @router.put("/{project_id}", response_model=ProjectRead)
-def update_project(project: OwnedProjectDep, project_info: Annotated[ProjectCreate, Body()], links: ValidLinksDep, repo: ProjectRepositoryDep) -> Project:
-    project.users_links.clear()
-    project.users_links.extend(links)
-    project.sqlmodel_update(project_info)
-    return repo.save(project)
+async def update_project_route(
+	session: SessionDep,
+	user: UserDep,
+	project_id: int,
+	project_update: ProjectUpdate,
+):
+	return update_project(
+		session=session,
+		user=user,
+		project_id=project_id,
+		project_update=project_update,
+	)
 
-
+# delete project user must be admin, or project admin
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_project(project: OwnedProjectDep, repo: ProjectRepositoryDep) -> None:
-    repo.delete(project)
+async def delete_project_route(
+	session: SessionDep,
+	user: UserDep,
+	project_id: int,
+):
+	delete_project(session=session, user=user, project_id=project_id)
