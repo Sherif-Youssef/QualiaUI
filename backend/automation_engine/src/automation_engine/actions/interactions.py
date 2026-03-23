@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Literal, Optional
-from pathlib import Path
 from pydantic import Field
 
 from .base import InteractionAction
@@ -23,7 +22,7 @@ class Click(InteractionAction):
     target_id: int
     button: Literal["left", "middle", "right"] = "left"
     click_count: int = Field(default=1, ge=1, description="1 = single click, 2 = double click, etc.")
-    modifiers: list[Literal["Alt", "ControlOrMeta", "Shift"]] = Field(default_factory=list, description="Keyboard modifiers held during click.")
+    modifiers: list[Literal["Alt", "ControlOrMeta", "Shift"]] | None = Field(default=None, description="Keyboard modifiers held during click.")
 
 
 @action
@@ -61,7 +60,7 @@ class Press(InteractionAction):
     """Send keystrokes, optionally focused on an element."""
     action_type: Literal[Interaction.PRESS] = Field(default=Interaction.PRESS, exclude=True)
 
-    key_strokes: list[str] = Field(min_length=1, description='Keys to press in sequence. Uses Playwright key names: "Enter", "Tab", "ArrowDown", "Control+a", etc.')
+    key: str = Field(min_length=1, description='Keys to press separated by "+". Uses Playwright key names: "Enter", "Tab", "ArrowDown", "Control+a", etc.')
     target_id: Optional[int] = Field(default=None, description="Focus target. None = page-level.")
 
 
@@ -99,14 +98,12 @@ class DragDrop(InteractionAction):
     target_id: int
 
 
-# @action
-# TODO: Support files
+@action
 class UploadFile(InteractionAction):
-    """Set file(s) on a file <input>."""
-    action_type: Literal[Interaction.UPLOAD] = Field(default=Interaction.UPLOAD, exclude=True)
+    action_type: Literal[Interaction.UPLOAD] = Field(default=Interaction.UPLOAD)
 
-    target_id: int = Field(description="File <input> element.")
-    file_paths: list[str] # Should point to variables
+    target_id: int = Field(description="Element id of the file <input> element.")
+    file_vars: list[str] = Field(default_factory=list, description="Variable names referencing file variables to upload.")
 
 
 @action

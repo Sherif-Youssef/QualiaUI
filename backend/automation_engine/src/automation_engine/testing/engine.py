@@ -45,8 +45,9 @@ from automation_engine.planning import (
     build_chain,
 )
 from automation_engine.execution.browser import PlaywrightBrowser
-from automation_engine.compilation import ActionCompiler, ExecAction
+from automation_engine.compilation import ActionCompiler, CompileContext, ExecAction
 from automation_engine.testing.config import EngineConfig
+from automation_engine.compilation.variables import Variable, VariableStore
 
 
 logger = logging.getLogger(__name__)
@@ -71,10 +72,12 @@ class TestingEngine:
     def __init__(
         self,
         llm: BaseChatModel,
+        variables: list[Variable] | None = None,
         config: EngineConfig | None = None,
     ) -> None:
         self._llm = llm
         self._config = config or EngineConfig()
+        self._variable_store = VariableStore(variables)
 
         self._dom_renderer = DOMRenderer(self._config.renderer.dom)
         self._history_renderer = HistoryRenderer(self._config.renderer.history)
@@ -118,8 +121,8 @@ class TestingSession:
         self._chain = build_chain(
             self._engine._llm,
             system_prompt=cfg.llm.system_prompt,
-            tooling=cfg.llm.output_tooling,
-            group_response=cfg.llm.group_response,
+            tooling=cfg.llm.use_tool_calling,
+            allow_grouped_steps=cfg.llm.allow_grouped_steps,
         )
 
         logger.info("Session started: url=%s", self._url)
@@ -131,19 +134,46 @@ class TestingSession:
             self._browser = None
         logger.info("Session closed.")
 
+    @staticmethod
+    def _fail_fast(func):
+        def wrapper(self: TestingSession, *args, **kwargs):
+            if self._test_run.status in (RunStatus.ERROR, RunStatus.FAILED):
+                raise ValueError("Previous step(s) have failed, can't continue")
+            return func(self, *args, **kwargs)
+        return wrapper
+
     @property
     def test_run(self) -> TestRun:
-        """Finalizes the test run & return it."""
-        if self._test_run.current_group.instruction == "<executable>":
-            if self._test_run.current_group.status not in (RunStatus.ERROR, RunStatus.FAILED):
-                self._test_run.add_step(TestStep(output=Complete(reason="<end_of_executable_no_errors>")))
-            else:
-                self._test_run.add_step(TestStep(output=Fail(reason="<end_of_executable_errors_present>")))
-        self._test_run.finalize()
+        if self._test_run.is_finalized:
+            self._test_run.finalize()
         return self._test_run
+    
+    @property
+    def current_group(self) -> TestStepGroup:
+        if not self._test_run.current_group.is_finalized:
+            self.finalize_group()
+        return self._test_run.current_group
+
+    @property
+    def steps(self) -> list[TestStep]:
+        return self._test_run.all_steps
+    
+    @property
+    def current_steps(self) -> list[TestStep]:
+        return self._test_run.current_steps
+
+    def finalize_group(self) -> None:
+        if self._test_run.current_group.is_finalized:
+            return
+        if self._test_run.current_group.status not in (RunStatus.ERROR, RunStatus.FAILED):
+            self._test_run.add_step(TestStep(output=Complete(reason="<manual_no_errors>")))
+        else:
+            self._test_run.add_step(TestStep(output=Fail(reason="<manual_errors_present>")))
+        self._test_run.current_group.finalize()
 
     # Public APIs
 
+    @_fail_fast
     async def run_group(
         self,
         instruction: str,
@@ -193,11 +223,13 @@ class TestingSession:
                 continue
 
             # Compile & Execute
-            compiler = ActionCompiler(snapshot.index)
+            compiler = ActionCompiler(
+                CompileContext(dom_index=snapshot.index, variables=self._engine._variable_store)
+            )
             should_break = False
 
             for output in outputs:
-                step = await self._execute_single(output, compiler)
+                step = await self._compile_execute_single(output, compiler)
                 yield step
 
                 if step.status == StepStatus.PASSED:
@@ -226,6 +258,7 @@ class TestingSession:
             len(group.steps),
         )
 
+    @_fail_fast
     async def run_step(
         self,
         instruction: str,
@@ -233,6 +266,7 @@ class TestingSession:
         async for step in self.run_group(instruction, max_steps=1):
             return step
 
+    @_fail_fast
     async def run_executable(
         self,
         exec_action: ExecAction,
@@ -241,69 +275,24 @@ class TestingSession:
         if not self._test_run.current_group or self._test_run.current_group.is_finalized:
             self._test_run.add_group("<executable>")
 
-        snapshot_before = await self._capture_step_snapshot()
         step = self._test_run.add_step(
-            TestStep(executable=exec_action, snapshot_before=snapshot_before),
+            TestStep(
+                executable=exec_action,
+                snapshot_before=await self._capture_step_snapshot()
+            ),
         )
+        compiler = ActionCompiler(CompileContext(variables=self._engine._variable_store))
 
-        try:
-            await self._browser.execute(exec_action)
-            step.finalize(status=StepStatus.PASSED)
-            logger.debug("Step %d passed: %s", step.run_index, type(exec_action).__name__)
-        except (AssertionError, TimeoutError) as e:
-            step.finalize(status=StepStatus.FAILED, error_message=str(e))
-        except Exception as e:
-            step.finalize(status=StepStatus.ERROR, error_message=str(e))
-
-        step.snapshot_after = await self._capture_step_snapshot()
+        await self._execute_single(exec_action, compiler, step)
         return step
 
     # Internal
-
-    async def _execute_single(
-        self,
-        output: BaseAction | TerminationSignal,
-        compiler: ActionCompiler,
-    ) -> TestStep:
-        """Compile an LLM output to an ExecAction, execute it, record as a TestStep."""
-        snapshot_before = await self._capture_step_snapshot()
-        step = self._test_run.add_step(
-            TestStep(output=output, snapshot_before=snapshot_before),
-        )
-
-        # Termination signals don't need compilation or execution
-        if isinstance(output, TerminationSignal):
-            step.finalize(status=StepStatus.PASSED)
-            logger.info("Termination: %s", output.action_type)
-            return step
-
-        # Compile
-        try:
-            exec_action = compiler.compile(output)
-            step.executable = exec_action
-        except Exception as e:
-            step.finalize(status=StepStatus.ERROR, error_message=f"Compilation failed: {e}")
-            step.snapshot_after = await self._capture_step_snapshot()
-            return step
-
-        # Execute
-        try:
-            await self._browser.execute(exec_action)
-            step.finalize(status=StepStatus.PASSED)
-            logger.debug("Step %d passed: %s", step.run_index, output.action_type)
-        except (AssertionError, TimeoutError) as e:
-            step.finalize(status=StepStatus.FAILED, error_message=str(e))
-        except Exception as e:
-            step.finalize(status=StepStatus.ERROR, error_message=str(e))
-
-        step.snapshot_after = await self._capture_step_snapshot()
-        return step
 
     async def _observe(self) -> PageSnapshot:
         """Capture page state."""
         await self._browser.wait_for_load_state("domcontentloaded")
 
-        raw: dict = await self._browser.evaluate_js(expression=get_js_serializer_api_code())
+        raw: dict = await self._browser.evaluate_js(code=get_js_serializer_api_code())
         root = DOMElement(**raw)
         index = DOMIndex(root)
 
@@ -335,13 +324,11 @@ class TestingSession:
         snapshot: PageSnapshot,
     ) -> list[BaseAction | TerminationSignal]:
         """Ask the LLM for the next action(s)."""
-        dom_text = self._engine._dom_renderer.render_browser_state(snapshot.state)
-        history_text = self._engine._history_renderer.render_history(self._test_run)
 
         invoke_input: dict = {
             "instruction": instruction,
-            "page": dom_text,
-            "history": history_text,
+            "page": self._engine._dom_renderer.render_browser_state(snapshot.state),
+            "history": self._engine._history_renderer.render_history(self._test_run),
         }
 
         if self._engine.config.llm.use_screenshot:
@@ -362,28 +349,67 @@ class TestingSession:
             "LLM decided: %s (%d output(s)) - %s",
             outputs[0].action_type if outputs else "empty",
             len(outputs),
-            thought[:100] if thought else "",
+            thought if thought else "",
         )
 
         return outputs
 
     async def _capture_step_snapshot(self) -> TestStepSnapshot:
         """Lightweight snapshot for step before/after."""
-        return None
         screenshot = await self._browser.screenshot()
-        dom = None
-        try:
-            raw = await self._browser.evaluate_js(expression=get_js_serializer_api_code())
-            root = DOMElement(**raw)
-            state = BrowserState(
-                current_url=self._browser.url,
-                page_title=await self._browser.title(),
-                viewport_width=self._browser.viewport_width,
-                viewport_height=self._browser.viewport_height,
-                root=root,
-            )
-            dom = self._engine._dom_renderer.render_browser_state(state)
-        except Exception as e:
-            logger.warning("DOM capture for snapshot failed: %s", e)
+        return TestStepSnapshot(screenshot=screenshot)
 
-        return TestStepSnapshot(screenshot=screenshot, dom=dom)
+    async def _execute_single(
+        self,
+        exec_action: ExecAction,
+        compiler: ActionCompiler,
+        step: TestStep
+    ) -> None:
+        
+        try:
+            resolved_action = compiler.resolve_vars(exec_action)
+        except Exception as e:
+            step.finalize(status=StepStatus.ERROR, error_message=f"Error resolving variables: {e}")
+            return
+
+        try:
+            await self._browser.execute(resolved_action)
+            step.finalize(status=StepStatus.PASSED)
+            logger.debug("Step %d passed: %s", step.run_index, type(resolved_action).__name__)
+        except (AssertionError, TimeoutError) as e:
+            step.finalize(status=StepStatus.FAILED, error_message=str(e))
+        except Exception as e:
+            step.finalize(status=StepStatus.ERROR, error_message=str(e))
+        
+        step.snapshot_after = await self._capture_step_snapshot()
+
+    async def _compile_execute_single(
+        self,
+        output: BaseAction | TerminationSignal,
+        compiler: ActionCompiler,
+    ) -> TestStep:
+        """Compile an LLM output to an ExecAction, execute it, record as a TestStep."""
+        snapshot_before = await self._capture_step_snapshot()
+        step = self._test_run.add_step(
+            TestStep(output=output, snapshot_before=snapshot_before),
+        )
+
+        # Termination signals don't need compilation or execution
+        if isinstance(output, TerminationSignal):
+            step.finalize(status=StepStatus.PASSED)
+            logger.info("Termination: %s", output.action_type)
+            return step
+
+        # Compile
+        try:
+            exec_action = compiler.compile(output, resolve_vars=False)
+            step.executable = exec_action
+        except Exception as e:
+            step.finalize(status=StepStatus.ERROR, error_message=f"Compilation failed: {e}")
+            step.snapshot_after = await self._capture_step_snapshot()
+            return step
+
+        # Execute
+        await self._execute_single(exec_action, compiler, step)
+
+        return step

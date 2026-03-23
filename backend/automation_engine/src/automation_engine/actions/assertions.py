@@ -50,8 +50,7 @@ class AssertElementCount(AssertionAction):
 
 @action
 class AssertJSEval(AssertionAction):
-    """Run JS and assert truthy result. Return {success, error}. Last resort only."""
+    """Run JS and assert truthy result. Return true/false. Last resort only."""
     action_type: Literal[Assertion.JS_EVAL] = Assertion.JS_EVAL
 
     code: str
-    target_id: Optional[int] = Field(default=None, description="If set, DOM element passed as first arg.")

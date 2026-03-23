@@ -1,12 +1,15 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from enum import StrEnum
 from typing import List
+from pydantic import BaseModel, ConfigDict
 
 from ..planning.state import DOMElement, BrowserState
 from ..testing.history import TestRun, TestStep
+from ..compilation.variables import Variable, FileVariable, VariableStore
 
+
+# Config
 
 class Verbosity(StrEnum):
     MINIMAL = "minimal"
@@ -14,9 +17,8 @@ class Verbosity(StrEnum):
     FULL = "full"
 
 
-@dataclass(frozen=True, slots=True)
-class DOMRendererConfig:
-    """Controls what gets included in the LLM-facing string."""
+class DOMRendererConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
 
     verbosity: Verbosity = Verbosity.STANDARD
     indent_size: int = 2
@@ -27,6 +29,19 @@ class DOMRendererConfig:
     max_url_length: int = 50
     max_attr_length: int = 40
 
+
+class HistoryRendererConfig(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    include_reasoning: bool = False
+    include_status: bool = True
+    include_error: bool = True
+    include_timing: bool = False
+    max_actions: int | None = None
+    exclude_defaults: bool = True
+
+
+# Renderers
 
 class DOMRenderer:
     """
@@ -176,16 +191,6 @@ class DOMRenderer:
         val = el.attr(name)
         if val:
             parts.append(f'{name}="{self._truncate(val, max_len)}"')
-
-
-@dataclass(frozen=True, slots=True)
-class HistoryRendererConfig:
-    include_reasoning: bool = False
-    include_status: bool = True
-    include_error: bool = True
-    include_timing: bool = False
-    max_actions: int | None = None
-    exclude_defaults: bool = True
 
 
 class HistoryRenderer:

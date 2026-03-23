@@ -121,9 +121,6 @@ class PlaywrightBrowser:
     def url(self) -> str:
         return self.page.url
 
-    async def title(self) -> str:
-        return await self.page.title()
-
     @property
     def viewport_width(self) -> int:
         return self._viewport_width
@@ -131,6 +128,9 @@ class PlaywrightBrowser:
     @property
     def viewport_height(self) -> int:
         return self._viewport_height
+
+    async def title(self) -> str:
+        return await self.page.title()
 
     async def go_back(self, *, timeout: float | None = None) -> None:
         kwargs = {"timeout": timeout} if timeout else {}
@@ -328,11 +328,11 @@ class PlaywrightBrowser:
     async def evaluate_js(
         self,
         *,
-        expression: str,
+        code: str,
         arg: Any = None,
     ) -> Any:
         try:
-            return await self.page.evaluate(expression, arg)
+            return await self.page.evaluate(code, arg)
         except PlaywrightError as e:
             if "Execution context was destroyed" not in str(e):
                 raise
@@ -366,10 +366,11 @@ class PlaywrightBrowser:
         *,
         target_selector: str | None = None,
         target_type: str | None = None,
-        pattern: re.Pattern,
+        pattern: str,
         timeout: float | None = None,
     ) -> None:
         kwargs = {"timeout": timeout} if timeout else {}
+        pattern = re.compile(pattern)
 
         if target_type == "title":
             await expect(self.page).to_have_title(pattern, **kwargs)
@@ -421,22 +422,10 @@ class PlaywrightBrowser:
     async def assert_js_eval(
         self,
         *,
-        expression: str,
+        code: str,
         arg: Any = None,
     ) -> Any:
-        try:
-            result = await self.page.evaluate(expression, arg)
-        except PlaywrightError as e:
-            if "Execution context was destroyed" not in str(e):
-                raise
-            return None
-
-        if isinstance(result, dict):
-            if not result.get("success", False):
-                raise AssertionError(result.get("error", "JS assertion failed"))
-        elif not result:
-            raise AssertionError("JS assertion returned falsy value")
-        return result
+        await self.page.wait_for_function(code, arg=arg)
 
 
 PlaywrightBrowser.build_dispatch()
