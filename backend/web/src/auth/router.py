@@ -1,29 +1,43 @@
-from fastapi import APIRouter, Depends, Response, status, Cookie, Body
 from typing import Annotated
-from fastapi.security import OAuth2PasswordRequestForm
-from .service import AuthService
-from .schemas import *
-from .config import auth_settings
-from .service import AuthService
 
-router = APIRouter(
-    prefix="/auth",
-    tags=["auth"]
+from fastapi import APIRouter, Response, status, Cookie, HTTPException
+
+from src.database import SessionDep
+from .config import auth_settings
+from .dependencies import UserDep
+from .schemas import (
+    UserRead,
+    LoginRequest,
+    TokensResponse,
+    RefreshTokenResponse,
+    UserCreate
+)
+from .service import (
+    authenticate_user,
+    create_tokens,
+    refresh_tokens,
+    register_user
 )
 
+router = APIRouter(prefix="/auth", tags=["auth"])
+
+@router.get("/me", response_model=UserRead)
+async def me(user: UserDep):
+    return user
 
 @router.post("/tokens", response_model=TokensResponse, name="token")
 async def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], 
+    session: SessionDep,
+    login_data: LoginRequest,
     response: Response,
-    auth_service: Annotated[AuthService, Depends()],
 ) -> TokensResponse :
-    user = auth_service.authenticate_user(
-        form_data.username, 
-        form_data.password
+    user = authenticate_user(
+        session,
+        login_data.username,
+        login_data.password
     )
     
-    tokens = auth_service.create_tokens(user)
+    tokens = create_tokens(user)
 
     response.set_cookie(
         key="refresh_token", 
@@ -34,23 +48,20 @@ async def login(
         max_age=auth_settings.JWT_REFRESH_TOKEN_EXPIRATION_MINUTES * 60
     )
     
-    return tokens
-        
+    return tokens        
     
-@router.post("/tokens/refresh", name="refresh_token")
-async def refresh_tokens(
-    auth_service: Annotated[AuthService, Depends()],
-    refresh_token: Annotated[str, Cookie()], 
+@router.post("/tokens/refresh", name="refresh_token", response_model=RefreshTokenResponse)
+async def refresh(
+    session: SessionDep,
+    refresh_token: Annotated[str | None, Cookie()] = None,
 ) -> RefreshTokenResponse :
-    return auth_service.refresh_tokens(refresh_token)
+    if not refresh_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token.")
+    return refresh_tokens(session, refresh_token)
     
-
-@router.post("/register", response_model=UserRead, status_code=status.HTTP_201_CREATED)
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(
+    session: SessionDep,
     user_create: UserCreate,
-    auth_service: Annotated[AuthService, Depends()],
-    response: Response
-) -> UserRead:
-    user = auth_service.register_user(user_create=user_create)
-    response.headers["Location"] = f"/users/{user.id}"
-    return user
+):
+    register_user(session, user_create=user_create)

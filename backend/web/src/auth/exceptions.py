@@ -1,13 +1,13 @@
 # tokens
 
-def TokenError(Exception):
+class TokenError(Exception):
     pass
 
-def ExpiredTokenError(TokenError):
+class ExpiredTokenError(TokenError):
     pass
 
-def InvalidTokenError(TokenError):
+class InvalidTokenError(TokenError):
     pass
 
-def InvalidTokenTypeError(TokenError):
+class InvalidTokenTypeError(TokenError):
     pass
