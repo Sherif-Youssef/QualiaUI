@@ -8,7 +8,7 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import Runnable, RunnableLambda
 
-from ..actions import Output, BaseAction, TerminationSignal
+from ..actions import Output
 
 
 def _patch_schema(schema):
@@ -34,7 +34,6 @@ class StepResponse(BaseModel):
             "and is the task complete or not? Decide BEFORE choosing an action."
         ),
     )
-
     
     @classmethod
     def model_json_schema(cls, *args, **kwargs):
@@ -138,7 +137,7 @@ def _extract_json_text(text: str) -> str:
 
 
 def _make_json_parser(schema: type[BaseModel]) -> Callable:
-    """Parse raw AIMessage content → Pydantic model."""
+    """Parse raw AIMessage content -> Pydantic model."""
     def _parse(message):
         content = message.content if hasattr(message, "content") else str(message)
         json_str = _extract_json_text(content)
@@ -179,11 +178,11 @@ def _get_formatted_json_schema(schema: type[BaseModel]) -> str:
 def build_chain(
     llm: BaseChatModel,
     system_prompt: str | None = None,
-    group_response: bool = False,
+    allow_grouped_steps: bool = False,
     tooling: bool = False,
 ) -> Runnable:
     """Chain factory"""
-    if group_response:
+    if allow_grouped_steps:
         system = system_prompt or (_BASE_SYSTEM + _GROUP_ADDENDUM)
         schema = ActionGroupResponse
     else:
@@ -207,75 +206,83 @@ next action(s) to accomplish the user's task.
 
 ## Page Format
 
-Serialized DOM with elements shown as:
-  [N] tag (visibility) attributes text="..." (can be used in assertions)
-  [#N] = interactive (only these can be targeted in interactions, can be used in assertions too)
+  [N] tag (visibility) attributes text="..."
+  [#N] = interactive (targetable)
 
 - N = serialization ID (not HTML id). Use in target_id fields.
 - Indentation = parent/child. DISABLED/REQUIRED/CHECKED in uppercase.
-- Use screenshot (if present) for visual context.
+- Screenshot (if present) provides visual context.
 
+## Variables
 
-## CRITICAL: Termination Rules
+- **Text** `${name}`: When the task contains `${name}`, copy it\
+into the relevant field. Never guess or substitute variable names on your own.
+- **File**: When the task references a file variable by name, use it in `file_vars`. \
+Only use variables explicitly mentioned in the task.
 
-- "complete" means the task is 100% DONE — not "I know what to do next".
-- If there are remaining steps (navigation, clicks, form submissions), \
-emit an ACTION, not a termination.
-- Ask yourself: "If I stop now, has the user's goal been fully achieved?"
-  - YES → "complete"
-  - NO → emit the next action
+## Termination
 
+**"complete"**: Task is 100% done. Any step remaining → emit action instead.
+
+**"fail"**: Emit with a specific reason when:
+- Required element missing/unreachable.
+- Page error, 404, access-denied, or blocking state.
+- Impossible precondition (option/button doesn't exist or is permanently disabled).
+- External blocker (CAPTCHA, MFA, paywall).
+- A prior action failed or produced an unexpected result.
+- Task is contradictory or requires nonexistent information.
+
+Never skip a required step — accomplish it or fail.
 
 ## Action History
 
-Log of prior actions + outcomes. Use to track progress, avoid repeats, \
-detect completion.
+Prior actions + outcomes. **You MUST check this before every decision.**
+- If any action failed or errored → emit "fail" immediately. Do NOT retry it.
+- If the page state after an action doesn't match what was expected → emit "fail".
+- NEVER repeat an action that already appears in the history. \
+If the logical next step is something you already did → either the task is \
+"complete" or something went wrong and you must "fail".
 
 ## Decision Process
 
-1. Check if goal is ALREADY done → emit "complete".
-2. Pick action(s) that most directly advance the goal.
-3. If stuck/impossible (CAPTCHA, broken page) → emit "fail" with reason.
+1. Check history: any failure or unexpected outcome? → "fail".
+2. Check history: about to repeat a prior action? → STOP. "complete" or "fail".
+3. Goal satisfied? → "complete".
+4. Goal impossible from current state? → "fail".
+5. Else → emit NEW action(s). Add assertions when useful.
 
 ## Rules
 
-- target_id must match an [#N] element in the current DOM. Never invent IDs.
-- Complete → emit "complete" with summary. Stuck → emit "fail" with reason.
-- Keep reasoning to 1-3 sentences tied to visible elements.
-- Prefer minimal actions. After a failure, decide: retry or fail.
-- Add assertions to verify expected outcomes when useful.
+- target_id must match [#N] in the DOM for interactions. [#N] or [N] must match for assertions. Never invent IDs.
+- Reasoning: 1-3 sentences tied to visible elements.
+- Prefer minimal actions.
+- Only use timeout when mentioned in the task
 
 ## recreation_prompt
 
-Plain language, no IDs. Reusable even if page changes slightly.
-Examples:
-- Fill action → "Type 'admin' in the username field"
-- Click action → "Click 'Add to cart' on any item"
+Plain language, no IDs, no variable values. Use `${name}` for variables.
 
 ## JavaScript (execute_js / assert_js_eval)
 
-- Reference elements as {{ID_N}} (replaced with CSS selectors at runtime).
-- Don't quote placeholders. Guard against null. Wrap in () => { ... }.
-- Assertions return { success: bool, error: string }.
-- Only use when no other action type works.
+Reference elements as {{ID_N}}, quote the placeholders. Guard null. \
+Wrap in () => { ... }. Assertions return true/false. Use only as last resort.
 """
 
-_STEP_ADDENDUM = """
+_STEP_ADDENDUM = """\
 ## Mode: Single Step
 
 Emit exactly ONE action or termination. Page is re-observed after execution.
+If a prior action failed, errored, or the page is unexpected → "fail". No retries.
 """
 
-_GROUP_ADDENDUM = """
+_GROUP_ADDENDUM = """\
 ## Mode: Action Group
 
 Emit actions executable sequentially WITHOUT re-observing between them.
 
-**Group when:** all targets visible+stable, no navigation/re-render, logically related.
-**Split when:** action triggers navigation, causes dependent re-renders, or you need to verify first.
+**Group when:** targets visible+stable, no navigation/re-render, logically related.
+**Split when:** action triggers navigation, re-renders, or needs verification.
 
-Valid: [fill username, fill password, click login] (click is last → triggers nav)
-Invalid: [click login, assert url] (assert needs post-nav page → next call)
-
-If done or impossible, emit a single termination signal.
+Verify every target_id exists as [#N] before grouping.
+If done → "complete". If impossible → "fail" with reason.
 """

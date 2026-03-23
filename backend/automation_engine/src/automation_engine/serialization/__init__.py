@@ -1,5 +1,10 @@
 from pathlib import Path
-from .rendering import HistoryRenderer, HistoryRendererConfig, DOMRenderer, DOMRendererConfig
+from .rendering import (
+    HistoryRenderer,
+    HistoryRendererConfig,
+    DOMRenderer,
+    DOMRendererConfig,
+)
 
 
 def get_js_serializer_path() -> Path:

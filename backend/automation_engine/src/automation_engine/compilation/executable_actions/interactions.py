@@ -1,77 +1,94 @@
 from __future__ import annotations
 
-from typing import Any, Literal, Optional
+from typing import Annotated, Literal, Optional
 from pathlib import Path
 from pydantic import Field
+
 from .base import ExecAction
+from .registry import maps
+from ..markers import ElementRef, SourcedFrom, TextResolvable, JSResolvable, FileVarRef
+from ...actions.interactions import *
 
 
+@maps(Waiting)
 class WaitingExec(ExecAction):
-    ms: float = Field(default=1000, description="Milliseconds to wait.")
+    timeout: float = Field(default=1000, description="Milliseconds to wait.")
 
 
+@maps(Click)
 class ClickExec(ExecAction):
-    target_selector: str
+    target_selector: Annotated[str, SourcedFrom(source="target_id"), ElementRef()]
     button: Literal["left", "middle", "right"] = "left"
-    click_count: int = Field(default=1, ge=1, description="1 = single click, 2 = double click, etc.")
-    modifiers: list[Literal["Alt", "ControlOrMeta", "Shift"]] | None = Field(default=None, description="Keyboard modifiers held during click.")
+    click_count: int = Field(default=1, ge=1)
+    modifiers: list[Literal["Alt", "ControlOrMeta", "Shift"]] | None = None
     timeout: float | None = None
 
 
+@maps(Fill)
 class FillExec(ExecAction):
-    target_selector: str
-    value: str = Field(description="Text to type into the element.")
-    clear_first: bool = Field(default=True, description="Whether to clear existing content before typing.")
+    target_selector: Annotated[str, SourcedFrom(source="target_id"), ElementRef()]
+    value: Annotated[str, TextResolvable()]
+    clear_first: bool = True
     timeout: float | None = None
 
 
+@maps(Hover)
 class HoverExec(ExecAction):
-    target_selector: str
+    target_selector: Annotated[str, SourcedFrom(source="target_id"), ElementRef()]
     timeout: float | None = None
 
 
+@maps(SelectOption)
 class SelectOptionExec(ExecAction):
-    target_selector: str = Field(description="CSS selector of the <select> element.")
-    value: Optional[str] = Field(default=None, description="Value attribute of the option.")
-    label: Optional[str] = Field(default=None, description="Visible text of the option.")
-    index: Optional[int] = Field(default=None, ge=0, description="0-based index of the option.")
+    target_selector: Annotated[str, SourcedFrom(source="select_element_id"), ElementRef()]
+    value: Annotated[Optional[str], TextResolvable()] = None
+    label: Annotated[Optional[str], TextResolvable()] = None
+    index: Optional[int] = Field(default=None, ge=0)
     timeout: float | None = None
 
 
+@maps(Press)
 class PressExec(ExecAction):
     key: str = Field(description='Key combo string, e.g. "Enter", "Control+a".')
-    targer_selector: Optional[str] = Field(default=None, description="Element to focus before pressing. None → page-level.")
+    target_selector: Annotated[Optional[str], ElementRef()] = None
     timeout: float | None = None
 
 
+@maps(Focus)
 class FocusExec(ExecAction):
-    target_selector: str
+    target_selector: Annotated[str, SourcedFrom(source="target_id"), ElementRef()]
     timeout: float | None = None
 
 
+@maps(Navigate)
 class NavigateExec(ExecAction):
-    url: str = Field(description="Absolute or relative URL to navigate to.")
-    wait_until: Literal["commit", "domcontentloaded", "load", "networkidle"] = Field(default="load", description="When to consider navigation succeeded.")
+    url: Annotated[str, TextResolvable()]
+    wait_until: Literal["commit", "domcontentloaded", "load", "networkidle"] = "load"
     timeout: float | None = None
 
 
+@maps(Scroll)
 class ScrollExec(ExecAction):
-    target_selector: str = Field(description="CSS selector of the element to scroll into view.")
+    target_selector: Annotated[str, SourcedFrom(source="target_id"), ElementRef()]
     timeout: float | None = None
 
 
+@maps(DragDrop)
 class DragDropExec(ExecAction):
-    source_selector: str = Field(description="CSS selector of the element to drag.")
-    target_selector: str = Field(description="CSS selector of the drop target.")
+    source_selector: Annotated[str, SourcedFrom(source="source_id"), ElementRef()]
+    target_selector: Annotated[str, SourcedFrom(source="target_id"), ElementRef()]
     timeout: float | None = None
 
 
+@maps(UploadFile)
 class UploadFileExec(ExecAction):
-    target_selector: str = Field(description="CSS selector of the file <input> element.")
-    files: list[Path] = Field(min_length=1, description="Absolute paths to file(s) to upload.")
+    target_selector: Annotated[str, SourcedFrom(source="target_id"), ElementRef()]
+    files: Annotated[list[Path | str], SourcedFrom(source="file_vars"), FileVarRef()] = Field(min_length=1)
     timeout: float | None = None
 
 
+@maps(ExecuteJS)
 class ExecuteJSExec(ExecAction):
-    expression: str = Field(description="JavaScript code to execute.")
-    arg: Any = Field(default=None, description="Optional argument passed to the JS expression.")
+    code: Annotated[str, JSResolvable(), TextResolvable()]
+    # TODO: Support timeouts
+    # timeout: float | None = None
