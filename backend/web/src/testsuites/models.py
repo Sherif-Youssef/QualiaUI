@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from src.projects.models import Project
-    # from src.testcases.models import TestCase
+    from src.testcases.models import TestCase
 
 class TestSuite(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -12,4 +12,4 @@ class TestSuite(SQLModel, table=True):
 
     project_id: int = Field(foreign_key="project.id", ondelete="CASCADE")
     project: "Project" = Relationship(back_populates="testsuites")
-    # testcases: list["TestCase"] = Relationship(back_populates="testsuite", cascade_delete=True)
+    testcases: list["TestCase"] = Relationship(back_populates="testsuite", cascade_delete=True)

@@ -25,6 +25,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 async def me(user: UserDep):
     return user
 
+
 @router.post("/tokens", response_model=TokensResponse, name="token")
 async def login(
     session: SessionDep,
@@ -50,6 +51,7 @@ async def login(
     
     return tokens        
     
+
 @router.post("/tokens/refresh", name="refresh_token", response_model=RefreshTokenResponse)
 async def refresh(
     session: SessionDep,
@@ -58,6 +60,7 @@ async def refresh(
     if not refresh_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token.")
     return refresh_tokens(session, refresh_token)
+  
     
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(

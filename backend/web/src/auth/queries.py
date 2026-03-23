@@ -16,11 +16,13 @@ def get_by_username_or_email(session: Session, username_or_email: str) -> User |
     )
     return session.exec(statement).first()
 
+
 def get_by_id(session: Session, id: int) -> User | None:
     statement = select(User).where(
         User.id == id
     )
     return session.exec(statement).first()
+
 
 def get_by_ids(session: Session, ids: list[int]) -> list[User]:
     statement = select(User).where(
@@ -28,9 +30,11 @@ def get_by_ids(session: Session, ids: list[int]) -> list[User]:
     )
     return list(session.exec(statement).all())
 
+
 def count_by_ids(session: Session, ids: list[int]) -> int:
     statement = select(func.count()).where(col(User.id).in_(ids))
     return session.exec(statement).one()
+
 
 def exists_by_username(session: Session, username: str) -> bool:
     """Return ``True`` if a username already exists."""
@@ -39,6 +43,7 @@ def exists_by_username(session: Session, username: str) -> bool:
         User.username == username
     )
     return session.exec(statement).first() is not None
+
 
 def exists_by_email(session: Session, email: str) -> bool:
     """Return ``True`` if an email address already exists."""
