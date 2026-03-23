@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, Header, status
 
 from src.database import SessionDep
 from .service import decode_token
-from .models import User
+from .models import User, Role
 from .schemas import TokenType
 from .queries import get_by_id
 from .exceptions import TokenError
@@ -28,6 +28,7 @@ async def get_auth_token(
 
     return token
 
+
 async def get_current_user(
     session: SessionDep,
     token: Annotated[str, Depends(get_auth_token)],
@@ -47,3 +48,14 @@ async def get_current_user(
 
 
 UserDep = Annotated[User, Depends(get_current_user)]
+
+
+async def get_current_admin_user(
+    user: UserDep,
+) -> User:
+    if user.role != Role.ADMIN:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission required for this action.")
+    return user
+
+
+AdminUserDep = Annotated[User, Depends(get_current_admin_user)]

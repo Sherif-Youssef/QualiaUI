@@ -24,6 +24,7 @@ def check_project_role(user: User, user_project_link: UserProjectLink | None, ro
         raise HTTPException(status_code=403, detail="You don't have permission required for this action.")
     return False
 
+
 def get_project(session: Session, user: User, project_id: int) -> Project:
     project = get_by_id(session, project_id, load_links=True)
 
@@ -39,6 +40,7 @@ def get_project(session: Session, user: User, project_id: int) -> Project:
     check_project_role(user, user_project_link, Role.VIEWER)
 
     return project
+
 
 def list_projects(session: Session, user: User, pagination_params: PaginationParams) -> Page[ProjectSummaryRead]:
     projects = get_all_with_link(session, user.id, pagination_params) # pyright: ignore[reportArgumentType]
@@ -58,6 +60,7 @@ def list_projects(session: Session, user: User, pagination_params: PaginationPar
         limit=pagination_params.limit,
         total_items=projects_count,
     )
+
 
 def _build_member_links(
     session: Session,
@@ -88,6 +91,7 @@ def _build_member_links(
         for m in members
     ]
 
+
 def create_project(session: Session, user: User, project_create: ProjectCreate) -> Project:
     if not is_admin(user):
         raise HTTPException(status_code=403, detail="You don't have permission required for this action.")
@@ -104,6 +108,7 @@ def create_project(session: Session, user: User, project_create: ProjectCreate) 
     session.flush()
 
     return project
+
 
 def update_project(session: Session, user: User, project_id: int, project_update: ProjectUpdate) -> Project:
     t = get_with_link(session, project_id, user.id) # type: ignore[arg-type]
