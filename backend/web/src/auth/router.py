@@ -74,6 +74,7 @@ async def refresh_route(
     if not refresh_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token.")
     return refresh_tokens(session, refresh_token)
+  
     
 
 @auth_router.post("/users/{user_id}/temporary-password/regenerate", response_model=ProvisionedUserRead)

@@ -1,20 +1,30 @@
 import react from "@vitejs/plugin-react";
-import tailwind from "tailwindcss";
+import tailwindcss from "tailwindcss";
+import autoprefixer from "autoprefixer";
 import { defineConfig } from "vite";
+import { fileURLToPath, URL } from "node:url";
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   publicDir: "./static",
   base: "./",
-  css: {
-    postcss: {
-      plugins: [tailwind()],
-    },
+  server: {
+    proxy: {
+      '/api/v1': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      }
+    }
   },
   resolve: {
     alias: {
-      "@": "/src",
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
+  },
+  css: {
+    postcss: {
+      plugins: [tailwindcss, autoprefixer],
     },
   },
 });
