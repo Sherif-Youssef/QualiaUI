@@ -8,6 +8,9 @@ from src.base.schemas import RoleEnum
 if TYPE_CHECKING:
     from src.projects.models import UserProjectLink, Project
 
+NON_ADMIN_FIELDS: frozenset[str] = frozenset({"first_name", "last_name", "username", "email"})
+ADMIN_ONLY_FIELDS: frozenset[str] = frozenset({"role", "is_active"})
+ADMIN_FIELDS: frozenset[str] = NON_ADMIN_FIELDS | ADMIN_ONLY_FIELDS
 
 class Role(RoleEnum):
 	VIEWER = ("viewer", 1)
@@ -22,6 +25,7 @@ class User(SQLModel, table=True):
     username: str
     email: str
     hashed_password: str
+    is_temp_pass: bool = Field(default=False)
     is_active: bool = Field(default=True)
     role: Role = Field(default=Role.VIEWER)
 

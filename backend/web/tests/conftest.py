@@ -15,7 +15,7 @@ os.environ.setdefault("JWT_ACCESS_TOKEN_EXPIRATION_MINUTES", "15")
 os.environ.setdefault("JWT_REFRESH_TOKEN_EXPIRATION_MINUTES", "120")
 
 from src.auth.models import Role as UserRole, User 
-from src.auth.dependencies import get_current_user
+from src.auth.dependencies import require_active_user, require_non_temporary_password
 from src.auth.router import router as auth_router
 from src.auth.schemas import TokenType
 from src.auth.service import create_token
@@ -140,7 +140,9 @@ def override_current_user(client: TestClient):
     app = cast(FastAPI, client.app)
 
     def _override(user: User) -> None:
-        app.dependency_overrides[get_current_user] = lambda: user
+        app.dependency_overrides[require_non_temporary_password] = lambda: user
+        app.dependency_overrides[require_active_user] = lambda: user
 
     yield _override
-    app.dependency_overrides.pop(get_current_user, None)
+    app.dependency_overrides.pop(require_non_temporary_password, None)
+    app.dependency_overrides.pop(require_active_user, None)
