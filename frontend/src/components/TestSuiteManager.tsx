@@ -1,8 +1,8 @@
 import React from 'react';
 import { Plus, Play } from 'lucide-react';
-import { Button } from '../components/ui/button';
+import { Button } from '@/components/ui/button';
 import { TestCaseCard } from './TestCaseCard';
-import { TestCase, ActionStep } from '../types';
+import { TestCase, ActionStep } from '@/types/test-case';
 
 interface TestSuiteManagerProps {
   testCases: TestCase[];
