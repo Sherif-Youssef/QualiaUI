@@ -1,0 +1,85 @@
+import React from 'react';
+import { Pencil, Trash2 } from 'lucide-react';
+import { Project } from '@/types/project';
+
+interface ProjectsTableProps {
+    projects: Project[];
+    onNavigate: (id: string) => void;
+    onEdit: (project: Project, e: React.MouseEvent) => void;
+    onDelete: (id: string, name: string, e: React.MouseEvent) => void;
+    userRole?: string;
+    isAdmin?: boolean;
+}
+
+export const ProjectsTable: React.FC<ProjectsTableProps> = ({
+    projects,
+    onNavigate,
+    onEdit,
+    onDelete,
+    userRole,
+    isAdmin
+}) => {
+    const isViewer = userRole?.toLowerCase() === 'viewer';
+    const isFullAdmin = isAdmin || userRole?.toLowerCase() === 'admin';
+
+    return (
+        <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm">
+            <table className="w-full">
+                <thead className="bg-gray-50/50 border-b border-gray-100">
+                    <tr>
+                        <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                            Workspace Name
+                        </th>
+                        {!isViewer && (
+                            <th className="px-8 py-4 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                                Actions
+                            </th>
+                        )}
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                    {projects.map((project) => (
+                        <tr
+                            key={project.id}
+                            onClick={() => onNavigate(project.id)}
+                            className="hover:bg-gray-50/50 transition-all cursor-pointer group"
+                        >
+                            <td className="px-8 py-5">
+                                <div className="flex flex-col">
+                                    <span className="text-base font-black text-gray-900 group-hover:text-primary transition-colors">
+                                        {project.name}
+                                    </span>
+                                    {project.description && (
+                                        <p className="text-xs font-medium text-gray-500 mt-1 line-clamp-1">{project.description}</p>
+                                    )}
+                                </div>
+                            </td>
+                            {!isViewer && (
+                                <td className="px-8 py-5">
+                                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={(e) => onEdit(project, e)}
+                                            className="p-2.5 rounded-xl hover:bg-white border border-transparent hover:border-gray-100 text-gray-400 hover:text-primary transition-all shadow-none hover:shadow-sm"
+                                            title="Edit Workspace"
+                                        >
+                                            <Pencil className="w-4 h-4" strokeWidth={2} />
+                                        </button>
+                                        {(isFullAdmin) && (
+                                            <button
+                                                onClick={(e) => onDelete(project.id, project.name, e)}
+                                                className="p-2.5 rounded-xl hover:bg-red-50 border border-transparent hover:border-red-100 text-gray-400 hover:text-red-500 transition-all shadow-none hover:shadow-sm"
+                                                title="Delete Workspace"
+                                            >
+                                                <Trash2 className="w-4 h-4" strokeWidth={2} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </td>
+                            )}
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+};

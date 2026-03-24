@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from src.auth.models import User
 
 
-
 def get_by_id(session: Session, project_id: int, load_links: bool = True) -> Project | None:
     """Get one project by id.
 
@@ -31,6 +30,7 @@ def get_by_id(session: Session, project_id: int, load_links: bool = True) -> Pro
         ) 
 
     return session.exec(statement).first()
+
 
 def get_with_link(session: Session, project_id: int, user_id: int) -> Tuple[Project, UserProjectLink | None] | None:
     """Get a project and this user's membership link (if it exists).
@@ -84,10 +84,10 @@ def get_all_with_link(
 
     return list(session.exec(statement).all())
 
+
 def count(session: Session) -> int:
     return session.exec(select(func.count(Project.id))).one()  # type: ignore[arg-type]
 
+
 def delete(session: Session, project: Project) -> None:
     session.delete(project)
-
-# def create(session: Session, )
