@@ -1,5 +1,4 @@
 import api from '@/lib/api';
-// not handled yet in the backend
 export const twoFactorAuthService = {
     verify2FA: async (mfaToken: string, code: string) => {
         try {

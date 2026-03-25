@@ -9,10 +9,9 @@ interface StepsSidebarProps {
     selectedStepId: string;
     onSelectStep: (id: string) => void;
     isRunning: boolean;
-    // onRun: () => void;
     finalStatus: 'passed' | 'failed' | null;
-    onEditStep: (step: TestStep, e: React.MouseEvent) => void;
-    onDeleteStep: (id: string, text: string, e: React.MouseEvent) => void;
+    onEditStep?: (step: TestStep, e: React.MouseEvent) => void;
+    onDeleteStep?: (id: string, text: string, e: React.MouseEvent) => void;
 }
 
 export const StepsSidebar: React.FC<StepsSidebarProps> = ({
@@ -21,7 +20,6 @@ export const StepsSidebar: React.FC<StepsSidebarProps> = ({
     selectedStepId,
     onSelectStep,
     isRunning,
-    // onRun,
     finalStatus,
     onEditStep,
     onDeleteStep
@@ -45,7 +43,6 @@ export const StepsSidebar: React.FC<StepsSidebarProps> = ({
                     </div>
                 </div>
                 <Button
-                    // onClick={onRun}
                     disabled={isRunning}
                     className="w-full h-11 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                 >
@@ -93,18 +90,22 @@ export const StepsSidebar: React.FC<StepsSidebarProps> = ({
                                         <p className="text-sm text-gray-700 font-medium leading-relaxed pt-0.5">{step.text}</p>
                                     </div>
                                     <div className="flex items-center justify-end gap-1 mt-1">
-                                        <button
-                                            onClick={(e) => onEditStep(step, e)}
-                                            className="p-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                        >
-                                            <Pencil className="w-3.5 h-3.5" />
-                                        </button>
-                                        <button
-                                            onClick={(e) => onDeleteStep(step.id, step.text, e)}
-                                            className="p-2 text-muted-foreground hover:text-failure hover:bg-muted rounded-lg opacity-0 group-hover:opacity-100 transition-all"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
+                                        {onEditStep && (
+                                            <button
+                                                onClick={(e) => onEditStep(step, e)}
+                                                className="p-2 text-muted-foreground hover:text-primary hover:bg-muted rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                                            >
+                                                <Pencil className="w-3.5 h-3.5" />
+                                            </button>
+                                        )}
+                                        {onDeleteStep && (
+                                            <button
+                                                onClick={(e) => onDeleteStep(step.id, step.text, e)}
+                                                className="p-2 text-muted-foreground hover:text-failure hover:bg-muted rounded-lg opacity-0 group-hover:opacity-100 transition-all"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             </div>

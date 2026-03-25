@@ -5,6 +5,7 @@ import { Label } from '../ui/label';
 import { Input } from '../ui/input';
 import { Button } from '../ui/button';
 import { ModalHeader } from '../GeneralComponents';
+import { ErrorMessage } from '../GeneralComponents/ErrorMessage';
 
 interface AddProjectModalProps {
   isOpen: boolean;
@@ -13,6 +14,7 @@ interface AddProjectModalProps {
   editingProject?: { id: string; name: string; description: string } | null;
   onEdit?: (id: string, data: { name: string; description: string }) => void;
   error?: string | null;
+  onClearError?: () => void;
   isLoading?: boolean;
 }
 
@@ -23,6 +25,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
   editingProject,
   onEdit,
   error,
+  onClearError,
   isLoading
 }) => {
   const [name, setName] = useState('');
@@ -51,8 +54,11 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-      <div className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg border border-gray-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4 animate-in fade-in duration-300" onClick={onClose}>
+      <div 
+        className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg border border-gray-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
         <ModalHeader
           title={editingProject ? 'Edit Project' : 'Add Project'}
           subtitle={editingProject ? 'Modify project details' : 'Build something new today'}
@@ -62,10 +68,7 @@ export const AddProjectModal: React.FC<AddProjectModalProps> = ({
 
         <div className="p-6 space-y-4">
           {error && (
-            <div className="p-3.5 bg-failure/10 border border-failure/20 rounded-xl flex items-center gap-3 text-failure text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-failure animate-pulse"></span>
-              {error}
-            </div>
+            <ErrorMessage message={error} onClose={onClearError} />
           )}
 
           <div>

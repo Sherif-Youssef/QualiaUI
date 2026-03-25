@@ -1,11 +1,11 @@
-import api from "@/lib/api";
+import api, { ApiResponse } from "@/lib/api";
 import { TestSuiteDTO, TestSuite } from "@/types/test-suit";
 import { mapTestSuiteToViewModel } from "@/utils/mappers";
 
 export const testSuiteService = {
     getTestSuites: async (projectId: string): Promise<TestSuite[]> => {
         try {
-            const response = await api.get<{ items: TestSuiteDTO[] }>(`/projects/${projectId}/testsuites`);
+            const response = await api.get<ApiResponse<TestSuiteDTO>>(`/projects/${projectId}/testsuites`);
             return response.data.items.map(mapTestSuiteToViewModel);
         } catch (error) {
             console.error(`Service error (getTestSuites ${projectId}):`, error);

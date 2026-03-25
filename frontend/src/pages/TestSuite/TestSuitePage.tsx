@@ -6,6 +6,7 @@ import { AddTestCaseModal } from '@/components/Modal/AddTestCaseModal';
 import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
 import { TestCase } from '@/types/test-case';
 import { testCaseService } from '@/services/testCase/testCaseService';
+import { useProjectPermissions } from '@/hooks/useProjectPermissions';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteLayout } from './TestSuiteLayout';
 import { TestSuiteHeader } from './TestSuiteHeader';
@@ -26,17 +27,18 @@ export const TestSuitePage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [modalLoading, setModalLoading] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
+    const { canManageCases, isLoading: permissionsLoading, error: permissionsError } = useProjectPermissions(projectId);
 
     const itemsPerPage = 5;
 
     useEffect(() => {
         const fetchTestCases = async () => {
-            if (!suiteId) return;
+            if (!suiteId || !projectId) return;
             setIsLoading(true);
             setError(null);
             try {
-                const data = await testCaseService.getTestCases(suiteId);
-                setTestCases(data);
+                const cases = await testCaseService.getTestCases(projectId, suiteId);
+                setTestCases(cases);
             } catch (err: any) {
                 setError(err.response?.data?.detail || 'Failed to load test cases.');
             } finally {
@@ -44,7 +46,10 @@ export const TestSuitePage: React.FC = () => {
             }
         };
         fetchTestCases();
-    }, [suiteId]);
+    }, [suiteId, projectId]);
+
+    const isPageLoading = isLoading || permissionsLoading;
+    const pageError = error || permissionsError;
 
     const filteredCases = testCases.filter(testCase =>
         testCase.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -68,7 +73,7 @@ export const TestSuitePage: React.FC = () => {
         setModalLoading(true);
         setModalError(null);
         try {
-            await testCaseService.deleteTestCase(deleteConfirmation.id);
+            await testCaseService.deleteTestCase(projectId!, suiteId!, deleteConfirmation.id);
             setTestCases(testCases.filter(tc => tc.id !== deleteConfirmation.id));
             setDeleteConfirmation(null);
         } catch (err: any) {
@@ -84,7 +89,6 @@ export const TestSuitePage: React.FC = () => {
         setModalError(null);
         setIsModalOpen(true);
     };
-    // run is simulated for now as the api endpoint is not ready yet
     const handleRunAll = () => {
         setIsRunningAll(true);
         setTestCases(testCases.map(tc => ({ ...tc, status: 'running', runVersion })));
@@ -106,10 +110,10 @@ export const TestSuitePage: React.FC = () => {
         setModalError(null);
         try {
             if (editingTestCase) {
-                const updatedCase = await testCaseService.updateTestCase(editingTestCase.id, data);
+                const updatedCase = await testCaseService.updateTestCase(projectId!, suiteId!, editingTestCase.id, data);
                 setTestCases(testCases.map(tc => tc.id === editingTestCase.id ? updatedCase : tc));
             } else {
-                const newCase = await testCaseService.createTestCase(suiteId, data);
+                const newCase = await testCaseService.createTestCase(projectId!, suiteId!, data);
                 setTestCases([...testCases, newCase]);
             }
             setIsModalOpen(false);
@@ -134,6 +138,7 @@ export const TestSuitePage: React.FC = () => {
                         setModalError(null);
                         setIsModalOpen(true);
                     }}
+                    canManageCases={canManageCases}
                 />
             }
             searchBar={
@@ -145,9 +150,9 @@ export const TestSuitePage: React.FC = () => {
             }
             content={
                 <>
-                    {error && <div className="mb-6"><ErrorMessage message={error} /></div>}
+                    {pageError && <div className="mb-6"><ErrorMessage message={pageError} /></div>}
 
-                    {isLoading && testCases.length === 0 ? (
+                    {isPageLoading && testCases.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
                             <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
                             <p className="text-gray-500 font-medium font-sans">Loading Test Cases...</p>
@@ -159,6 +164,7 @@ export const TestSuitePage: React.FC = () => {
                                 onNavigate={(caseId) => navigate(`/project/${projectId}/suite/${suiteId}/case/${caseId}`)}
                                 onEdit={handleEditClick}
                                 onDelete={handleDeleteClick}
+                                canManageCases={canManageCases}
                             />
                             {filteredCases.length === 0 && !isLoading && (
                                 <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">

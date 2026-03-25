@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { socialAuthService } from '@/services/auth/socialAuth';
 import { authService } from '@/services/auth/auth';
@@ -21,7 +21,12 @@ export const LoginPage: React.FC = () => {
   const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [totpCode, setTotpCode] = useState('');
 
-
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token && !isMfaRequired) {
+      navigate('/projects');
+    }
+  }, [navigate, isMfaRequired]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -74,7 +79,7 @@ export const LoginPage: React.FC = () => {
         explain={isMfaRequired ? "Enter the 6-digit code from your authenticator app" : "Sign in to your account"}
       />
 
-      {error && <ErrorMessage message={error} />}
+      {error && <ErrorMessage message={error} onClose={() => setError(null)} />}
 
       {!isMfaRequired ? (
         <>

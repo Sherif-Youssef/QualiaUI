@@ -7,13 +7,15 @@ interface TestSuiteListProps {
     onNavigate: (id: string) => void;
     onEdit: (suite: TestSuite, e: React.MouseEvent) => void;
     onDelete: (id: string, name: string, e: React.MouseEvent) => void;
+    canManageSuites: boolean;
 }
 
 export const TestSuiteList: React.FC<TestSuiteListProps> = ({
     suites,
     onNavigate,
     onEdit,
-    onDelete
+    onDelete,
+    canManageSuites
 }) => {
     return (
         <div className="space-y-4">
@@ -34,18 +36,22 @@ export const TestSuiteList: React.FC<TestSuiteListProps> = ({
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
-                            <button
-                                onClick={(e) => onEdit(suite, e)}
-                                className="p-2.5 rounded-xl hover:bg-muted text-gray-400 hover:text-primary transition-all active:scale-90"
-                            >
-                                <Pencil className="w-5 h-5" strokeWidth={1.5} />
-                            </button>
-                            <button
-                                onClick={(e) => onDelete(suite.id, suite.name, e)}
-                                className="p-2.5 rounded-xl hover:bg-failure/10 text-gray-400 hover:text-failure transition-all active:scale-90"
-                            >
-                                <Trash2 className="w-5 h-5" strokeWidth={1.5} />
-                            </button>
+                            {canManageSuites && (
+                                <>
+                                    <button
+                                        onClick={(e) => onEdit(suite, e)}
+                                        className="p-2.5 rounded-xl hover:bg-muted text-gray-400 hover:text-primary transition-all active:scale-90"
+                                    >
+                                        <Pencil className="w-5 h-5" strokeWidth={1.5} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => onDelete(suite.id, suite.name, e)}
+                                        className="p-2.5 rounded-xl hover:bg-failure/10 text-gray-400 hover:text-failure transition-all active:scale-90"
+                                    >
+                                        <Trash2 className="w-5 h-5" strokeWidth={1.5} />
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>

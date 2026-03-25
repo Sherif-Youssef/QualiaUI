@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { X, User, Mail, Shield, ShieldAlert, Key } from 'lucide-react';
+import { X, User, Mail, Shield, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/components/GeneralComponents';
 
@@ -10,6 +10,7 @@ interface AddUserModalProps {
     editingUser?: any;
     onEdit: (id: string, data: any) => Promise<void>;
     error: string | null;
+    onClearError?: () => void;
     isLoading: boolean;
 }
 
@@ -20,29 +21,25 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
     editingUser,
     onEdit,
     error,
+    onClearError,
     isLoading,
 }) => {
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
     const [role, setRole] = useState('viewer');
 
     useEffect(() => {
         if (editingUser) {
             setFirstName(editingUser.firstName);
             setLastName(editingUser.lastName);
-            setUsername(editingUser.username || '');
-            setEmail(editingUser.email);
             setRole(editingUser.role || 'viewer');
-            setPassword('');
         } else {
             setFirstName('');
             setLastName('');
             setUsername('');
             setEmail('');
-            setPassword('');
             setRole('viewer');
         }
     }, [editingUser, isOpen]);
@@ -57,7 +54,6 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
             last_name: lastName,
             username: username,
             email: email,
-            password: password || undefined,
             role: role
         };
 
@@ -69,10 +65,10 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={onClose} />
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+            <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity duration-300" onClick={onClose} />
 
-            <div className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden transform transition-all duration-500 scale-100 opacity-100 flex flex-col max-h-[90vh]">
+            <div className="relative w-full max-w-xl bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden transform transition-all duration-500 scale-100 opacity-100 flex flex-col max-h-[90vh] mx-4">
                 <div className="p-8 flex items-center justify-between border-b border-gray-50 flex-shrink-0">
                     <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary shadow-inner border border-primary/5">
@@ -88,7 +84,11 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                 </div>
 
                 <div className="p-8 overflow-y-auto custom-scrollbar flex-grow">
-                    {error && <div className="mb-6"><ErrorMessage message={error} /></div>}
+                    {error && (
+                        <div className="mb-6 px-1">
+                            <ErrorMessage message={error} onClose={onClearError} />
+                        </div>
+                    )}
 
                     <form id="user-form" onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-2 gap-4">
@@ -151,25 +151,6 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                             </div>
                         </div>
 
-                        {!editingUser && (
-                            <div className="space-y-2">
-                                <label className="text-xs font-extrabold text-gray-500 uppercase tracking-widest pl-1">Temporary Password</label>
-                                <div className="relative group">
-                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
-                                        <Key className="w-5 h-5" />
-                                    </div>
-                                    <input
-                                        required
-                                        type="password"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        className="w-full pl-12 pr-4 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-gray-900 focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/5 transition-all outline-none"
-                                        placeholder="••••••••"
-                                    />
-                                </div>
-                            </div>
-                        )}
-
                         <div className="space-y-2 pt-4">
                             <label className="text-xs font-extrabold text-gray-500 uppercase tracking-widest pl-1">Assign User Role</label>
                             <div className="relative group">
@@ -181,6 +162,7 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                                     onChange={(e) => setRole(e.target.value)}
                                     className="w-full pl-12 pr-10 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-gray-900 focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
                                 >
+                                    <option value="guest">Guest (Limited access)</option>
                                     <option value="viewer">Viewer (Read-only access)</option>
                                     <option value="editor">Editor (Can create and modify)</option>
                                     <option value="admin">Administrator (Full control)</option>

@@ -8,12 +8,14 @@ interface AdminUsersTableProps {
     users: UserViewModel[];
     onEdit: (user: UserViewModel) => void;
     onDelete: (id: string, name: string) => void;
+    onRegeneratePassword: (userId: string, name: string) => void;
 }
 
 export const AdminUsersTable: React.FC<AdminUsersTableProps> = ({
     users,
     onEdit,
-    onDelete
+    onDelete,
+    onRegeneratePassword
 }) => {
     if (users.length === 0) {
         return <EmptyResults />;
@@ -25,11 +27,13 @@ export const AdminUsersTable: React.FC<AdminUsersTableProps> = ({
                 users={users} 
                 onEdit={onEdit} 
                 onDelete={onDelete} 
+                onRegeneratePassword={onRegeneratePassword}
             />
             <MobileGrid 
                 users={users} 
                 onEdit={onEdit} 
                 onDelete={onDelete} 
+                onRegeneratePassword={onRegeneratePassword}
             />
         </div>
     );

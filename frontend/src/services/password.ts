@@ -5,7 +5,7 @@ import { mapPasswordToDTO } from "@/utils/mappers";
 export const passwordService = {
   updatePassword: async (form: UpdatePasswordForm): Promise<void> => {
     try {
-      await api.put("/profile/password", mapPasswordToDTO(form));
+      await api.post("/auth/password/change", mapPasswordToDTO(form));
     } catch (error) {
       console.error("Failed to update password:", error);
       throw error;

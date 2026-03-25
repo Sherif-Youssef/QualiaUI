@@ -22,14 +22,10 @@ export const ProjectsPage: React.FC = () => {
     const [editingProject, setEditingProject] = useState<Project | null>(null);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
     const [projects, setProjects] = useState<Project[]>([]);
-    const [userRole, setUserRole] = useState<string>('viewer');
     const [isAdminState, setIsAdminState] = useState(false);
-
-    // Page Status
+    const [userRoleState, setUserRoleState] = useState<string | undefined>(undefined);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-
-    // Modal Status
     const [modalLoading, setModalLoading] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
 
@@ -40,12 +36,10 @@ export const ProjectsPage: React.FC = () => {
             setIsLoading(true);
             setError(null);
             try {
-                // Fetch user role first
                 const user = await authService.getCurrentUser();
-                setUserRole(user.role?.toLowerCase() || 'viewer');
-                setIsAdminState(user.is_admin);
+                setIsAdminState(user.is_admin || user.role?.toLowerCase() === 'admin');
+                setUserRoleState(user.role?.toLowerCase());
 
-                // Fetch projects
                 const data = await projectService.getAllProjects();
                 setProjects(data);
             } catch (err: any) {
@@ -115,7 +109,16 @@ export const ProjectsPage: React.FC = () => {
         setModalLoading(true);
         setModalError(null);
         try {
-            const newProject = await projectService.createProject(data);
+            const user = await authService.getCurrentUser();
+            const isAdmin = user.is_admin || user.role === 'admin' || user.role === 'Administrator';
+            
+            const projectData = {
+                ...data,
+                members: isAdmin ? [] : [
+                    { user_id: user.id, role: 'admin' }
+                ]
+            };
+            const newProject = await projectService.createProject(projectData as any);
             setProjects([...projects, newProject]);
             setIsModalOpen(false);
             setEditingProject(null);
@@ -131,12 +134,12 @@ export const ProjectsPage: React.FC = () => {
     return (
         <ProjectsLayout
             header={!isEmpty && (
-                <ProjectsHeader 
+                <ProjectsHeader
                     onAddProject={() => {
                         setModalError(null);
                         setIsModalOpen(true);
-                    }} 
-                    role={userRole}
+                    }}
+                    isAdmin={isAdminState}
                 />
             )}
             searchBar={!isEmpty && (
@@ -148,7 +151,7 @@ export const ProjectsPage: React.FC = () => {
             )}
             content={
                 <>
-                    {error && <div className="mb-6"><ErrorMessage message={error} /></div>}
+                    {error && <div className="mb-6"><ErrorMessage message={error} onClose={() => setError(null)} /></div>}
 
                     {isLoading && projects.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2rem] border border-gray-100 shadow-sm">
@@ -156,7 +159,7 @@ export const ProjectsPage: React.FC = () => {
                             <p className="text-gray-500 font-bold text-lg">Waking up your workspace...</p>
                         </div>
                     ) : isEmpty ? (
-                        <ProjectsEmptyState onCreateNew={() => {
+                        <ProjectsEmptyState isAdmin={isAdminState} onCreateNew={() => {
                             setModalError(null);
                             setIsModalOpen(true);
                         }} />
@@ -167,8 +170,8 @@ export const ProjectsPage: React.FC = () => {
                                 onNavigate={(id) => navigate(`/project/${id}`)}
                                 onEdit={handleEditClick}
                                 onDelete={handleDeleteClick}
-                                userRole={userRole}
                                 isAdmin={isAdminState}
+                                userRole={userRoleState}
                             />
                             {filteredProjects.length === 0 && !isLoading && (
                                 <div className="text-center py-12 text-gray-500 font-medium bg-white rounded-[2rem] border border-dashed border-gray-200">
@@ -201,6 +204,7 @@ export const ProjectsPage: React.FC = () => {
                         editingProject={editingProject}
                         onEdit={handleEditProject}
                         error={modalError}
+                        onClearError={() => setModalError(null)}
                         isLoading={modalLoading}
                     />
 
@@ -213,6 +217,7 @@ export const ProjectsPage: React.FC = () => {
                         onConfirm={confirmDelete}
                         itemName={deleteConfirmation?.name}
                         error={modalError}
+                        onClearError={() => setModalError(null)}
                         isLoading={modalLoading}
                     />
                 </>

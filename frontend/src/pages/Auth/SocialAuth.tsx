@@ -8,7 +8,7 @@ interface SocialAuthProps {
 export const SocialAuth: React.FC<SocialAuthProps> = ({ onSocialLogin }) => {
     return (
         <div className="animate-in fade-in slide-in-from-bottom duration-500 delay-500">
-            {/* Divider */}
+            {}
             <div className="relative my-6">
                 <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-gray-200"></div>
@@ -18,7 +18,7 @@ export const SocialAuth: React.FC<SocialAuthProps> = ({ onSocialLogin }) => {
                 </div>
             </div>
 
-            {/* Social Login */}
+            {}
             <div className="space-y-3">
                 <Button
                     type="button"

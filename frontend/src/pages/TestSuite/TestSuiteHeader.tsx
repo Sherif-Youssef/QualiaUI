@@ -9,6 +9,7 @@ interface TestSuiteHeaderProps {
     isRunningAll: boolean;
     onRunAll: () => void;
     onAddTestCase: () => void;
+    canManageCases: boolean;
 }
 
 export const TestSuiteHeader: React.FC<TestSuiteHeaderProps> = ({
@@ -16,7 +17,8 @@ export const TestSuiteHeader: React.FC<TestSuiteHeaderProps> = ({
     setRunVersion,
     isRunningAll,
     onRunAll,
-    onAddTestCase
+    onAddTestCase,
+    canManageCases
 }) => {
     return (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -33,27 +35,31 @@ export const TestSuiteHeader: React.FC<TestSuiteHeaderProps> = ({
                     </SelectContent>
                 </Select>
 
-                <Button
-                    onClick={onRunAll}
-                    disabled={isRunningAll}
-                    variant="outline"
-                    className="h-10 border-primary text-primary hover:bg-primary/5 rounded-lg px-4"
-                >
-                    {isRunningAll ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                        <Play className="w-4 h-4 mr-2" />
-                    )}
-                    Run All
-                </Button>
+                {canManageCases && (
+                    <>
+                        <Button
+                            onClick={onRunAll}
+                            disabled={isRunningAll}
+                            variant="outline"
+                            className="h-10 border-primary text-primary hover:bg-primary/5 rounded-lg px-4"
+                        >
+                            {isRunningAll ? (
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                                <Play className="w-4 h-4 mr-2" />
+                            )}
+                            Run All
+                        </Button>
 
-                <Button
-                    onClick={onAddTestCase}
-                    className="h-10 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 rounded-lg px-4"
-                >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Test Case
-                </Button>
+                        <Button
+                            onClick={onAddTestCase}
+                            className="h-10 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 rounded-lg px-4"
+                        >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Test Case
+                        </Button>
+                    </>
+                )}
             </div>
         </div>
     );

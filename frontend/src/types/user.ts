@@ -24,12 +24,9 @@ export interface UserDTO {
     two_factor_enabled: boolean;
 }
 
-
-
 export interface PasswordDTO {
     current_password: string;
     new_password: string;
-    confirm_password: string;
 }
 
 export interface UpdatePasswordForm {

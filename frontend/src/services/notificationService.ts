@@ -5,8 +5,6 @@ import { mapNotificationToViewModel } from "@/utils/mappers";
 export const notificationService = {
     getLatestNotifications: async (): Promise<NotificationViewModel[]> => {
         try {
-            // const response = await api.get<NotificationDTO[]>('/notifications');
-            // return response.data.map(mapNotificationToViewModel);
             return [
                 {
                     id: '1',

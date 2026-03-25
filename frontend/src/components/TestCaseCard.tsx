@@ -113,6 +113,19 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
           <h3 className="text-body-lg font-body font-semibold text-foreground truncate">
             {testCase.name}
           </h3>
+          <div className="group/prompt relative">
+            <p 
+              className="text-body-sm font-body text-muted-foreground truncate italic cursor-pointer hover:text-primary transition-colors"
+              onClick={() => {
+                const newPrompt = prompt('Edit Instruction:', testCase.prompt || '');
+                if (newPrompt !== null && newPrompt !== testCase.prompt) {
+                  onInstructionChange(testCase.id, newPrompt);
+                }
+              }}
+            >
+              {testCase.prompt || 'No instruction set'}
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-1 flex-shrink-0">

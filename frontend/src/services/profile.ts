@@ -2,11 +2,10 @@ import api from "@/lib/api";
 import { UserProfile, UserDTO } from "@/types/user";
 import { mapUserToViewModel, mapProfileToDTO } from "@/utils/mappers";
 
-
 export const profileService = {
     getProfile: async (): Promise<UserProfile> => {
         try {
-            const response = await api.get<UserDTO>('/auth/me'); // Updated
+            const response = await api.get<UserDTO>('/auth/me');
             return mapUserToViewModel(response.data);
         }
         catch (error) {
@@ -16,14 +15,13 @@ export const profileService = {
 
     updateProfile: async (profile: Partial<UserProfile>): Promise<UserProfile> => {
         try {
-            const response = await api.put<UserDTO>('/auth/me', mapProfileToDTO(profile)); // Updated
+            const response = await api.put<UserDTO>('/auth/me', mapProfileToDTO(profile));
             return mapUserToViewModel(response.data);
         }
         catch (error) {
             throw error;
         }
     },
-
 
     updateProfileAvatar: async (avatar: File): Promise<{ avatarUrl: string }> => {
         try {

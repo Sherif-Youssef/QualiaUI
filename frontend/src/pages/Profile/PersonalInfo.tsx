@@ -18,7 +18,6 @@ export const PersonalInfo: React.FC<PersonalInfoProps> = ({
     readOnly = false
 }) => {
 
-
     return (
         <ProfileCard
             title="Personal Information"

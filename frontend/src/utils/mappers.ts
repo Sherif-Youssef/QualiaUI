@@ -4,28 +4,35 @@ import { TestCaseDTO, TestCase } from "@/types/test-case";
 import { UserDTO, UserProfile, PasswordDTO, UpdatePasswordForm } from "@/types/user";
 import { NotificationDTO, NotificationViewModel } from "@/types/notification";
 import { DashboardDTO, DashboardData } from "@/types/dashboard";
-
-// --- project mappers ---
 export const mapProjectToViewModel = (dto: ProjectDTO): Project => ({
-    id: dto.id,
+    id: String(dto.id),
     name: dto.name,
     description: dto.description,
+    role: dto.user_role,
+    isAdmin: dto.user_role === ('admin' as any),
     createdAt: dto.created_at,
+    members: dto.members?.map(m => ({
+        user: {
+            id: String(m.user.id),
+            firstName: m.user.first_name,
+            lastName: m.user.last_name,
+            email: m.user.email,
+            isAdmin: m.user.is_admin
+        },
+        role: m.role,
+        joinedAt: m.joined_at
+    }))
 });
-
-// --- test suite mappers ---
 export const mapTestSuiteToViewModel = (dto: TestSuiteDTO): TestSuite => ({
-    id: dto.id,
-    projectId: dto.project_id,
+    id: String(dto.id),
+    projectId: String(dto.project_id),
     name: dto.name,
     description: dto.description,
     createdAt: dto.created_at,
 });
-
-// --- test case mappers ---
 export const mapTestCaseToViewModel = (dto: TestCaseDTO): TestCase => ({
-    id: dto.id,
-    suiteId: dto.suite_id,
+    id: String(dto.id),
+    suiteId: String(dto.suite_id),
     name: dto.name,
     url: dto.url,
     mode: dto.mode,
@@ -37,8 +44,6 @@ export const mapTestCaseToViewModel = (dto: TestCaseDTO): TestCase => ({
     runVersion: dto.run_version,
     createdAt: dto.created_at,
 });
-
-// --- user mappers ---
 export const mapUserToViewModel = (dto: UserDTO): UserProfile => ({
     fullName: `${dto.first_name || ''} ${dto.last_name || ''}`.trim() || 'User',
     username: dto.username || '',
@@ -46,7 +51,7 @@ export const mapUserToViewModel = (dto: UserDTO): UserProfile => ({
     avatarUrl: dto.avatar_url,
     bannerUrl: dto.banner_url,
     role: dto.role || 'Member',
-    isAdmin: dto.is_admin,
+    isAdmin: dto.is_admin || dto.role === 'admin',
     emailNotifications: dto.email_notifications ?? true,
     twoFactorEnabled: dto.two_factor_enabled ?? false,
 });
@@ -71,16 +76,10 @@ export const mapProfileToDTO = (profile: Partial<UserProfile>): Partial<UserDTO>
 
     return dto;
 };
-
-
-// --- password mappers ---
 export const mapPasswordToDTO = (form: UpdatePasswordForm): PasswordDTO => ({
     current_password: form.currentPassword,
     new_password: form.newPassword,
-    confirm_password: form.confirmPassword,
 });
-
-// --- notification mappers ---
 export const mapNotificationToViewModel = (dto: NotificationDTO): NotificationViewModel => ({
     id: dto.id,
     title: dto.title,
@@ -89,8 +88,6 @@ export const mapNotificationToViewModel = (dto: NotificationDTO): NotificationVi
     time: dto.created_at,
     isRead: dto.is_read
 });
-
-// --- dashboard mappers ---
 export const mapDashboardToViewModel = (dto: DashboardDTO): DashboardData => ({
     metrics: {
         totalProjects: dto.metrics.total_projects,
