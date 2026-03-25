@@ -6,4 +6,4 @@ class AuthSettings(BaseSettings):
     JWT_ACCESS_TOKEN_EXPIRATION_MINUTES: int
     JWT_REFRESH_TOKEN_EXPIRATION_MINUTES: int
 
-auth_settings = AuthSettings()
+auth_settings = AuthSettings()  # pyright: ignore[reportCallIssue]

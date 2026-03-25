@@ -1,7 +1,8 @@
 from typing import Annotated
+
 from fastapi import Depends
 from sqlmodel import SQLModel, Session, create_engine
-from pathlib import Path
+
 from .config import settings
 
 engine = create_engine(settings.DATABASE_URL, echo=True)
