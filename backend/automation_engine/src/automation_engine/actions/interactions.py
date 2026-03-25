@@ -106,6 +106,7 @@ class UploadFile(InteractionAction):
     file_vars: list[str] = Field(default_factory=list, description="Variable names referencing file variables to upload.")
 
 
+# TODO: Support turning off JS executions, and support turning on & off actions dynamically
 @action
 class ExecuteJS(InteractionAction):
     """Run arbitrary JavaScript in page context. Use only when no other action works."""

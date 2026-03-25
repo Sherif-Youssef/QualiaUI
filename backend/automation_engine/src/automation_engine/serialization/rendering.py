@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 from enum import StrEnum
-from typing import List
 from pydantic import BaseModel, ConfigDict
 
 from ..planning.state import DOMElement, BrowserState
 from ..testing.history import TestRun, TestStep
-from ..compilation.variables import Variable, FileVariable, VariableStore
 
 
 # Config
@@ -33,12 +31,9 @@ class DOMRendererConfig(BaseModel):
 class HistoryRendererConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    include_reasoning: bool = False
-    include_status: bool = True
+    include_status: bool = False
     include_error: bool = True
-    include_timing: bool = False
     max_actions: int | None = None
-    exclude_defaults: bool = True
 
 
 # Renderers
@@ -53,17 +48,18 @@ class DOMRenderer:
         self.config = config or DOMRendererConfig()
 
     def render_browser_state(self, state: BrowserState) -> str:
-        parts = [
-            f"current_url: {state.current_url}",
-            f"page_title: {state.page_title}",
+        lines = [
+            f"Current URL: {state.current_url}",
+            f"Page title: {state.page_title}",
             f"viewport: {state.viewport_width}x{state.viewport_height}",
-            "elements:",
+            "DOM:",
             self.render_element(state.root),
         ]
-        return "\n".join(parts)
+        
+        return "\n".join(lines)
 
     def render_element(self, element: DOMElement) -> str:
-        lines: List[str] = []
+        lines: list[str] = []
         self._render(element, depth=0, lines=lines)
         return "\n".join(lines)
 
@@ -71,12 +67,12 @@ class DOMRenderer:
         self,
         el: DOMElement,
         depth: int,
-        lines: List[str],
+        lines: list[str],
     ) -> None:
         cfg = self.config
         prefix = " " * (depth * cfg.indent_size)
-        parts: List[str] = []
-        secondary: List[str] = []
+        parts: list[str] = []
+        secondary: list[str] = []
 
         # 1. ID (# prefix for interactive)
         marker = "#" if el.is_interactive else ""
@@ -162,7 +158,7 @@ class DOMRenderer:
 
     def _append_attr(
         self,
-        parts: List[str],
+        parts: list[str],
         el: DOMElement,
         name: str,
     ) -> None:
@@ -172,7 +168,7 @@ class DOMRenderer:
 
     def _append_truncated_attr(
         self,
-        parts: List[str],
+        parts: list[str],
         el: DOMElement,
         name: str,
         max_len: int,
@@ -183,7 +179,7 @@ class DOMRenderer:
 
     def _append_quoted_attr(
         self,
-        parts: List[str],
+        parts: list[str],
         el: DOMElement,
         name: str,
         max_len: int,
@@ -194,13 +190,13 @@ class DOMRenderer:
 
 
 class HistoryRenderer:
-    """Renders TestRun history into LLM-friendly strings."""
+    """Renders test history into LLM-friendly strings."""
 
     def __init__(self, config: HistoryRendererConfig | None = None) -> None:
         self.config = config or HistoryRendererConfig()
 
     def render_history(self, run: TestRun) -> str:
-        steps = run.current_steps
+        steps = run.current_group.steps if run.current_group else []
         if not steps:
             return "No actions taken yet."
 
@@ -209,6 +205,8 @@ class HistoryRenderer:
             steps = steps[-cfg.max_actions:]
 
         lines: list[str] = []
+
+        lines.append(f"Last {len(steps)} actions, starting from oldest, line by line:")
         for step in steps:
             lines.append(self._render_step(step))
 
@@ -216,37 +214,14 @@ class HistoryRenderer:
 
     def _render_step(self, step: TestStep) -> str:
         cfg = self.config
-        parts: list[str] = []
 
-        # Index
-        parts.append(f"[{step.index}]")
+        parts = [
+            f"[{step.index}]",
+            f"[{step.status.upper()}]" if cfg.include_status else "",
+            step.action.action_type,
+            "-",
+            step.action.recreation_prompt,
+            f"(Error: {step.error_message})" if cfg.include_error and step.error_message else "",
+        ]
 
-        # Status
-        if cfg.include_status:
-            parts.append(f"[{step.status.upper()}]")
-
-        # Action type
-        parts.append(step.output.action_type)
-
-        # Serialized output (compact)
-        output_json = step.output.model_dump_json(
-            exclude_defaults=cfg.exclude_defaults,
-            exclude={"recreation_prompt"},
-        )
-        parts.append(output_json)
-
-        # Timing
-        if cfg.include_timing and step.duration_seconds is not None:
-            parts.append(f"({step.duration_seconds:.0f}ms)")
-
-        line = " ".join(parts)
-
-        # Error on next line
-        if cfg.include_error and step.error_message:
-            line += f"\n  -> error: {step.error_message}"
-
-        # Reasoning on next line
-        if cfg.include_reasoning and step.reasoning:
-            line += f"\n  -> reasoning: {step.reasoning}"
-
-        return line
+        return " ".join(parts)

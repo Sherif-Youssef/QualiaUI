@@ -8,7 +8,8 @@ from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_core.runnables import Runnable, RunnableLambda
 
-from ..actions import Output
+from ..actions import ActionOutput, TerminationOutput
+from .state import FullInputState
 
 
 def _patch_schema(schema):
@@ -22,45 +23,27 @@ def _patch_schema(schema):
     return schema
 
 
-# Response models
+# Response model
 
-class StepResponse(BaseModel):
-    """LLM emits one action or terminates."""
 
-    output: Output  # type: ignore
+class PlanningOutput(BaseModel):
+    """Single-step planning output."""
     reasoning: str = Field(
         description=(
             "Brief analysis: what is the current state, what needs to happen next, "
-            "and is the task complete or not? Decide BEFORE choosing an action."
+            "and is the task complete or not? Decide BEFORE responding."
         ),
     )
-    
+    output: ActionOutput | TerminationOutput # type: ignore
+
     @classmethod
     def model_json_schema(cls, *args, **kwargs):
         return _patch_schema(super().model_json_schema(*args, **kwargs))
 
 
-class ActionGroupResponse(BaseModel):
-    """
-    LLM emits a batch of actions that can run sequentially
-    WITHOUT re-observing the page, OR a single termination signal.
-
-    Group together actions when all targets are visible and stable
-    and no action causes navigation or significant re-render.
-    """
-
-    reasoning: str = Field(
-        description=(
-            "Why these actions are grouped and what they accomplish as a unit. "
-            "Mention if a page change is expected after execution."
-        ),
-    )
-    output: list[Output]  # type: ignore
-
-    @classmethod
-    def model_json_schema(cls, *args, **kwargs):
-        return _patch_schema(super().model_json_schema(*args, **kwargs))
-
+class GroupPlanningOutput(PlanningOutput):
+    """Grouped-step planning output."""
+    output: list[ActionOutput] | TerminationOutput # type: ignore
 
 # Helpers
 
@@ -92,27 +75,26 @@ def _build_human_content(
     ]
 
 
-def _make_message_formatter(system: str) -> Callable[[dict]]:
+def _make_message_formatter(system: str) -> Callable[[FullInputState]]:
     """
     Returns a function that converts input dict -> message list.
     Wrapped in RunnableLambda to stay in the Runnable ecosystem.
     """
 
-    def _format(inputs: dict) -> list:
+    def _format(state: FullInputState) -> list:
         parts = [
-            f"## Task\n{inputs['instruction']}",
-            f"\n\n## Current Page\n```\n{inputs['page']}\n```",
+            f"## Task\n{state.instruction}",
+            f"\n\n## Current Page\n```\n{state.page}\n```",
         ]
 
-        history = inputs.get("history")
-        if history:
-            parts.append(f"\n\n## Action History\n{history}")
+        if state.history:
+            parts.append(f"\n\n## Action History\n{state.history}")
 
         parts.append("\n\nDecide and return your response.")
 
         content = _build_human_content(
             "".join(parts),
-            inputs.get("screenshot"),
+            state.screenshot,
         )
 
         return [
@@ -173,6 +155,8 @@ def _get_formatted_json_schema(schema: type[BaseModel]) -> str:
     )
 
 
+TestingChain = Runnable[FullInputState, PlanningOutput]
+
 # API
 
 def build_chain(
@@ -180,18 +164,18 @@ def build_chain(
     system_prompt: str | None = None,
     allow_grouped_steps: bool = False,
     tooling: bool = False,
-) -> Runnable:
+) -> TestingChain:
     """Chain factory"""
     if allow_grouped_steps:
         system = system_prompt or (_BASE_SYSTEM + _GROUP_ADDENDUM)
-        schema = ActionGroupResponse
+        schema = GroupPlanningOutput
     else:
         system = system_prompt or (_BASE_SYSTEM + _STEP_ADDENDUM)
-        schema = StepResponse
-    
+        schema = PlanningOutput
+
     if tooling:
         formatter = RunnableLambda(_make_message_formatter(system))
-        return formatter | llm.with_structured_output(schema, strict=True)
+        return formatter | llm.with_structured_output(schema)
     else:
         formatter = RunnableLambda(_make_message_formatter(system + _get_formatted_json_schema(schema)))
         parser = RunnableLambda(_make_json_parser(schema))
@@ -216,9 +200,8 @@ next action(s) to accomplish the user's task.
 ## Variables
 
 - **Text** `${name}`: When the task contains `${name}`, copy it\
-into the relevant field. Never guess or substitute variable names on your own.
+into the relevant field. Never guess or substitute variable names.
 - **File**: When the task references a file variable by name, use it in `file_vars`. \
-Only use variables explicitly mentioned in the task.
 
 ## Termination
 

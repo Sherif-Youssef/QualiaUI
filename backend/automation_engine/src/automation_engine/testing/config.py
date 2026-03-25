@@ -28,7 +28,7 @@ class LLMConfig(BaseModel):
     """Controls how the LLM is prompted and how its output is parsed."""
     model_config = ConfigDict(frozen=True)
 
-    allow_grouped_steps: bool = Field(default=False, description="True = ActionGroupResponse (batch), False = StepResponse (one-at-a-time).")
+    allow_grouped_steps: bool = Field(default=False, description="True = batch steps, False = one-at-a-time.")
     use_tool_calling: bool = Field(default=True, description="True = structured output / tool calling, False = raw JSON in prompt.")
     use_screenshot: bool = Field(default=True, description="Attach a page screenshot to every LLM call.")
     system_prompt: Optional[str] = Field(default=None, description="Override the default system prompt.")
@@ -39,6 +39,7 @@ class ExecutionConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     max_steps: int = Field(default=50, ge=1, description="Abort after this many steps.")
+    # TODO: needs support
     max_errors: int = Field(default=1, ge=0, description="Abort after this many consecutive errors.")
 
 
