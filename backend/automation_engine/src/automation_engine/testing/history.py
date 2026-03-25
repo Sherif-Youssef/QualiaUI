@@ -5,35 +5,39 @@ from typing import Optional
 from enum import StrEnum
 from pydantic import BaseModel, Field, computed_field
 
-from ..actions import Output
 from ..actions.terminations import Complete, Fail
-from ..actions.base import BaseAction, InteractionAction, AssertionAction, TerminationSignal
+from ..actions.base import BaseAction, TerminationSignal
 from ..compilation import ExecAction
+from ..planning import BrowserState
 
 
-class StepStatus(StrEnum):
-    PASSED = "passed"
-    FAILED = "failed"
-    SKIPPED = "skipped"
-    ERROR = "error"
+class TestStatus(StrEnum):
+    PASSED = "PASSED"
+    FAILED = "FAILED"
+    ERROR = "ERROR"
+    ABORTED = "ABORTED"
 
 
-class RunStatus(StrEnum):
-    PASSED = "passed"
-    FAILED = "failed"
-    ERROR = "error"
-    ABORTED = "aborted"
-
-
-class TestStepSnapshot(BaseModel):
+class StateSnapshot(BaseModel):
     """Snapshot of the browser state at the time of a TestStep."""
-    screenshot: Optional[bytes] = Field(default=None, description="Screenshot of the page.")
-    dom: Optional[str] = Field(default=None, description="Serialized DOM.")
+    screenshot: bytes = Field(default=None, description="Screenshot of the page.")
 
 
-class TestHierachyElement(BaseModel):
+class TestHierarchyElement(BaseModel):
     started_at: datetime = Field(default_factory=datetime.now, init=False)
     finished_at: Optional[datetime] = Field(default=None, init=False)
+
+    def _assert_running(self):
+        if self.is_finalized:
+            raise ValueError(f"Test element ({self.__class__.__name__}) is already finalized")
+    
+    def _assert_finalized(self):
+        if not self.is_finalized:
+            raise ValueError(f"Test element ({self.__class__.__name__}) isn't finalized yet, call `finalize()`")
+
+    def finalize(self) -> None:
+        self._assert_running()
+        self.finished_at = datetime.now()
 
     @computed_field
     @property
@@ -41,152 +45,127 @@ class TestHierachyElement(BaseModel):
         if self.finished_at is None:
             return None
         return (self.finished_at - self.started_at).total_seconds()
-    
-    def finalize(self) -> None:
-        self.finished_at = datetime.now()
-    
+
     @property
     def is_finalized(self):
         return self.finished_at is not None
 
 
-class TestStep(TestHierachyElement):
-    index: Optional[int] = Field(default=None, description="0-based position relative to group.", init=False)
-    run_index: Optional[int] = Field(default=None, description="0-based position relative to run.", init=False)
-    output: Optional[Output] = Field(default=None, description="The action or termination signal the LLM produced.") # type: ignore
+class TestStep(TestHierarchyElement):
+    index: Optional[int] = Field(default=None, description="0-based position relative to group.")
+    action: Optional[BaseAction] = Field(default=None, description="LLM Action")
     executable: Optional[ExecAction] = Field(default=None, description="Executable action (compiled from LLM output).")
-    status: Optional[StepStatus] = Field(default=None, init=False, description="Whether the step passed, failed, or was skipped.")
+    status: Optional[TestStatus] = Field(default=None, description="Whether the step passed, failed, or was skipped.")
     error_message: Optional[str] = Field(default=None, description="Error message if the action failed.")
-    snapshot_before: Optional[TestStepSnapshot] = Field(default=None, description="Browser state before executing the step.")
-    snapshot_after: Optional[TestStepSnapshot] = Field(default=None, description="Browser state after executing the step.")
+    snapshot_before: Optional[StateSnapshot] = Field(default=None, description="Browser state before executing the step.")
+    snapshot_after: Optional[StateSnapshot] = Field(default=None, description="Browser state after executing the step.")
+    abort_reason: Optional[str] = Field(default=None)
 
-    @property
-    def reasoning(self) -> str | None:
-        if not self.output:
-            return None
-        if isinstance(self.output, BaseAction):
-            return self.output.intent
-        elif isinstance(self.output, TerminationSignal):
-            return self.output.reason
+    def set_exe(self, exe_action: ExecAction) -> None:
+        self.executable = exe_action
 
-    @property
-    def is_termination(self) -> bool:
-        return isinstance(self.output, TerminationSignal)
-
-    @property
-    def is_action(self) -> bool:
-        return isinstance(self.output, BaseAction)
-
-    @property
-    def is_interaction(self) -> bool:
-        return isinstance(self.output, InteractionAction)
-
-    @property
-    def is_assertion(self) -> bool:
-        return isinstance(self.output, AssertionAction)
-
-    def finalize(self, status: StepStatus = StepStatus.PASSED, error_message: str | None = None) -> None:
+    def finalize(
+        self,
+        status: TestStatus,
+        error_message: str | None = None,
+        abort_reason: str | None = None,
+    ) -> None:
         super(TestStep, self).finalize()
         self.status = status
         self.error_message = error_message
+        self.abort_reason = abort_reason
+
+    @property
+    def is_success(self) -> bool:
+        return self.status == TestStatus.PASSED
 
 
-class TestStepGroup(TestHierachyElement):
+class TestTermination(BaseModel):
+    term_signal: TerminationSignal
+
+
+class TestStepGroup(TestHierarchyElement):
+    index: Optional[int] = Field(default=None, description="0-based position relative to run.", init=False)
     instruction: Optional[str] = Field(default=None, description="Original natural-language, high-level task.")
-    steps: list[TestStep] = Field(default_factory=list)
+    steps: list[TestStep] = Field(default_factory=list, init=False)
+    # NOTE: When true, need a termination signal from LLM, otherwise, marked as ABORTED
+    llm_loop: bool = Field(default=True)
+    term: Optional[TestTermination] = Field(default=None, init=False)
+    abort_reason: Optional[str] = Field(default=None)
 
+    def add_step(self, step: TestStep) -> None:
+        self._assert_running()
+        step.index = len(self.steps)
+        self.steps.append(step)
+
+    def finalize(
+        self,
+        term: TestTermination | None = None,
+        abort_reason: str | None = None
+    ) -> None:
+        super(TestStepGroup, self).finalize()
+        self.term = term
+        self.abort_reason = abort_reason
+        
     @computed_field
     @property
-    def status(self) -> RunStatus:
-        if not self.steps:
-            return RunStatus.ABORTED
+    def status(self) -> TestStatus:
+        for nxt in (TestStatus.ERROR, TestStatus.FAILED, TestStatus.ABORTED):
+            if any(s.status == nxt for s in self.steps):
+                return nxt
+        
+        if not self.llm_loop:
+            # No need for a termination signal
+            return TestStatus.PASSED
 
-        if any(s.status == StepStatus.ERROR for s in self.steps):
-            return RunStatus.ERROR
+        if self.term is None:
+            return TestStatus.ABORTED
+        elif isinstance(self.term.term_signal, Fail):
+            return TestStatus.FAILED
+        else:
+            return TestStatus.PASSED
 
-        if any(s.status == StepStatus.FAILED for s in self.steps):
-            return RunStatus.FAILED
-
-        last = self.steps[-1]
-        if last.is_termination:
-            if isinstance(last.output, Fail):
-                return RunStatus.FAILED
-            if isinstance(last.output, Complete):
-                return RunStatus.PASSED
-
-        if all(s.status in (StepStatus.PASSED, StepStatus.SKIPPED) for s in self.steps):
-            return RunStatus.PASSED
-
-        return RunStatus.ABORTED
+    @property
+    def failed_steps(self) -> list[TestStep]:
+        return [s for s in self.steps if s.status in (TestStatus.FAILED, TestStatus.ERROR)]
 
 
-class TestRun(TestHierachyElement):
+class TestRun(TestHierarchyElement):
     """Complete history of a single test execution."""
     base_url: str
-    groups: list[TestStepGroup] = Field(default_factory=list)
+    groups: list[TestStepGroup] = Field(default_factory=list, init=False)
 
-    def add_group(self, instruction: str | None = None) -> TestStepGroup:
-        if self.current_group and not self.current_group.is_finalized:
-            self.current_group.finalize()
-        
-        group = TestStepGroup(instruction=instruction)
+    def add_group(self, group: TestStepGroup) -> None:
+        self._assert_running()
+        if self.current_group:
+            self.current_group._assert_finalized()
+        group.index = len(self.groups)
         self.groups.append(group)
-        return group
-
-    def add_step(self, step: TestStep) -> TestStep:
-        if not self.groups:
-            raise ValueError("No step groups present, call `add_group()` first.")
-        step.index = len(self.current_steps)
-        step.run_index = len(self.all_steps)
-        self.current_group.steps.append(step)
-        return step
 
     def finalize(self) -> None:
+        if self.current_group:
+            self.current_group._assert_finalized()
         super(TestRun, self).finalize()
-        if not self.current_group.is_finalized:
-            self.current_group.finalize()
 
     @computed_field
     @property
-    def status(self) -> None:
-        steps = self.all_steps
-
-        if not steps:
-            return RunStatus.ABORTED
-
-        if any(s.status == StepStatus.ERROR for s in steps):
-            return RunStatus.ERROR
-        if any(s.status == StepStatus.FAILED for s in steps):
-            return RunStatus.FAILED
-
-        last = steps[-1]
-        if last.is_termination:
-            if isinstance(last.output, Fail):
-                return RunStatus.FAILED
-            if isinstance(last.output, Complete):
-                return RunStatus.PASSED
-
-        if all(s.status in (StepStatus.PASSED, StepStatus.SKIPPED) for s in steps):
-            return RunStatus.PASSED
+    def status(self) -> TestStatus:
+        for nxt in (TestStatus.ERROR, TestStatus.FAILED, TestStatus.ABORTED):
+            if any(g.status == nxt for g in self.groups):
+                return nxt
         
-        return RunStatus.ABORTED
+        return TestStatus.PASSED
 
     @property
-    def current_group(self) -> TestStepGroup:
+    def current_group(self) -> TestStepGroup | None:
         if not self.groups:
             return None
         return self.groups[-1]
 
     @property
-    def current_steps(self) -> list[TestStep]:
-        return self.current_group.steps
-
-    @computed_field
-    @property
     def all_steps(self) -> list[TestStep]:
         return [s for g in self.groups for s in g.steps]
 
-    @computed_field
     @property
     def failed_steps(self) -> list[TestStep]:
-        return [s for s in self.all_steps if s.status in (StepStatus.FAILED, StepStatus.ERROR)]
+        return [s for s in self.all_steps if s.status in (TestStatus.FAILED, TestStatus.ERROR)]

@@ -6,6 +6,13 @@ from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 
 
+class FullInputState(BaseModel):
+    instruction: str
+    page: str
+    history: str
+    screenshot: Optional[bytes]
+
+
 class Visibility(StrEnum):
     HIDDEN = "hidden"
     IN_VIEWPORT_FULL = "in_viewport_full"
