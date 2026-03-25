@@ -1,3 +1,4 @@
+from collections.abc import Awaitable, Callable
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Header, status
@@ -10,7 +11,7 @@ from .queries import get_by_id
 from .exceptions import TokenError
 
 
-async def get_auth_token(
+async def require_auth_token(
     authorization: Annotated[str | None, Header()] = None,
 ) -> str:
     if not authorization:
@@ -28,10 +29,10 @@ async def get_auth_token(
 
     return token
 
-
-async def get_current_user(
+# require_active_user -> require_auth_token
+async def require_active_user(
     session: SessionDep,
-    token: Annotated[str, Depends(get_auth_token)],
+    token: Annotated[str, Depends(require_auth_token)],
 ) -> User:
     try:
         payload = decode_token(token, expected_type=TokenType.ACCESS)
@@ -46,16 +47,36 @@ async def get_current_user(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
     return user
 
-
-UserDep = Annotated[User, Depends(get_current_user)]
-
-
-async def get_current_admin_user(
-    user: UserDep,
+# require_non_temporary_password -> require_active_user -> require_auth_token
+async def require_non_temporary_password(
+    user: Annotated[User, Depends(require_active_user)],
 ) -> User:
-    if user.role != Role.ADMIN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You don't have permission required for this action.")
+    if user.is_temp_pass:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Password change required",
+        )
     return user
 
+# require_role -> require_non_temporary_password -> require_active_user -> require_auth_token
+def require_role(required_role: Role) -> Callable[..., Awaitable[User]]:
+    async def role_checker(
+        user: Annotated[User, Depends(require_non_temporary_password)],
+    ) -> User:
+        if user.role < required_role:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have enough permissions",
+            )
+        return user
+    return role_checker
 
-AdminUserDep = Annotated[User, Depends(get_current_admin_user)]
+# require_admin -> require_role -> require_non_temporary_password -> require_active_user -> require_auth_token
+def require_admin(
+    user: Annotated[User, Depends(require_role(Role.ADMIN))],
+) -> User:
+    return user    
+
+UserDep = Annotated[User, Depends(require_non_temporary_password)]
+AdminUserDep = Annotated[User, Depends(require_admin)]
+PasswordChangeRequiredUserDep = Annotated[User, Depends(require_active_user)]
