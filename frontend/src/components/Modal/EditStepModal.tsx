@@ -15,6 +15,7 @@ interface EditStepModalProps {
   onCancel: () => void;
   isLoading?: boolean;
   error?: string | null;
+  onClearError?: () => void;
 }
 
 export const EditStepModal: React.FC<EditStepModalProps> = ({
@@ -23,6 +24,7 @@ export const EditStepModal: React.FC<EditStepModalProps> = ({
   onCancel,
   isLoading = false,
   error = null,
+  onClearError
 }) => {
   const [stepText, setStepText] = useState(step.text);
 
@@ -46,7 +48,7 @@ export const EditStepModal: React.FC<EditStepModalProps> = ({
         </div>
 
         <div className="p-6 space-y-4">
-          {error && <ErrorMessage message={error} />}
+          {error && <ErrorMessage message={error} onClose={onClearError} />}
 
           <div>
             <Label htmlFor="step-text" className="text-sm font-semibold text-gray-700 mb-2 block">

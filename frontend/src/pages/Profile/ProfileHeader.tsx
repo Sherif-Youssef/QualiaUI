@@ -12,6 +12,7 @@ interface ProfileHeaderProps {
     onBannerClick: () => void;
     onAvatarClick: () => void;
     onImageChange: (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => void;
+    isOwnProfile: boolean;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
@@ -24,7 +25,8 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     avatarInputRef,
     onBannerClick,
     onAvatarClick,
-    onImageChange
+    onImageChange,
+    isOwnProfile
 }) => {
     return (
         <div className="mb-8">
@@ -36,14 +38,16 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     backgroundPosition: 'center'
                 }}
             >
-                <button
-                    onClick={onBannerClick}
-                    className="absolute top-3 right-3 md:top-4 md:right-4 flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white/10 md:bg-white/20 backdrop-blur-md hover:bg-white/30 text-foreground text-xs md:text-sm font-medium rounded-lg md:rounded-xl transition-all border border-white/20 md:border-white/30 z-10"
-                >
-                    <ImageIcon className="w-3.5 h-3.5 md:w-4 h-4" />
-                    <span className="hidden sm:inline">Change Banner</span>
-                    <span className="sm:hidden">Edit</span>
-                </button>
+                {isOwnProfile && (
+                    <button
+                        onClick={onBannerClick}
+                        className="absolute top-3 right-3 md:top-4 md:right-4 flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 bg-white/10 md:bg-white/20 backdrop-blur-md hover:bg-white/30 text-foreground text-xs md:text-sm font-medium rounded-lg md:rounded-xl transition-all border border-white/20 md:border-white/30 z-10"
+                    >
+                        <ImageIcon className="w-3.5 h-3.5 md:w-4 h-4" />
+                        <span className="hidden sm:inline">Change Banner</span>
+                        <span className="sm:hidden">Edit</span>
+                    </button>
+                )}
                 <input
                     type="file"
                     ref={bannerInputRef}
@@ -71,7 +75,7 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                         </div>
                     )}
 
-                    {!isLoading && (
+                    {isOwnProfile && !isLoading && (
                         <div
                             onClick={onAvatarClick}
                             className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100 cursor-pointer"

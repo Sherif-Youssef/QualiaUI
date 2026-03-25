@@ -1,5 +1,12 @@
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
+export interface ApiResponse<T> {
+    items: T[];
+    total_items: number;
+    offset: number;
+    limit: number;
+}
+
 const api = axios.create({
     baseURL: '/api/v1',
     withCredentials: true,
@@ -7,6 +14,7 @@ const api = axios.create({
         'Content-Type': 'application/json',
     },
 });
+
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('token');
 
@@ -19,21 +27,78 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     return config;
 });
 
-api.interceptors.response.use(
-    (response: AxiosResponse) => response,
-    (error: AxiosError) => {
-        if (error.response) {
-            console.error(`[API ERROR ${error.response.status}]:`, error.response.data);
+let isRefreshing = false;
+let failedQueue: any[] = [];
 
-            if (error.response.status === 401) {
-                console.warn("Unauthorized: Token might be expired.");
-                localStorage.removeItem('token');
-                window.location.href = '/login';
-            }
-        } else if (error.request) {
-            console.error('[API NETWORK ERROR]: No response received.', error.request);
+const processQueue = (error: any, token: string | null = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
         } else {
-            console.error('[API SETUP ERROR]:', error.message);
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
+
+api.interceptors.response.use(
+    (response: AxiosResponse) => {
+        return response;
+    },
+    async (error: AxiosError) => {
+        const originalRequest: any = error.config;
+
+        if (error.response) {
+            const status = error.response.status;
+
+            if (status === 401 && !originalRequest._retry) {
+                if (originalRequest.url.includes('/auth/tokens')) {
+                    localStorage.removeItem('token');
+                    if (window.location.pathname !== '/login') {
+                        window.location.href = '/login';
+                    }
+                    return Promise.reject(error);
+                }
+                if (isRefreshing) {
+                    return new Promise((resolve, reject) => {
+                        failedQueue.push({ resolve, reject });
+                    })
+                        .then(token => {
+                            originalRequest.headers['Authorization'] = 'Bearer ' + token;
+                            return api(originalRequest);
+                        })
+                        .catch(err => {
+                            return Promise.reject(err);
+                        });
+                }
+
+                originalRequest._retry = true;
+                isRefreshing = true;
+
+                try {
+                    const response = await axios.post<{ access_token: string }>('/api/v1/auth/tokens/refresh', {}, {
+                        withCredentials: true
+                    });
+
+                    const newToken = response.data.access_token;
+                    localStorage.setItem('token', newToken);
+
+                    api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+                    processQueue(null, newToken);
+
+                    originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+                    return api(originalRequest);
+                } catch (refreshError) {
+                    processQueue(refreshError, null);
+                    localStorage.removeItem('token');
+                    if (window.location.pathname !== '/login') {
+                        window.location.href = '/login';
+                    }
+                    return Promise.reject(refreshError);
+                } finally {
+                    isRefreshing = false;
+                }
+            }
         }
         return Promise.reject(error);
     }

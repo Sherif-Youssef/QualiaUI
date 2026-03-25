@@ -73,8 +73,6 @@ export const ProfilePage: React.FC = () => {
         getProfile();
     }, [userId]);
 
-
-
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
         const file = e.target.files?.[0];
         if (file) {
@@ -141,6 +139,7 @@ export const ProfilePage: React.FC = () => {
                     onBannerClick={() => !userId && bannerInputRef.current?.click()}
                     onAvatarClick={() => !userId && avatarInputRef.current?.click()}
                     onImageChange={handleImageChange}
+                    isOwnProfile={!userId}
                 />
             }
             leftColumn={

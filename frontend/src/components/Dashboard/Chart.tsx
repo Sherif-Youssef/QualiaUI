@@ -18,7 +18,8 @@ const Chart: React.FC<ChartProps> = ({
     data,
     config,
     dimensions = { width: '100%', height: 300 }
-}) => {
+}) => {
+
     const themeColors = {
         grid: '#f1f5f9',
         axisTick: '#94a3b8',

@@ -4,16 +4,14 @@ import { Button } from '@/components/ui/button';
 
 interface ProjectsHeaderProps {
     onAddProject: () => void;
-    role?: string;
+    isAdmin: boolean;
 }
 
-export const ProjectsHeader: React.FC<ProjectsHeaderProps> = ({ onAddProject, role }) => {
-    const isViewer = role?.toLowerCase() === 'viewer';
-
+export const ProjectsHeader: React.FC<ProjectsHeaderProps> = ({ onAddProject, isAdmin }) => {
     return (
         <div className="flex items-center justify-between">
             <h2 className="text-2xl font-sans font-semibold text-gray-800">Projects Portal</h2>
-            {!isViewer && (
+            {isAdmin && (
                 <Button
                     onClick={onAddProject}
                     className="bg-primary hover:bg-primary/90 text-white shadow-sm transition-all rounded-xl px-6"

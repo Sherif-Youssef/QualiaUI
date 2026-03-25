@@ -28,15 +28,11 @@ export const useSearch = (onSearch: ((query: string) => void) | undefined) => {
             setIsLoading(false);
         }
     }, []);
-
-    // initial fetch
     useEffect(() => {
         const controller = new AbortController();
         fetchData(controller.signal);
         return () => controller.abort();
     }, [fetchData]);
-
-    // filtering logic
     useEffect(() => {
         const handler = setTimeout(() => {
             if (searchQuery.length >= 2) {

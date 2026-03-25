@@ -1,47 +1,61 @@
-import api from "@/lib/api";
+import api, { ApiResponse } from "@/lib/api";
 import { TestCaseDTO, TestCase } from "@/types/test-case";
 import { mapTestCaseToViewModel } from "@/utils/mappers";
 
 export const testCaseService = {
-    getTestCases: async (suiteId: string): Promise<TestCase[]> => {
+    getTestCases: async (projectId: string, suiteId: string): Promise<TestCase[]> => {
         try {
-            const response = await api.get<TestCaseDTO[]>(`/test-suites/${suiteId}/test-cases`);
-            return response.data.map(mapTestCaseToViewModel);
+            const response = await api.get<ApiResponse<TestCaseDTO>>(
+                `/projects/${projectId}/testsuites/${suiteId}/testcases`
+            );
+            return response.data.items.map(mapTestCaseToViewModel);
         } catch (error) {
-            console.error(`Service error (getTestCases ${suiteId}):`, error);
+            console.error(`Service error (getTestCases suite ${suiteId}):`, error);
             throw error;
         }
     },
-    getTestCaseById: async (caseId: string): Promise<TestCase> => {
+
+    getTestCaseById: async (projectId: string, suiteId: string, caseId: string): Promise<TestCase> => {
         try {
-            const response = await api.get<TestCaseDTO>(`/test-cases/${caseId}`);
+            const response = await api.get<TestCaseDTO>(
+                `/projects/${projectId}/testsuites/${suiteId}/testcases/${caseId}`
+            );
             return mapTestCaseToViewModel(response.data);
         } catch (error) {
             console.error(`Service error (getTestCaseById ${caseId}):`, error);
             throw error;
         }
     },
-    createTestCase: async (suiteId: string, data: any): Promise<TestCase> => {
+
+    createTestCase: async (projectId: string, suiteId: string, data: any): Promise<TestCase> => {
         try {
-            const response = await api.post<TestCaseDTO>(`/test-suites/${suiteId}/test-cases`, data);
+            const response = await api.post<TestCaseDTO>(
+                `/projects/${projectId}/testsuites/${suiteId}/testcases`,
+                data
+            );
             return mapTestCaseToViewModel(response.data);
         } catch (error) {
             console.error('Service error (createTestCase):', error);
             throw error;
         }
     },
-    updateTestCase: async (caseId: string, data: any): Promise<TestCase> => {
+
+    updateTestCase: async (projectId: string, suiteId: string, caseId: string, data: any): Promise<TestCase> => {
         try {
-            const response = await api.put<TestCaseDTO>(`/test-cases/${caseId}`, data);
+            const response = await api.put<TestCaseDTO>(
+                `/projects/${projectId}/testsuites/${suiteId}/testcases/${caseId}`,
+                data
+            );
             return mapTestCaseToViewModel(response.data);
         } catch (error) {
             console.error(`Service error (updateTestCase ${caseId}):`, error);
             throw error;
         }
     },
-    deleteTestCase: async (caseId: string) => {
+
+    deleteTestCase: async (projectId: string, suiteId: string, caseId: string) => {
         try {
-            await api.delete(`/test-cases/${caseId}`);
+            await api.delete(`/projects/${projectId}/testsuites/${suiteId}/testcases/${caseId}`);
         } catch (error) {
             console.error(`Service error (deleteTestCase ${caseId}):`, error);
             throw error;

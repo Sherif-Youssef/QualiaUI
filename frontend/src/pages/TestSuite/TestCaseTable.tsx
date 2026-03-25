@@ -7,6 +7,7 @@ interface TestCaseTableProps {
     onNavigate: (id: string) => void;
     onEdit: (testCase: TestCase, e: React.MouseEvent) => void;
     onDelete: (id: string, name: string, e: React.MouseEvent) => void;
+    canManageCases: boolean;
 }
 
 const getStatusIcon = (status: TestStatus) => {
@@ -30,7 +31,8 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
     testCases,
     onNavigate,
     onEdit,
-    onDelete
+    onDelete,
+    canManageCases
 }) => {
     return (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -40,7 +42,7 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
                         <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Test Case Name</th>
                         <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Execution Status</th>
                         <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Version</th>
-                        <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                        {canManageCases && <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>}
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -68,22 +70,24 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
                                     {testCase.runVersion || 'v1.0'}
                                 </span>
                             </td>
-                            <td className="px-6 py-5 text-right">
-                                <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={(e) => onEdit(testCase, e)}
-                                        className="p-2 text-gray-400 hover:text-primary transition-all active:scale-90"
-                                    >
-                                        <Pencil className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={(e) => onDelete(testCase.id, testCase.name, e)}
-                                        className="p-2 text-gray-400 hover:text-failure transition-all active:scale-90"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </td>
+                            {canManageCases && (
+                                <td className="px-6 py-5 text-right">
+                                    <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={(e) => onEdit(testCase, e)}
+                                            className="p-2 text-gray-400 hover:text-primary transition-all active:scale-90"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => onDelete(testCase.id, testCase.name, e)}
+                                            className="p-2 text-gray-400 hover:text-failure transition-all active:scale-90"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                </td>
+                            )}
                         </tr>
                     ))}
                 </tbody>

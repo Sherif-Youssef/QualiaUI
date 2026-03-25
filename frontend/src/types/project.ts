@@ -1,23 +1,36 @@
 export interface ProjectDTO {
-    id: string;
+    id: number | string;
     name: string;
     description: string;
-    created_at: string;
+    user_role?: 'admin' | 'editor' | 'viewer' | 'guest';
+    created_at?: string;
+    members?: Array<{
+        user: { id: number | string, first_name: string, last_name: string, email: string, is_admin?: boolean };
+        role: 'admin' | 'editor' | 'viewer' | 'guest';
+        joined_at: string;
+    }>;
 }
 
 export interface TestSuiteDTO {
-    id: string;
-    project_id: string;
+    id: number | string;
+    project_id: number | string;
     name: string;
     description: string;
-    created_at: string;
+    created_at?: string;
 }
 
 export interface Project {
     id: string;
     name: string;
     description: string;
-    createdAt: string;
+    role?: 'admin' | 'editor' | 'viewer' | 'guest';
+    isAdmin: boolean;
+    createdAt?: string;
+    members?: Array<{
+        user: { id: string, firstName: string, lastName: string, email: string, isAdmin?: boolean };
+        role: 'admin' | 'editor' | 'viewer' | 'guest';
+        joinedAt: string;
+    }>;
 }
 
 export interface TestSuite {
@@ -25,5 +38,6 @@ export interface TestSuite {
     projectId: string;
     name: string;
     description: string;
-    createdAt: string;
+    createdAt?: string;
 }
+

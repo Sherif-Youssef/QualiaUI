@@ -7,9 +7,15 @@ interface MobileGridProps {
     users: UserViewModel[];
     onEdit: (user: UserViewModel) => void;
     onDelete: (id: string, name: string) => void;
+    onRegeneratePassword: (userId: string, name: string) => void;
 }
 
-export const MobileGrid: React.FC<MobileGridProps> = ({ users, onEdit, onDelete }) => {
+export const MobileGrid: React.FC<MobileGridProps> = ({ 
+    users, 
+    onEdit, 
+    onDelete, 
+    onRegeneratePassword 
+}) => {
     return (
         <div className="grid grid-cols-1 gap-4 md:hidden">
             {users.map((user) => (
@@ -38,27 +44,37 @@ export const MobileGrid: React.FC<MobileGridProps> = ({ users, onEdit, onDelete 
                             <Mail className="w-4 h-4 text-gray-400" />
                             <span className="text-xs font-bold text-gray-600 truncate">{user.email}</span>
                         </div>
-                        <div className="flex items-center gap-3 p-3 bg-gray-50/50 rounded-2xl border border-gray-100">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <span className="text-xs font-bold text-gray-600">Member since {new Date(user.createdAt).toLocaleDateString()}</span>
-                        </div>
+                        {user.createdAt && (
+                            <div className="flex items-center gap-3 p-3 bg-gray-50/50 rounded-2xl border border-gray-100">
+                                <Calendar className="w-4 h-4 text-gray-400" />
+                                <span className="text-xs font-bold text-gray-600">Member since {new Date(user.createdAt).toLocaleDateString()}</span>
+                            </div>
+                        )}
                     </div>
-                    <div className="grid grid-cols-2 gap-3 mt-2">
+                    <div className="grid grid-cols-3 gap-3 mt-2">
                         <button
                             onClick={() => onEdit(user)}
-                            className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-gray-900 text-white text-xs font-black uppercase tracking-widest hover:bg-gray-800 transition-all active:scale-95"
+                            className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all active:scale-95"
+                            title="Edit"
                         >
                             <Pencil className="w-4 h-4" />
-                            Edit
+                        </button>
+                        <button
+                            onClick={() => onRegeneratePassword(user.id, `${user.firstName} ${user.lastName}`)}
+                            className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all active:scale-95"
+                            title="Reset"
+                        >
+                            <ShieldAlert className="w-4 h-4" />
                         </button>
                         <button
                             onClick={() => onDelete(user.id, `${user.firstName} ${user.lastName}`)}
-                            className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-failure/5 text-failure text-xs font-black uppercase tracking-widest hover:bg-failure/10 transition-all active:scale-95"
+                            className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-red-50 text-red-600 border border-red-100 text-[10px] font-black uppercase tracking-widest hover:bg-red-100 transition-all active:scale-95"
+                            title="Delete"
                         >
                             <Trash2 className="w-4 h-4" />
-                            Delete
                         </button>
                     </div>
+
                 </div>
             ))}
         </div>

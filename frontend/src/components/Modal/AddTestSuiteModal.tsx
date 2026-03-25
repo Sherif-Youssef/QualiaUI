@@ -4,6 +4,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
+import { ErrorMessage } from '../GeneralComponents/ErrorMessage';
 
 interface AddTestSuiteModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface AddTestSuiteModalProps {
   editingSuite?: { id: string; name: string; description: string } | null;
   onEdit?: (id: string, data: { name: string; description: string }) => void;
   error?: string | null;
+  onClearError?: () => void;
   isLoading?: boolean;
 }
 
@@ -22,6 +24,7 @@ export const AddTestSuiteModal: React.FC<AddTestSuiteModalProps> = ({
   editingSuite,
   onEdit,
   error,
+  onClearError,
   isLoading
 }) => {
   const [name, setName] = useState('');
@@ -49,8 +52,11 @@ export const AddTestSuiteModal: React.FC<AddTestSuiteModalProps> = ({
 
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-gray-100 overflow-hidden">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-300" onClick={onClose}>
+      <div 
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <h2 className="text-xl font-bold text-gray-800">
             {editingSuite ? 'Edit Test Suite' : 'Create Test Suite'}
@@ -62,10 +68,7 @@ export const AddTestSuiteModal: React.FC<AddTestSuiteModalProps> = ({
 
         <div className="p-6 space-y-5">
           {error && (
-            <div className="p-3.5 bg-failure/10 border border-failure/20 rounded-xl flex items-center gap-3 text-failure text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
-              <span className="w-1.5 h-1.5 rounded-full bg-failure animate-pulse"></span>
-              {error}
-            </div>
+            <ErrorMessage message={error} onClose={onClearError} />
           )}
 
           <div className="space-y-2">

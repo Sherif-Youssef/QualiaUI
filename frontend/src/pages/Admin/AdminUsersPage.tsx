@@ -10,7 +10,7 @@ import { AdminUsersHeader } from './AdminUsersHeader';
 import { AdminUsersTable } from './UsersTable/AdminUsersTable';
 import { AddUserModal } from '@/components/Modal/AddUserModal';
 import { AdminUsersEmptyState } from './AdminUsersEmptyState';
-
+import { TempPasswordModal } from '@/components/Modal/TempPasswordModal';
 
 export const AdminUsersPage: React.FC = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -25,6 +25,7 @@ export const AdminUsersPage: React.FC = () => {
 
     const [modalLoading, setModalLoading] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
+    const [passwordModal, setPasswordModal] = useState<{ pass: string; name: string; title: string } | null>(null);
 
     const itemsPerPage = 8;
 
@@ -44,10 +45,7 @@ export const AdminUsersPage: React.FC = () => {
         fetchUsers();
     }, []);
 
-    const filteredUsers = users.filter(user =>
-        `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredUsers = adminService.filterUsers(users, searchQuery);
 
     const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
     const paginatedUsers = filteredUsers.slice(
@@ -91,13 +89,7 @@ export const AdminUsersPage: React.FC = () => {
             setIsModalOpen(false);
             setEditingUser(null);
         } catch (err: any) {
-            const detail = err.response?.data?.detail;
-            const message = typeof detail === 'string' 
-                ? detail 
-                : Array.isArray(detail)
-                    ? detail.map((d: any) => d.msg || JSON.stringify(d)).join(', ')
-                    : 'Failed to update user.';
-            setModalError(message);
+            setModalError(adminService.formatError(err, 'Failed to update user.'));
         } finally {
 
             setModalLoading(false);
@@ -108,20 +100,37 @@ export const AdminUsersPage: React.FC = () => {
         setModalLoading(true);
         setModalError(null);
         try {
-            const newUser = await adminService.createUser(data);
+            const { user: newUser, temporaryPassword } = await adminService.createUser(data);
             setUsers([...users, newUser]);
             setIsModalOpen(false);
             setEditingUser(null);
+            
+            if (temporaryPassword) {
+                setPasswordModal({ 
+                    pass: temporaryPassword, 
+                    name: `${newUser.firstName} ${newUser.lastName}`,
+                    title: 'User Created Successfully'
+                });
+            }
         } catch (err: any) {
-            const detail = err.response?.data?.detail;
-            const message = typeof detail === 'string' 
-                ? detail 
-                : Array.isArray(detail)
-                    ? detail.map((d: any) => d.msg || JSON.stringify(d)).join(', ')
-                    : 'Failed to create user.';
-            setModalError(message);
+            setModalError(adminService.formatError(err, 'Failed to create user.'));
         } finally {
 
+            setModalLoading(false);
+        }
+    };
+
+    const handleRegeneratePassword = async (userId: string, name: string) => {
+        if (!window.confirm(`Are you sure you want to regenerate a temporary password for ${name}?`)) return;
+
+        setModalLoading(true);
+        setModalError(null);
+        try {
+            const result = await adminService.regenerateTempPassword(userId);
+            setPasswordModal({ pass: result.temporary_password, name: name, title: 'Password Regenerated' });
+        } catch (err: any) {
+            setError(err.response?.data?.detail || 'Failed to regenerate temporary password.');
+        } finally {
             setModalLoading(false);
         }
     };
@@ -143,7 +152,7 @@ export const AdminUsersPage: React.FC = () => {
             )}
             content={
                 <>
-                    {error && <div className="mb-6"><ErrorMessage message={error} /></div>}
+                    {error && <div className="mb-6"><ErrorMessage message={error} onClose={() => setError(null)} /></div>}
 
                     {isLoading && users.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-[2rem] border border-gray-100 shadow-sm">
@@ -161,7 +170,9 @@ export const AdminUsersPage: React.FC = () => {
                                 users={paginatedUsers}
                                 onEdit={handleEditClick}
                                 onDelete={handleDeleteClick}
+                                onRegeneratePassword={handleRegeneratePassword}
                             />
+
                             {filteredUsers.length === 0 && !isLoading && (
                                 <div className="text-center py-12 text-gray-500 font-medium bg-white rounded-[2rem] border border-dashed border-gray-200">
                                     No users match your search.
@@ -193,6 +204,7 @@ export const AdminUsersPage: React.FC = () => {
                         editingUser={editingUser}
                         onEdit={handleUpdateUser}
                         error={modalError}
+                        onClearError={() => setModalError(null)}
                         isLoading={modalLoading}
                     />
 
@@ -205,7 +217,16 @@ export const AdminUsersPage: React.FC = () => {
                         onConfirm={confirmDelete}
                         itemName={deleteConfirmation?.name}
                         error={modalError}
+                        onClearError={() => setModalError(null)}
                         isLoading={modalLoading}
+                    />
+
+                    <TempPasswordModal
+                        isOpen={passwordModal !== null}
+                        onClose={() => setPasswordModal(null)}
+                        password={passwordModal?.pass || ''}
+                        userName={passwordModal?.name || ''}
+                        title={passwordModal?.title}
                     />
                 </>
             }

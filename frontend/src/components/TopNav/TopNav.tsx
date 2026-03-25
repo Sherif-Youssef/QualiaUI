@@ -31,11 +31,16 @@ export const TopNav: React.FC = () => {
     const fetchUserData = async () => {
       try {
         const user = await authService.getCurrentUser();
-        setUserName(`${user.first_name} ${user.last_name}`);
-        setRole(user.role || (user.is_admin ? 'Administrator' : 'Researcher'));
-        setIsAdmin(user.is_admin);
+        setUserName(`${user.first_name || ''} ${user.last_name || ''}`);
+        
+        const isUserAdmin = user.is_admin || user.role === 'admin';
+        const userRole = user.role || 'viewer';
+
+        setRole(userRole.charAt(0).toUpperCase() + userRole.slice(1));
+        setIsAdmin(isUserAdmin);
 
         const data = await notificationService.getLatestNotifications();
+
         setNotifications(data);
       } catch (err) {
         console.error("Error fetching nav data:", err);
@@ -90,7 +95,7 @@ export const TopNav: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 h-full relative">
-            <NotificationHub 
+            <NotificationHub
               notifications={notifications}
               isOpen={isNotificationsOpen}
               onToggle={() => { setIsNotificationsOpen(!isNotificationsOpen); setIsProfileOpen(false); setIsMobileMenuOpen(false); }}
@@ -98,7 +103,7 @@ export const TopNav: React.FC = () => {
               innerRef={notificationRef}
             />
 
-            <ProfilePortal 
+            <ProfilePortal
               userName={userName}
               role={role}
               isOpen={isProfileOpen}
@@ -107,7 +112,7 @@ export const TopNav: React.FC = () => {
               innerRef={dropdownRef}
             />
 
-            <MobileMenu 
+            <MobileMenu
               navLinks={navLinks}
               isOpen={isMobileMenuOpen}
               onToggle={() => { setIsMobileMenuOpen(!isMobileMenuOpen); setIsNotificationsOpen(false); setIsProfileOpen(false); }}

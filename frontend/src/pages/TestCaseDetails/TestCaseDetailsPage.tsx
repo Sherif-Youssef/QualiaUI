@@ -4,15 +4,14 @@ import { EditStepModal } from '@/components/Modal/EditStepModal';
 import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
 import { TestStep, TestCase } from '@/types/test-case';
 import { testCaseService } from '@/services/testCase/testCaseService';
+import { useProjectPermissions } from '@/hooks/useProjectPermissions';
 import { ErrorMessage } from '@/components/GeneralComponents';
-
-// Sub-components
 import { TestCaseDetailsLayout } from './TestCaseDetailsLayout';
 import { StepsSidebar } from './StepsSidebar';
 import { ScreenshotViewer } from './ScreenshotViewer';
 
 export const TestCaseDetailsPage: React.FC = () => {
-    const { caseId } = useParams<{ caseId: string }>();
+    const { projectId, suiteId, caseId } = useParams<{ projectId: string; suiteId: string; caseId: string }>();
     const navigate = useNavigate();
     const [testCase, setTestCase] = useState<TestCase | null>(null);
     const [selectedStepId, setSelectedStepId] = useState<string>('');
@@ -20,13 +19,15 @@ export const TestCaseDetailsPage: React.FC = () => {
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; text: string } | null>(null);
     const [zoomLevel, setZoomLevel] = useState(100);
     const [steps, setSteps] = useState<TestStep[]>([]);
-    const [isRunning, setIsRunning] = useState(false);
+    const isRunning = false;
 
     const [finalStatus, setFinalStatus] = useState<'passed' | 'failed' | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [actionLoading, setActionLoading] = useState(false);
     const [actionError, setActionError] = useState<string | null>(null);
+
+    const { canManageCases, isLoading: permissionsLoading, error: permissionsError } = useProjectPermissions(projectId);
 
     useEffect(() => {
         const fetchTestCase = async () => {
@@ -35,7 +36,7 @@ export const TestCaseDetailsPage: React.FC = () => {
             setIsLoading(true);
             setError(null);
             try {
-                const data = await testCaseService.getTestCaseById(caseId);
+                const data = await testCaseService.getTestCaseById(projectId!, suiteId!, caseId!);
                 setTestCase(data);
                 const executionSteps = data.executionSteps || [];
                 setSteps(executionSteps);
@@ -55,10 +56,12 @@ export const TestCaseDetailsPage: React.FC = () => {
         };
 
         fetchTestCase();
-    }, [caseId]);
+    }, [caseId, projectId, suiteId]);
+
+    const isPageLoading = isLoading || permissionsLoading;
+    const pageError = error || permissionsError;
 
     const selectedStep = steps.find(s => s.id === selectedStepId);
-    // removing the run as endpoint not ready yet
 
     const handleDeleteStepClick = (stepId: string, stepText: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -77,7 +80,7 @@ export const TestCaseDetailsPage: React.FC = () => {
                 number: index + 1,
             }));
 
-            await testCaseService.updateTestCase(caseId, { executionSteps: updatedSteps });
+            await testCaseService.updateTestCase(projectId!, suiteId!, caseId!, { executionSteps: updatedSteps });
 
             setSteps(updatedSteps);
             if (selectedStepId === deleteConfirmation.id && updatedSteps.length > 0) {
@@ -106,7 +109,7 @@ export const TestCaseDetailsPage: React.FC = () => {
                 const updatedSteps = steps.map(s =>
                     s.id === editingStep.id ? { ...s, text: updatedText } : s
                 );
-                await testCaseService.updateTestCase(caseId, { executionSteps: updatedSteps });
+                await testCaseService.updateTestCase(projectId!, suiteId!, caseId!, { executionSteps: updatedSteps });
 
                 setSteps(updatedSteps);
                 setEditingStep(null);
@@ -118,19 +121,19 @@ export const TestCaseDetailsPage: React.FC = () => {
         }
     };
 
-    if (isLoading) {
+    if (isPageLoading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
                 <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-500 font-medium font-sans">Loading Test Case Details...</p>
+                <p className="text-gray-500 font-medium font-sans">Loading details...</p>
             </div>
         );
     }
 
-    if (error) {
+    if (pageError) {
         return (
             <div className="p-8">
-                <ErrorMessage message={error} />
+                <ErrorMessage message={pageError} onClose={() => setError(null)} />
                 <button onClick={() => navigate(-1)} className="mt-4 text-primary font-medium hover:underline">
                     &larr; Go Back
                 </button>
@@ -147,10 +150,9 @@ export const TestCaseDetailsPage: React.FC = () => {
                     selectedStepId={selectedStepId}
                     onSelectStep={setSelectedStepId}
                     isRunning={isRunning}
-                    // onRun={/*{handleRunTestCase}*/}
                     finalStatus={finalStatus}
-                    onEditStep={handleEditStepClick}
-                    onDeleteStep={handleDeleteStepClick}
+                    onEditStep={canManageCases ? handleEditStepClick : undefined}
+                    onDeleteStep={canManageCases ? handleDeleteStepClick : undefined}
                 />
             }
             content={
@@ -170,6 +172,7 @@ export const TestCaseDetailsPage: React.FC = () => {
                             onCancel={() => setEditingStep(null)}
                             isLoading={actionLoading}
                             error={actionError}
+                            onClearError={() => setActionError(null)}
                         />
                     )}
 
@@ -183,6 +186,7 @@ export const TestCaseDetailsPage: React.FC = () => {
                         itemName={deleteConfirmation?.text || ""}
                         isLoading={actionLoading}
                         error={actionError}
+                        onClearError={() => setActionError(null)}
                     />
                 </>
             }
