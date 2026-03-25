@@ -23,6 +23,8 @@ from src.projects.models import Project, Role as ProjectRole, UserProjectLink
 from src.projects.router import router as projects_router
 from src.testsuites.models import TestSuite
 from src.testsuites.router import router as testsuites_router
+from src.testcases.models import TestCase
+from src.testcases.router import router as testcases_router
 from src.database import get_session
 
 
@@ -105,11 +107,36 @@ def testsuite_factory(session: Session) -> Callable[..., TestSuite]:
 
 
 @pytest.fixture()
+def testcase_factory(session: Session) -> Callable[..., TestCase]:
+    def _create_testcase(
+        testsuite_id: int,
+        name: str = "Test One",
+        description: str = "",
+        base_url: str = "https://example.com",
+        instruction: str = "Go to homepage",
+    ) -> TestCase:
+        testcase = TestCase(
+            testsuite_id=testsuite_id,
+            name=name,
+            description=description,
+            base_url=base_url,
+            instruction=instruction,
+        )
+        session.add(testcase)
+        session.commit()
+        session.refresh(testcase)
+        return testcase
+
+    return _create_testcase
+
+
+@pytest.fixture()
 def client(session: Session) -> Generator[TestClient, None, None]:
     app = FastAPI()
     app.include_router(auth_router, prefix="/api/v1")
     app.include_router(projects_router, prefix="/api/v1")
     app.include_router(testsuites_router, prefix="/api/v1")
+    app.include_router(testcases_router, prefix="/api/v1")
 
     def _override_get_session() -> Generator[Session, None, None]:
         yield session
