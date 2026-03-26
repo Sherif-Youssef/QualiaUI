@@ -43,27 +43,37 @@ export const ProjectsPage: React.FC = () => {
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
-    useEffect(() => {
-        const fetchInitialPageData = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const user = await authService.getCurrentUser();
-                setIsAdminState(user.is_admin || user.role?.toLowerCase() === 'admin');
-                setUserRoleState(user.role?.toLowerCase());
+    const fetchProjects = React.useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const user = await authService.getCurrentUser();
+            setIsAdminState(user.is_admin || user.role?.toLowerCase() === 'admin');
+            setUserRoleState(user.role?.toLowerCase());
 
-                const offset = (currentPage - 1) * itemsPerPage;
-                const result = await projectService.getAllProjects(offset, itemsPerPage, debouncedSearch);
-                setProjects(result.projects);
-                setTotalProjects(result.total);
-            } catch (err: any) {
-                setError(err.response?.data?.detail || 'Failed to initialize workspace data.');
-            } finally {
-                setIsLoading(false);
+            const offset = (currentPage - 1) * itemsPerPage;
+            const result = await projectService.getAllProjects(offset, itemsPerPage, debouncedSearch);
+
+            if (result.projects.length === 0 && currentPage > 1 && result.total > 0) {
+                setCurrentPage(prev => {
+                    const next = prev - 1;
+                    return next > 0 ? next : 1;
+                });
+                return;
             }
-        };
-        fetchInitialPageData();
+
+            setProjects(result.projects);
+            setTotalProjects(result.total);
+        } catch (err: any) {
+            setError(err.response?.data?.detail || 'Failed to initialize workspace data.');
+        } finally {
+            setIsLoading(false);
+        }
     }, [currentPage, debouncedSearch]);
+
+    useEffect(() => {
+        fetchProjects();
+    }, [fetchProjects]);
 
     const totalPages = Math.ceil(totalProjects / itemsPerPage);
 
@@ -81,7 +91,7 @@ export const ProjectsPage: React.FC = () => {
         setModalError(null);
         try {
             await projectService.deleteProject(deleteConfirmation.id);
-            setProjects(projects.filter(p => p.id !== deleteConfirmation.id));
+            await fetchProjects();
             setDeleteConfirmation(null);
         } catch (err: any) {
             setModalError(err.response?.data?.detail || 'Failed to delete project.');
@@ -101,8 +111,8 @@ export const ProjectsPage: React.FC = () => {
         setModalLoading(true);
         setModalError(null);
         try {
-            const updatedProject = await projectService.updateProject(id, data);
-            setProjects(projects.map(p => p.id === id ? updatedProject : p));
+            await projectService.updateProject(id, data);
+            await fetchProjects();
             setIsModalOpen(false);
             setEditingProject(null);
         } catch (err: any) {
@@ -125,8 +135,9 @@ export const ProjectsPage: React.FC = () => {
                     { user_id: user.id, role: 'admin' }
                 ]
             };
-            const newProject = await projectService.createProject(projectData as any);
-            setProjects([...projects, newProject]);
+            await projectService.createProject(projectData as any);
+            setCurrentPage(1);
+            await fetchProjects();
             setIsModalOpen(false);
             setEditingProject(null);
         } catch (err: any) {
@@ -136,11 +147,12 @@ export const ProjectsPage: React.FC = () => {
         }
     };
 
-    const isEmpty = projects.length === 0 && !isLoading;
+    const isTrulyEmpty = totalProjects === 0 && debouncedSearch === '' && !isLoading;
+    const isSearchEmpty = projects.length === 0 && debouncedSearch !== '' && !isLoading;
 
     return (
         <ProjectsLayout
-            header={!isEmpty && (
+            header={(
                 <ProjectsHeader
                     onAddProject={() => {
                         setModalError(null);
@@ -149,7 +161,7 @@ export const ProjectsPage: React.FC = () => {
                     isAdmin={isAdminState}
                 />
             )}
-            searchBar={!isEmpty && (
+            searchBar={(
                 <SearchBar
                     value={searchQuery}
                     onChange={setSearchQuery}
@@ -165,7 +177,7 @@ export const ProjectsPage: React.FC = () => {
                             <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
                             <p className="text-gray-500 font-bold text-lg">Waking up your workspace...</p>
                         </div>
-                    ) : isEmpty ? (
+                    ) : isTrulyEmpty ? (
                         <ProjectsEmptyState isAdmin={isAdminState} onCreateNew={() => {
                             setModalError(null);
                             setIsModalOpen(true);
@@ -180,7 +192,7 @@ export const ProjectsPage: React.FC = () => {
                                 isAdmin={isAdminState}
                                 userRole={userRoleState}
                             />
-                             {projects.length === 0 && !isLoading && (
+                             {isSearchEmpty && (
                                 <div className="text-center py-12 text-gray-500 font-medium bg-white rounded-[2rem] border border-dashed border-gray-200">
                                     No projects match your search.
                                 </div>
@@ -189,7 +201,7 @@ export const ProjectsPage: React.FC = () => {
                     )}
                 </>
             }
-            pagination={!isEmpty && totalProjects > 0 && (
+            pagination={totalProjects > 0 && (
                 <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}

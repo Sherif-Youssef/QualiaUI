@@ -33,9 +33,16 @@ export const testCaseService = {
 
     createTestCase: async (projectId: string, suiteId: string, data: any): Promise<TestCase> => {
         try {
+            const payload = {
+                name: data.name,
+                description: data.description || '',
+                base_url: data.url || '',
+                instruction: data.prompt || data.plainText || '',
+                executable_steps: data.steps || null
+            };
             const response = await api.post<TestCaseDTO>(
                 `/projects/${projectId}/testsuites/${suiteId}/testcases`,
-                data
+                payload
             );
             return mapTestCaseToViewModel(response.data);
         } catch (error) {
@@ -46,9 +53,16 @@ export const testCaseService = {
 
     updateTestCase: async (projectId: string, suiteId: string, caseId: string, data: any): Promise<TestCase> => {
         try {
+            const payload = {
+                name: data.name,
+                description: data.description,
+                base_url: data.url,
+                instruction: data.prompt || data.plainText,
+                executable_steps: data.steps
+            };
             const response = await api.put<TestCaseDTO>(
                 `/projects/${projectId}/testsuites/${suiteId}/testcases/${caseId}`,
-                data
+                payload
             );
             return mapTestCaseToViewModel(response.data);
         } catch (error) {

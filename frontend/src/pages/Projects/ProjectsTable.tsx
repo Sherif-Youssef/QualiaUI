@@ -47,12 +47,17 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
                                     className="hover:bg-gray-50/50 transition-all cursor-pointer group"
                                 >
                                     <td className="px-8 py-5">
-                                        <div className="flex flex-col">
-                                            <span className="text-base font-black text-gray-900 group-hover:text-primary transition-colors">
+                                        <div className="flex flex-col max-w-[400px]">
+                                            <span className="text-sm font-black text-gray-900 group-hover:text-primary transition-all">
                                                 {project.name}
                                             </span>
                                             {project.description && (
-                                                <p className="text-xs font-medium text-gray-500 mt-1 line-clamp-1">{project.description}</p>
+                                                <p 
+                                                    className="text-[11px] font-medium text-gray-400 mt-1 line-clamp-2 leading-relaxed"
+                                                    title={project.description}
+                                                >
+                                                    {project.description}
+                                                </p>
                                             )}
                                         </div>
                                     </td>
