@@ -29,7 +29,19 @@ export const TestSuitePage: React.FC = () => {
     const [modalError, setModalError] = useState<string | null>(null);
     const { canManageCases, isLoading: permissionsLoading, error: permissionsError } = useProjectPermissions(projectId);
 
+    const [totalCases, setTotalCases] = useState(0);
+    const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+
     const itemsPerPage = 5;
+
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+            setCurrentPage(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     useEffect(() => {
         const fetchTestCases = async () => {
@@ -37,8 +49,10 @@ export const TestSuitePage: React.FC = () => {
             setIsLoading(true);
             setError(null);
             try {
-                const cases = await testCaseService.getTestCases(projectId, suiteId);
-                setTestCases(cases);
+                const offset = (currentPage - 1) * itemsPerPage;
+                const result = await testCaseService.getTestCases(projectId, suiteId, offset, itemsPerPage, debouncedSearch);
+                setTestCases(result.testCases);
+                setTotalCases(result.total);
             } catch (err: any) {
                 setError(err.response?.data?.detail || 'Failed to load test cases.');
             } finally {
@@ -46,20 +60,13 @@ export const TestSuitePage: React.FC = () => {
             }
         };
         fetchTestCases();
-    }, [suiteId, projectId]);
+    }, [suiteId, projectId, currentPage, debouncedSearch]);
+
+    const totalPages = Math.ceil(totalCases / itemsPerPage);
+
 
     const isPageLoading = isLoading || permissionsLoading;
     const pageError = error || permissionsError;
-
-    const filteredCases = testCases.filter(testCase =>
-        testCase.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    const totalPages = Math.ceil(filteredCases.length / itemsPerPage);
-    const paginatedCases = filteredCases.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
 
     const handleDeleteClick = (id: string, name: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -160,13 +167,13 @@ export const TestSuitePage: React.FC = () => {
                     ) : (
                         <>
                             <TestCaseTable
-                                testCases={paginatedCases}
+                                testCases={testCases}
                                 onNavigate={(caseId) => navigate(`/project/${projectId}/suite/${suiteId}/case/${caseId}`)}
                                 onEdit={handleEditClick}
                                 onDelete={handleDeleteClick}
                                 canManageCases={canManageCases}
                             />
-                            {filteredCases.length === 0 && !isLoading && (
+                            {testCases.length === 0 && !isLoading && (
                                 <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
                                     <p className="text-gray-500 font-medium">No test cases match your search.</p>
                                 </div>
@@ -175,12 +182,12 @@ export const TestSuitePage: React.FC = () => {
                     )}
                 </>
             }
-            pagination={filteredCases.length > 0 && (
+            pagination={totalCases > 0 && (
                 <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
                     itemsPerPage={itemsPerPage}
-                    totalItems={filteredCases.length}
+                    totalItems={totalCases}
                     onPageChange={setCurrentPage}
                 />
             )}

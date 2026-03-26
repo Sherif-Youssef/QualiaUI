@@ -29,7 +29,19 @@ export const ProjectsPage: React.FC = () => {
     const [modalLoading, setModalLoading] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
 
+    const [totalProjects, setTotalProjects] = useState(0);
+    const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+
     const itemsPerPage = 6;
+
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+            setCurrentPage(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     useEffect(() => {
         const fetchInitialPageData = async () => {
@@ -40,8 +52,10 @@ export const ProjectsPage: React.FC = () => {
                 setIsAdminState(user.is_admin || user.role?.toLowerCase() === 'admin');
                 setUserRoleState(user.role?.toLowerCase());
 
-                const data = await projectService.getAllProjects();
-                setProjects(data);
+                const offset = (currentPage - 1) * itemsPerPage;
+                const result = await projectService.getAllProjects(offset, itemsPerPage, debouncedSearch);
+                setProjects(result.projects);
+                setTotalProjects(result.total);
             } catch (err: any) {
                 setError(err.response?.data?.detail || 'Failed to initialize workspace data.');
             } finally {
@@ -49,17 +63,10 @@ export const ProjectsPage: React.FC = () => {
             }
         };
         fetchInitialPageData();
-    }, []);
+    }, [currentPage, debouncedSearch]);
 
-    const filteredProjects = projects.filter(project =>
-        project.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const totalPages = Math.ceil(totalProjects / itemsPerPage);
 
-    const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
-    const paginatedProjects = filteredProjects.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
 
     const handleDeleteClick = (id: string, name: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -166,14 +173,14 @@ export const ProjectsPage: React.FC = () => {
                     ) : (
                         <>
                             <ProjectsTable
-                                projects={paginatedProjects}
+                                projects={projects}
                                 onNavigate={(id) => navigate(`/project/${id}`)}
                                 onEdit={handleEditClick}
                                 onDelete={handleDeleteClick}
                                 isAdmin={isAdminState}
                                 userRole={userRoleState}
                             />
-                            {filteredProjects.length === 0 && !isLoading && (
+                             {projects.length === 0 && !isLoading && (
                                 <div className="text-center py-12 text-gray-500 font-medium bg-white rounded-[2rem] border border-dashed border-gray-200">
                                     No projects match your search.
                                 </div>
@@ -182,12 +189,12 @@ export const ProjectsPage: React.FC = () => {
                     )}
                 </>
             }
-            pagination={!isEmpty && filteredProjects.length > 0 && (
+            pagination={!isEmpty && totalProjects > 0 && (
                 <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
                     itemsPerPage={itemsPerPage}
-                    totalItems={filteredProjects.length}
+                    totalItems={totalProjects}
                     onPageChange={setCurrentPage}
                 />
             )}

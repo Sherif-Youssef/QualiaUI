@@ -3,10 +3,15 @@ import { ProjectDTO, Project } from "@/types/project";
 import { mapProjectToViewModel } from "@/utils/mappers";
 
 export const projectService = {
-    getAllProjects: async (): Promise<Project[]> => {
+    getAllProjects: async (offset = 0, limit = 6, name?: string): Promise<{ projects: Project[]; total: number }> => {
         try {
-            const response = await api.get<ApiResponse<ProjectDTO>>('/projects');
-            return response.data.items.map(mapProjectToViewModel);
+            const response = await api.get<ApiResponse<ProjectDTO>>('/projects', {
+                params: { offset, limit, name: name || undefined }
+            });
+            return {
+                projects: response.data.items.map(mapProjectToViewModel),
+                total: response.data.total_items
+            };
         } catch (error) {
             throw error;
         }

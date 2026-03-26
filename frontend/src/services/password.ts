@@ -21,4 +21,4 @@ export const passwordService = {
       throw error;
     }
   },
-};
+};
