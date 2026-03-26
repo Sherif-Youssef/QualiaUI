@@ -29,8 +29,20 @@ export const ProjectPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [modalLoading, setModalLoading] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
+    const [totalSuites, setTotalSuites] = useState(0);
+    const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+
     const { canManageSuites, canManageProject } = useProjectPermissions(projectId);
     const itemsPerPage = 6;
+
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+            setCurrentPage(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -39,11 +51,13 @@ export const ProjectPage: React.FC = () => {
             setIsLoading(true);
             setError(null);
             try {
-                const [suites] = await Promise.all([
-                    testSuiteService.getTestSuites(projectId),
+                const offset = (currentPage - 1) * itemsPerPage;
+                const [suitesResult] = await Promise.all([
+                    testSuiteService.getTestSuites(projectId, offset, itemsPerPage, debouncedSearch),
                     projectService.getProjectById(projectId)
                 ]);
-                setTestSuites(suites);
+                setTestSuites(suitesResult.testSuites);
+                setTotalSuites(suitesResult.total);
             } catch (err: any) {
                 setError(err.response?.data?.detail || 'Failed to load test suites.');
             } finally {
@@ -52,17 +66,10 @@ export const ProjectPage: React.FC = () => {
         };
 
         fetchData();
-    }, [projectId]);
+    }, [projectId, currentPage, debouncedSearch]);
 
-    const filteredSuites = testSuites.filter(suite =>
-        suite.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const totalPages = Math.ceil(totalSuites / itemsPerPage);
 
-    const totalPages = Math.ceil(filteredSuites.length / itemsPerPage);
-    const paginatedSuites = filteredSuites.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
 
     const handleDeleteClick = (id: string, name: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -163,13 +170,13 @@ export const ProjectPage: React.FC = () => {
                     ) : (
                         <>
                             <TestSuiteList
-                                suites={paginatedSuites}
+                                suites={testSuites}
                                 onNavigate={(suiteId) => navigate(`/project/${projectId}/suite/${suiteId}`)}
                                 onEdit={handleEditClick}
                                 onDelete={handleDeleteClick}
                                 canManageSuites={canManageSuites}
                             />
-                            {filteredSuites.length === 0 && !isLoading && (
+                            {testSuites.length === 0 && !isLoading && (
                                 <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
                                     <p className="text-gray-500 font-medium">No test suites match your search.</p>
                                 </div>
@@ -178,12 +185,12 @@ export const ProjectPage: React.FC = () => {
                     )}
                 </>
             }
-            pagination={filteredSuites.length > 0 && (
+            pagination={totalSuites > 0 && (
                 <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
                     itemsPerPage={itemsPerPage}
-                    totalItems={filteredSuites.length}
+                    totalItems={totalSuites}
                     onPageChange={setCurrentPage}
                 />
             )}

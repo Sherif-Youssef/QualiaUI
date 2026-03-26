@@ -3,10 +3,15 @@ import { TestSuiteDTO, TestSuite } from "@/types/test-suit";
 import { mapTestSuiteToViewModel } from "@/utils/mappers";
 
 export const testSuiteService = {
-    getTestSuites: async (projectId: string): Promise<TestSuite[]> => {
+    getTestSuites: async (projectId: string, offset = 0, limit = 10, name?: string): Promise<{ testSuites: TestSuite[]; total: number }> => {
         try {
-            const response = await api.get<ApiResponse<TestSuiteDTO>>(`/projects/${projectId}/testsuites`);
-            return response.data.items.map(mapTestSuiteToViewModel);
+            const response = await api.get<ApiResponse<TestSuiteDTO>>(`/projects/${projectId}/testsuites`, {
+                params: { offset, limit, name: name || undefined }
+            });
+            return {
+                testSuites: response.data.items.map(mapTestSuiteToViewModel),
+                total: response.data.total_items
+            };
         } catch (error) {
             console.error(`Service error (getTestSuites ${projectId}):`, error);
             throw error;
