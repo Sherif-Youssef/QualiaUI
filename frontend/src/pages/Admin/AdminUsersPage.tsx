@@ -27,31 +27,39 @@ export const AdminUsersPage: React.FC = () => {
     const [modalError, setModalError] = useState<string | null>(null);
     const [passwordModal, setPasswordModal] = useState<{ pass: string; name: string; title: string } | null>(null);
 
+    const [totalUsers, setTotalUsers] = useState(0);
+    const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+
     const itemsPerPage = 8;
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+            setCurrentPage(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
     useEffect(() => {
         const fetchUsers = async () => {
             setIsLoading(true);
             setError(null);
             try {
-                const data = await adminService.getAllUsers();
-                setUsers(data);
+                const offset = (currentPage - 1) * itemsPerPage;
+                const result = await adminService.getAllUsers(offset, itemsPerPage, debouncedSearch);
+                setUsers(result.users);
+                setTotalUsers(result.total);
             } catch (err: any) {
-                setError(err.response?.data?.detail || 'Failed to fetch users. Ensure the backend admin endpoints are implemented.');
+                setError(err.response?.data?.detail || 'Failed to fetch users.');
             } finally {
                 setIsLoading(false);
             }
         };
         fetchUsers();
-    }, []);
+    }, [currentPage, debouncedSearch]);
 
-    const filteredUsers = adminService.filterUsers(users, searchQuery);
+    const totalPages = Math.ceil(totalUsers / itemsPerPage);
 
-    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-    const paginatedUsers = filteredUsers.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
 
     const handleDeleteClick = (id: string, name: string) => {
         setModalError(null);
@@ -104,10 +112,10 @@ export const AdminUsersPage: React.FC = () => {
             setUsers([...users, newUser]);
             setIsModalOpen(false);
             setEditingUser(null);
-            
+
             if (temporaryPassword) {
-                setPasswordModal({ 
-                    pass: temporaryPassword, 
+                setPasswordModal({
+                    pass: temporaryPassword,
                     name: `${newUser.firstName} ${newUser.lastName}`,
                     title: 'User Created Successfully'
                 });
@@ -167,13 +175,13 @@ export const AdminUsersPage: React.FC = () => {
                     ) : (
                         <>
                             <AdminUsersTable
-                                users={paginatedUsers}
+                                users={users}
                                 onEdit={handleEditClick}
                                 onDelete={handleDeleteClick}
                                 onRegeneratePassword={handleRegeneratePassword}
                             />
 
-                            {filteredUsers.length === 0 && !isLoading && (
+                            {users.length === 0 && !isLoading && (
                                 <div className="text-center py-12 text-gray-500 font-medium bg-white rounded-[2rem] border border-dashed border-gray-200">
                                     No users match your search.
                                 </div>
@@ -182,12 +190,12 @@ export const AdminUsersPage: React.FC = () => {
                     )}
                 </>
             }
-            pagination={!isEmpty && filteredUsers.length > 0 && (
+            pagination={!isEmpty && totalUsers > 0 && (
                 <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
                     itemsPerPage={itemsPerPage}
-                    totalItems={filteredUsers.length}
+                    totalItems={totalUsers}
                     onPageChange={setCurrentPage}
                 />
             )}
