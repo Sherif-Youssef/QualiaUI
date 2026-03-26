@@ -41,6 +41,9 @@ export const LoginPage: React.FC = () => {
         setMfaToken(data.mfa_token);
       } else {
         localStorage.setItem('token', data.access_token);
+        if (data.must_change_password) {
+          localStorage.setItem('must_change_password', 'true');
+        }
         navigate('/projects');
       }
     } catch (err: any) {
