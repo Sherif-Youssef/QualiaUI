@@ -32,19 +32,21 @@ export const mapTestSuiteToViewModel = (dto: TestSuiteDTO): TestSuite => ({
 });
 export const mapTestCaseToViewModel = (dto: TestCaseDTO): TestCase => ({
     id: String(dto.id),
-    suiteId: String(dto.suite_id),
+    suiteId: String(dto.testsuite_id),
     name: dto.name,
-    url: dto.url,
-    mode: dto.mode,
-    plainText: dto.plain_text,
-    prompt: dto.prompt,
-    steps: dto.steps,
-    executionSteps: dto.execution_steps,
-    status: dto.status,
+    description: dto.description,
+    url: dto.base_url || '',
+    mode: (dto.executable_steps && dto.executable_steps.length > 0) ? 'step-based' : 'plain',
+    plainText: dto.instruction || '',
+    prompt: dto.instruction || '',
+    steps: dto.executable_steps || [],
+    executionSteps: dto.executable_steps || [],
+    status: dto.status || 'idle',
     runVersion: dto.run_version,
     createdAt: dto.created_at,
 });
 export const mapUserToViewModel = (dto: UserDTO): UserProfile => ({
+    id: String(dto.id),
     fullName: `${dto.first_name || ''} ${dto.last_name || ''}`.trim() || 'User',
     username: dto.username || '',
     email: dto.email,
@@ -52,6 +54,8 @@ export const mapUserToViewModel = (dto: UserDTO): UserProfile => ({
     bannerUrl: dto.banner_url,
     role: dto.role || 'Member',
     isAdmin: dto.is_admin || dto.role === 'admin',
+    isActive: dto.is_active !== false,
+    isTempPass: !!dto.is_temp_pass,
     emailNotifications: dto.email_notifications ?? true,
     twoFactorEnabled: dto.two_factor_enabled ?? false,
 });

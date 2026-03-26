@@ -44,29 +44,35 @@ export const ProjectPage: React.FC = () => {
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            if (!projectId) return;
+    const fetchData = React.useCallback(async () => {
+        if (!projectId) return;
 
-            setIsLoading(true);
-            setError(null);
-            try {
-                const offset = (currentPage - 1) * itemsPerPage;
-                const [suitesResult] = await Promise.all([
-                    testSuiteService.getTestSuites(projectId, offset, itemsPerPage, debouncedSearch),
-                    projectService.getProjectById(projectId)
-                ]);
-                setTestSuites(suitesResult.testSuites);
-                setTotalSuites(suitesResult.total);
-            } catch (err: any) {
-                setError(err.response?.data?.detail || 'Failed to load test suites.');
-            } finally {
-                setIsLoading(false);
+        setIsLoading(true);
+        setError(null);
+        try {
+            const offset = (currentPage - 1) * itemsPerPage;
+            const [suitesResult] = await Promise.all([
+                testSuiteService.getTestSuites(projectId, offset, itemsPerPage, debouncedSearch),
+                projectService.getProjectById(projectId)
+            ]);
+
+            if (suitesResult.testSuites.length === 0 && currentPage > 1 && suitesResult.total > 0) {
+                setCurrentPage(prev => prev - 1);
+                return;
             }
-        };
 
-        fetchData();
+            setTestSuites(suitesResult.testSuites);
+            setTotalSuites(suitesResult.total);
+        } catch (err: any) {
+            setError(err.response?.data?.detail || 'Failed to load test suites.');
+        } finally {
+            setIsLoading(false);
+        }
     }, [projectId, currentPage, debouncedSearch]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const totalPages = Math.ceil(totalSuites / itemsPerPage);
 
@@ -84,7 +90,7 @@ export const ProjectPage: React.FC = () => {
         setModalError(null);
         try {
             await testSuiteService.deleteTestSuite(projectId!, deleteConfirmation.id);
-            setTestSuites(testSuites.filter(suite => suite.id !== deleteConfirmation.id));
+            await fetchData();
             setDeleteConfirmation(null);
         } catch (err: any) {
             setModalError(err.response?.data?.detail || 'Failed to delete test suite.');
@@ -104,10 +110,8 @@ export const ProjectPage: React.FC = () => {
         setModalLoading(true);
         setModalError(null);
         try {
-            const updatedSuite = await testSuiteService.updateTestSuite(projectId!, id, data);
-            setTestSuites(testSuites.map(suite =>
-                suite.id === id ? updatedSuite : suite
-            ));
+            await testSuiteService.updateTestSuite(projectId!, id, data);
+            await fetchData();
             setIsModalOpen(false);
             setEditingSuite(null);
         } catch (err: any) {
@@ -123,8 +127,9 @@ export const ProjectPage: React.FC = () => {
         setModalLoading(true);
         setModalError(null);
         try {
-            const newSuite = await testSuiteService.createTestSuite(projectId, data);
-            setTestSuites([...testSuites, newSuite]);
+            await testSuiteService.createTestSuite(projectId, data);
+            setCurrentPage(1);
+            await fetchData();
             setIsModalOpen(false);
             setEditingSuite(null);
         } catch (err: any) {
@@ -134,7 +139,8 @@ export const ProjectPage: React.FC = () => {
         }
     };
 
-    const isEmpty = testSuites.length === 0 && !isLoading;
+    const isTrulyEmpty = totalSuites === 0 && debouncedSearch === '' && !isLoading;
+    const isSearchEmpty = testSuites.length === 0 && debouncedSearch !== '' && !isLoading;
     return (
         <ProjectLayout
             header={<ProjectHeader 
@@ -146,7 +152,7 @@ export const ProjectPage: React.FC = () => {
                 canManageSuites={canManageSuites} 
                 canManageProject={canManageProject}
             />}
-            searchBar={!isEmpty && (
+            searchBar={(
                 <SearchBar
                     value={searchQuery}
                     onChange={setSearchQuery}
@@ -162,7 +168,7 @@ export const ProjectPage: React.FC = () => {
                             <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
                             <p className="text-gray-500 font-medium">Loading project data...</p>
                         </div>
-                    ) : isEmpty ? (
+                    ) : isTrulyEmpty ? (
                         <TestSuitEmptyState canManageSuites={canManageSuites} onCreate={() => {
                             setModalError(null);
                             setIsModalOpen(true);
@@ -176,7 +182,7 @@ export const ProjectPage: React.FC = () => {
                                 onDelete={handleDeleteClick}
                                 canManageSuites={canManageSuites}
                             />
-                            {testSuites.length === 0 && !isLoading && (
+                            {isSearchEmpty && (
                                 <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
                                     <p className="text-gray-500 font-medium">No test suites match your search.</p>
                                 </div>

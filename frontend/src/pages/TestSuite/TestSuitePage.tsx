@@ -32,7 +32,7 @@ export const TestSuitePage: React.FC = () => {
     const [totalCases, setTotalCases] = useState(0);
     const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
 
-    const itemsPerPage = 5;
+    const itemsPerPage = 6;
 
 
     useEffect(() => {
@@ -43,24 +43,34 @@ export const TestSuitePage: React.FC = () => {
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
-    useEffect(() => {
-        const fetchTestCases = async () => {
-            if (!suiteId || !projectId) return;
-            setIsLoading(true);
-            setError(null);
-            try {
-                const offset = (currentPage - 1) * itemsPerPage;
-                const result = await testCaseService.getTestCases(projectId, suiteId, offset, itemsPerPage, debouncedSearch);
-                setTestCases(result.testCases);
-                setTotalCases(result.total);
-            } catch (err: any) {
-                setError(err.response?.data?.detail || 'Failed to load test cases.');
-            } finally {
-                setIsLoading(false);
+    const fetchTestCases = React.useCallback(async () => {
+        if (!suiteId || !projectId) return;
+        setIsLoading(true);
+        setError(null);
+        try {
+            const offset = (currentPage - 1) * itemsPerPage;
+            const result = await testCaseService.getTestCases(projectId, suiteId, offset, itemsPerPage, debouncedSearch);
+
+            if (result.testCases.length === 0 && currentPage > 1 && result.total > 0) {
+                setCurrentPage(prev => {
+                    const next = prev - 1;
+                    return next > 0 ? next : 1;
+                });
+                return;
             }
-        };
-        fetchTestCases();
+
+            setTestCases(result.testCases);
+            setTotalCases(result.total);
+        } catch (err: any) {
+            setError(err.response?.data?.detail || 'Failed to load test cases.');
+        } finally {
+            setIsLoading(false);
+        }
     }, [suiteId, projectId, currentPage, debouncedSearch]);
+
+    useEffect(() => {
+        fetchTestCases();
+    }, [fetchTestCases]);
 
     const totalPages = Math.ceil(totalCases / itemsPerPage);
 
@@ -81,7 +91,7 @@ export const TestSuitePage: React.FC = () => {
         setModalError(null);
         try {
             await testCaseService.deleteTestCase(projectId!, suiteId!, deleteConfirmation.id);
-            setTestCases(testCases.filter(tc => tc.id !== deleteConfirmation.id));
+            await fetchTestCases();
             setDeleteConfirmation(null);
         } catch (err: any) {
             setModalError(err.response?.data?.detail || 'Failed to delete test case.');
@@ -117,12 +127,12 @@ export const TestSuitePage: React.FC = () => {
         setModalError(null);
         try {
             if (editingTestCase) {
-                const updatedCase = await testCaseService.updateTestCase(projectId!, suiteId!, editingTestCase.id, data);
-                setTestCases(testCases.map(tc => tc.id === editingTestCase.id ? updatedCase : tc));
+                await testCaseService.updateTestCase(projectId!, suiteId!, editingTestCase.id, data);
             } else {
-                const newCase = await testCaseService.createTestCase(projectId!, suiteId!, data);
-                setTestCases([...testCases, newCase]);
+                await testCaseService.createTestCase(projectId!, suiteId!, data);
+                setCurrentPage(1);
             }
+            await fetchTestCases();
             setIsModalOpen(false);
             setEditingTestCase(null);
         } catch (err: any) {
@@ -131,6 +141,9 @@ export const TestSuitePage: React.FC = () => {
             setModalLoading(false);
         }
     };
+
+    const isTrulyEmpty = totalCases === 0 && debouncedSearch === '' && !isLoading;
+    const isSearchEmpty = testCases.length === 0 && debouncedSearch !== '' && !isLoading;
 
     return (
         <TestSuiteLayout
@@ -164,6 +177,11 @@ export const TestSuitePage: React.FC = () => {
                             <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
                             <p className="text-gray-500 font-medium font-sans">Loading Test Cases...</p>
                         </div>
+                    ) : isTrulyEmpty ? (
+                         <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
+                             <p className="text-gray-500 font-medium text-lg mb-2">Workspace is currently empty</p>
+                             <p className="text-gray-400">Add your first test case to get started.</p>
+                         </div>
                     ) : (
                         <>
                             <TestCaseTable
@@ -173,7 +191,7 @@ export const TestSuitePage: React.FC = () => {
                                 onDelete={handleDeleteClick}
                                 canManageCases={canManageCases}
                             />
-                            {testCases.length === 0 && !isLoading && (
+                            {isSearchEmpty && (
                                 <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
                                     <p className="text-gray-500 font-medium">No test cases match your search.</p>
                                 </div>

@@ -2,15 +2,13 @@ export type TestStatus = 'idle' | 'running' | 'passed' | 'failed' | 'success' | 
 
 export interface TestCaseDTO {
     id: number | string;
-    suite_id: number | string;
+    testsuite_id: number | string;
     name: string;
-    url: string;
-    mode: 'plain' | 'step-based';
-    plain_text?: string;
-    prompt?: string;
-    steps?: any[];
-    execution_steps?: any[];
-    status: TestStatus;
+    description: string;
+    base_url: string;
+    instruction: string;
+    executable_steps?: any[];
+    status?: TestStatus;
     run_version?: string;
     created_at?: string;
 }
@@ -19,6 +17,7 @@ export interface TestCase {
     id: string;
     suiteId: string;
     name: string;
+    description?: string;
     url: string;
     mode: 'plain' | 'step-based';
     plainText?: string;
