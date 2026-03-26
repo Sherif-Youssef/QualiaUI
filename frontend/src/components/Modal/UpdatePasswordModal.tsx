@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { passwordService } from '@/services/password';
 import { ModalHeader, ErrorMessage, SuccessMessage } from '@/components/GeneralComponents';
 
 interface Props {
     onClose: () => void;
+    isForced?: boolean;
 }
 
-export const UpdatePasswordModal: React.FC<Props> = ({ onClose }) => {
+export const UpdatePasswordModal: React.FC<Props> = ({ onClose, isForced = false }) => {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -64,18 +65,19 @@ export const UpdatePasswordModal: React.FC<Props> = ({ onClose }) => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in duration-300">
             <div className="bg-card w-full max-w-md rounded-[2rem] shadow-2xl border border-border overflow-hidden flex flex-col animate-in zoom-in-95 duration-300">
                 <ModalHeader
-                    title="Update Password"
-                    subtitle="Secure your account with a new password"
+                    title={isForced ? "Security Reset Required" : "Update Password"}
+                    subtitle={isForced ? "You must set a new password before proceeding" : "Secure your account with a new password"}
                     icon={Lock}
                     onClose={onClose}
+                    hideClose={isForced}
                 />
 
                 <form onSubmit={handleUpdate} className="p-8 space-y-5">
-                    {}
+                    { }
                     {error && <ErrorMessage message={error} />}
                     {success && <SuccessMessage message={success} />}
 
-                    {}
+                    { }
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Current Password</label>
@@ -201,13 +203,17 @@ export const UpdatePasswordModal: React.FC<Props> = ({ onClose }) => {
                                 'Update Password'
                             )}
                         </button>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="w-full py-4 text-muted-foreground font-bold hover:bg-muted/50 rounded-2xl transition-colors"
-                        >
-                            Cancel
-                        </button>
+                        {
+                            !isForced && (
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="w-full py-4 text-muted-foreground font-bold hover:bg-muted/50 rounded-2xl transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                            )
+                        }
                     </div>
                 </form>
             </div>
