@@ -18,12 +18,14 @@ def create_all():
     from src.projects.models import Project, UserProjectLink
     from src.testsuites.models import TestSuite
     from src.testcases.models import TestCase
-    from src.runs.models import TestRun
+    from src.runs.models import TestRun, TestCaseRun, TestStepRun
     User.model_rebuild()
     Project.model_rebuild()
     UserProjectLink.model_rebuild()
     TestSuite.model_rebuild()
     TestCase.model_rebuild()
     TestRun.model_rebuild()
+    TestCaseRun.model_rebuild()
+    TestStepRun.model_rebuild()
     
     SQLModel.metadata.create_all(engine)

@@ -20,6 +20,7 @@ from src.auth.models import User
 from src.projects.models import Role as ProjectRole
 from src.projects.queries import get_with_link
 from src.projects.service import check_project_role
+from src.testcases.models import TestCase
 from src.testsuites.queries import get_by_id as get_testsuite_by_id
 
 from ..models import TestRun, TestCaseRun, TestStepRun, TestStatus, TestRunMode
@@ -35,8 +36,6 @@ class RunContext:
     project_id: int
     testsuite_id: int
     mode: TestRunMode
-    name: str
-    description: str
     started_at: datetime
     aborted: bool = False
 
@@ -90,16 +89,14 @@ def _build_specs(session: Session, testsuite_id: int, mode: TestRunMode) -> list
             if not tc.executable_steps:
                 raise HTTPException(status_code=400, detail=f"Test case '{tc.name}' has no executable steps")
             specs.append(TestCaseSpec(
-                name=tc.name,
-                description=tc.description,
+                metadata={"id": tc.id},
                 url=tc.base_url,
                 executable_steps=[ExecActionInput(**s) for s in tc.executable_steps],
             ))
 
         elif mode == TestRunMode.NATURAL:
             specs.append(TestCaseSpec(
-                name=tc.name,
-                description=tc.description,
+                metadata={"id": tc.id},
                 url=tc.base_url,
                 instruction=tc.instruction,
             ))
@@ -137,6 +134,7 @@ def _step_to_active(
             executable=step.executable.model_dump() if step.executable else None,
             screenshot_before=step.snapshot_before.screenshot if step.snapshot_before else None,
             screenshot_after=step.snapshot_after.screenshot if step.snapshot_after else None,
+            llm_action=step.action.recreation_prompt if step.action else None,
             started_at=step.started_at,
             finished_at=step.finished_at,
             status=TestStatus(step.status),
@@ -175,16 +173,24 @@ async def _persist_run(
     for nxt in (TestStatus.ERROR, TestStatus.FAILED, TestStatus.ABORTED):
         if nxt in statuses:
                 overall_status = nxt
-    
+
     if overall_status is None:
         overall_status = TestStatus.PASSED
+
+    testsuite = get_testsuite_by_id(
+        session,
+        project_id=ctx.project_id,
+        testsuite_id=ctx.testsuite_id
+    )
+    testcases = get_all_testcases(session, ctx.testsuite_id)
+    testcases_by_id = {tc.id: tc for tc in testcases}
 
     # create TestRun
     test_run = TestRun(
         run_uid=run_id,
         project_id=ctx.project_id,
-        name=ctx.name,
-        description=ctx.description,
+        name=testsuite.name,
+        description=testsuite.description,
         mode=ctx.mode,
         started_at=ctx.started_at,
         finished_at=finished_at,
@@ -201,11 +207,18 @@ async def _persist_run(
 
         case_status = TestStatus(engine_run.status)
 
+        testcase = testcases_by_id[spec.metadata["id"]]
+
+        if engine_run.status == TestStatus.PASSED:
+            executables = [step.executable.model_dump() for step in steps]
+            testcase.executable_steps = executables
+            session.add(testcase)
+
         case_run = TestCaseRun(
             testrun_id=test_run.id,
             base_url=engine_run.base_url,
-            name=spec.name,
-            description=spec.description,
+            name=testcase.name,
+            description=testcase.description,
             instruction=spec.instruction,
             started_at=ctx.started_at,
             finished_at=finished_at,
@@ -227,6 +240,7 @@ async def _persist_run(
                 executable=step.executable.model_dump() if step.executable else None,
                 screenshot_before=step.snapshot_before.screenshot if step.snapshot_before else None,
                 screenshot_after=step.snapshot_after.screenshot if step.snapshot_after else None,
+                llm_action=step.action.recreation_prompt if step.action else None,
                 started_at=step.started_at,
                 finished_at=step.finished_at,
                 status=TestStatus(step.status),
@@ -298,8 +312,8 @@ async def start_run(
     return ActiveTestRun(
         run_id=run_id,
         indices=ctx.manager.indices,
-        name=ctx.name,
-        description=ctx.description,
+        name=testsuite.name,
+        description=testsuite.description,
         mode=ctx.mode,
         started_at=ctx.started_at,
         finished_at=None,

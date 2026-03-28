@@ -14,8 +14,7 @@ class TestCaseSpec(BaseModel):
     or instruction (for NATURAL mode).
     """
     url: str
-    name: str
-    description: str = ""
+    metadata: dict | None = None
     executable_steps: list[ExecAction] | None = None
     instruction: str | None = None
     max_steps: int | None = None

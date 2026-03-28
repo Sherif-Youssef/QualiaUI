@@ -66,6 +66,7 @@ class TestStepRun(SQLModel, table=True):
     screenshot_before: bytes | None = Field(default=None)
     screenshot_after: bytes | None = Field(default=None)
     error_message: str | None = Field(default=None)
+    llm_action: str | None = Field(default=None)
 
     started_at: datetime
     finished_at: datetime

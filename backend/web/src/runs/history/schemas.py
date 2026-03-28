@@ -60,6 +60,7 @@ class TestCaseRunRead(TestCaseRunBase):
 
 class TestStepRunBase(BaseModel):
     executable: dict | None = None
+    llm_action: str | None = None
     screenshot_before: Base64Bytes | None = None
     screenshot_after: Base64Bytes | None = None
     started_at: datetime
