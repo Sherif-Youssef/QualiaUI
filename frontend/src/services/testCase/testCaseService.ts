@@ -3,12 +3,16 @@ import { TestCaseDTO, TestCase } from "@/types/test-case";
 import { mapTestCaseToViewModel } from "@/utils/mappers";
 
 export const testCaseService = {
-    getTestCases: async (projectId: string, suiteId: string): Promise<TestCase[]> => {
+    getTestCases: async (projectId: string, suiteId: string, offset = 0, limit = 5, title?: string): Promise<{ testCases: TestCase[]; total: number }> => {
         try {
             const response = await api.get<ApiResponse<TestCaseDTO>>(
-                `/projects/${projectId}/testsuites/${suiteId}/testcases`
+                `/projects/${projectId}/testsuites/${suiteId}/testcases`,
+                { params: { offset, limit, title: title || undefined } }
             );
-            return response.data.items.map(mapTestCaseToViewModel);
+            return {
+                testCases: response.data.items.map(mapTestCaseToViewModel),
+                total: response.data.total_items
+            };
         } catch (error) {
             console.error(`Service error (getTestCases suite ${suiteId}):`, error);
             throw error;
@@ -29,9 +33,16 @@ export const testCaseService = {
 
     createTestCase: async (projectId: string, suiteId: string, data: any): Promise<TestCase> => {
         try {
+            const payload = {
+                name: data.name,
+                description: data.description || '',
+                base_url: data.url || '',
+                instruction: data.prompt || data.plainText || '',
+                executable_steps: data.steps || null
+            };
             const response = await api.post<TestCaseDTO>(
                 `/projects/${projectId}/testsuites/${suiteId}/testcases`,
-                data
+                payload
             );
             return mapTestCaseToViewModel(response.data);
         } catch (error) {
@@ -42,9 +53,16 @@ export const testCaseService = {
 
     updateTestCase: async (projectId: string, suiteId: string, caseId: string, data: any): Promise<TestCase> => {
         try {
+            const payload = {
+                name: data.name,
+                description: data.description,
+                base_url: data.url,
+                instruction: data.prompt || data.plainText,
+                executable_steps: data.steps
+            };
             const response = await api.put<TestCaseDTO>(
                 `/projects/${projectId}/testsuites/${suiteId}/testcases/${caseId}`,
-                data
+                payload
             );
             return mapTestCaseToViewModel(response.data);
         } catch (error) {

@@ -5,6 +5,7 @@ interface ModalHeaderProps {
     subtitle?: string;
     icon?: LucideIcon;
     onClose: () => void;
+    hideClose?: boolean;
     iconColorClass?: string;
     bgColorClass?: string;
 }
@@ -14,6 +15,7 @@ export const ModalHeader = ({
     subtitle,
     icon: Icon,
     onClose,
+    hideClose = false,
     iconColorClass = "text-primary",
     bgColorClass = "bg-primary/10"
 }: ModalHeaderProps) => {
@@ -30,12 +32,14 @@ export const ModalHeader = ({
                     {subtitle && <p className="text-xs text-muted-foreground">{subtitle}</p>}
                 </div>
             </div>
-            <button
-                onClick={onClose}
-                className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground"
-            >
-                <X className="w-5 h-5" />
-            </button>
+            {!hideClose && (
+                <button
+                    onClick={onClose}
+                    className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground"
+                >
+                    <X className="w-5 h-5" />
+                </button>
+            )}
         </div>
     );
 };

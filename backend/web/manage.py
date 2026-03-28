@@ -9,7 +9,6 @@ import click
 
 
 WEB_ROOT = Path(__file__).resolve().parent
-print(WEB_ROOT)
 COMMANDS_DIR = WEB_ROOT / "src" / "management" / "commands"
 
 

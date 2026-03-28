@@ -1,5 +1,5 @@
-
 export interface UserProfile {
+    id: string;
     fullName: string;
     username: string;
     email: string;
@@ -7,11 +7,14 @@ export interface UserProfile {
     bannerUrl?: string;
     role: string;
     isAdmin: boolean;
+    isActive: boolean;
+    isTempPass: boolean;
     emailNotifications: boolean;
     twoFactorEnabled: boolean;
 }
 
 export interface UserDTO {
+    id: number | string;
     first_name: string;
     last_name: string;
     username: string;
@@ -20,9 +23,12 @@ export interface UserDTO {
     banner_url?: string;
     role?: string;
     is_admin: boolean;
+    is_active?: boolean;
+    is_temp_pass?: boolean;
     email_notifications: boolean;
     two_factor_enabled: boolean;
 }
+
 
 export interface PasswordDTO {
     current_password: string;

@@ -28,12 +28,14 @@ const Header = ({ onMenuClick, onSearch }: HeaderProps) => {
         isLoading,
         error,
         retryFetch
-    } = useSearch(onSearch);
+    } = useSearch(onSearch);
+
     const userData = {
         name: "Ali Mohsen",
         role: "Admin Account",
         initials: "AM"
-    };
+    };
+
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -47,7 +49,8 @@ const Header = ({ onMenuClick, onSearch }: HeaderProps) => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isProfileOpen]);
+    }, [isProfileOpen]);
+
     useEffect(() => {
         if (isSearchMobileOpen && searchInputRef.current) {
             searchInputRef.current.focus();

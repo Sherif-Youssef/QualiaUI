@@ -18,7 +18,10 @@ export interface UserViewModel {
     createdAt?: string;
     status: 'active' | 'inactive';
 }
-
+export interface UserListResult {
+    users: UserViewModel[];
+    total: number;
+}
 const mapUserToViewModel = (dto: UserManagementDTO): UserViewModel => ({
     id: String(dto.id),
     firstName: dto.first_name || '',
@@ -28,14 +31,19 @@ const mapUserToViewModel = (dto: UserManagementDTO): UserViewModel => ({
     role: dto.role || 'user',
     isAdmin: dto.is_admin || dto.role === 'admin',
     createdAt: dto.created_at,
-    status: 'active'
+    status: dto.is_active !== false ? 'active' : 'inactive'
 });
 
 export const adminService = {
-    getAllUsers: async (): Promise<UserViewModel[]> => {
+    getAllUsers: async (offset = 0, limit = 8, username?: string): Promise<UserListResult> => {
         try {
-            const response = await api.get<ApiResponse<UserManagementDTO>>('/users');
-            return response.data.items.map(mapUserToViewModel);
+            const response = await api.get<ApiResponse<UserManagementDTO>>('/users', {
+                params: { offset, limit, username: username || undefined }
+            });
+            return {
+                users: response.data.items.map(mapUserToViewModel),
+                total: response.data.total_items
+            };
         } catch (error) {
             throw error;
         }
@@ -90,7 +98,7 @@ export const adminService = {
 
     filterUsers: (users: UserViewModel[], query: string): UserViewModel[] => {
         const lowerQuery = query.toLowerCase();
-        return users.filter(u => 
+        return users.filter(u =>
             u.email.toLowerCase().includes(lowerQuery) ||
             `${u.firstName} ${u.lastName}`.toLowerCase().includes(lowerQuery)
         );
@@ -98,8 +106,8 @@ export const adminService = {
 
     searchUsers: async (query: string, limit: number = 5): Promise<UserViewModel[]> => {
         try {
-            const allUsers = await adminService.getAllUsers();
-            return adminService.filterUsers(allUsers, query).slice(0, limit);
+            const result = await adminService.getAllUsers(0, limit, query);
+            return result.users;
         } catch (error) {
             return [];
         }

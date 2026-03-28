@@ -29,37 +29,54 @@ export const TestSuitePage: React.FC = () => {
     const [modalError, setModalError] = useState<string | null>(null);
     const { canManageCases, isLoading: permissionsLoading, error: permissionsError } = useProjectPermissions(projectId);
 
-    const itemsPerPage = 5;
+    const [totalCases, setTotalCases] = useState(0);
+    const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+
+    const itemsPerPage = 6;
+
 
     useEffect(() => {
-        const fetchTestCases = async () => {
-            if (!suiteId || !projectId) return;
-            setIsLoading(true);
-            setError(null);
-            try {
-                const cases = await testCaseService.getTestCases(projectId, suiteId);
-                setTestCases(cases);
-            } catch (err: any) {
-                setError(err.response?.data?.detail || 'Failed to load test cases.');
-            } finally {
-                setIsLoading(false);
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+            setCurrentPage(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const fetchTestCases = React.useCallback(async () => {
+        if (!suiteId || !projectId) return;
+        setIsLoading(true);
+        setError(null);
+        try {
+            const offset = (currentPage - 1) * itemsPerPage;
+            const result = await testCaseService.getTestCases(projectId, suiteId, offset, itemsPerPage, debouncedSearch);
+
+            if (result.testCases.length === 0 && currentPage > 1 && result.total > 0) {
+                setCurrentPage(prev => {
+                    const next = prev - 1;
+                    return next > 0 ? next : 1;
+                });
+                return;
             }
-        };
+
+            setTestCases(result.testCases);
+            setTotalCases(result.total);
+        } catch (err: any) {
+            setError(err.response?.data?.detail || 'Failed to load test cases.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [suiteId, projectId, currentPage, debouncedSearch]);
+
+    useEffect(() => {
         fetchTestCases();
-    }, [suiteId, projectId]);
+    }, [fetchTestCases]);
+
+    const totalPages = Math.ceil(totalCases / itemsPerPage);
+
 
     const isPageLoading = isLoading || permissionsLoading;
     const pageError = error || permissionsError;
-
-    const filteredCases = testCases.filter(testCase =>
-        testCase.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    const totalPages = Math.ceil(filteredCases.length / itemsPerPage);
-    const paginatedCases = filteredCases.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
 
     const handleDeleteClick = (id: string, name: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -74,7 +91,7 @@ export const TestSuitePage: React.FC = () => {
         setModalError(null);
         try {
             await testCaseService.deleteTestCase(projectId!, suiteId!, deleteConfirmation.id);
-            setTestCases(testCases.filter(tc => tc.id !== deleteConfirmation.id));
+            await fetchTestCases();
             setDeleteConfirmation(null);
         } catch (err: any) {
             setModalError(err.response?.data?.detail || 'Failed to delete test case.');
@@ -110,12 +127,12 @@ export const TestSuitePage: React.FC = () => {
         setModalError(null);
         try {
             if (editingTestCase) {
-                const updatedCase = await testCaseService.updateTestCase(projectId!, suiteId!, editingTestCase.id, data);
-                setTestCases(testCases.map(tc => tc.id === editingTestCase.id ? updatedCase : tc));
+                await testCaseService.updateTestCase(projectId!, suiteId!, editingTestCase.id, data);
             } else {
-                const newCase = await testCaseService.createTestCase(projectId!, suiteId!, data);
-                setTestCases([...testCases, newCase]);
+                await testCaseService.createTestCase(projectId!, suiteId!, data);
+                setCurrentPage(1);
             }
+            await fetchTestCases();
             setIsModalOpen(false);
             setEditingTestCase(null);
         } catch (err: any) {
@@ -124,6 +141,9 @@ export const TestSuitePage: React.FC = () => {
             setModalLoading(false);
         }
     };
+
+    const isTrulyEmpty = totalCases === 0 && debouncedSearch === '' && !isLoading;
+    const isSearchEmpty = testCases.length === 0 && debouncedSearch !== '' && !isLoading;
 
     return (
         <TestSuiteLayout
@@ -157,16 +177,21 @@ export const TestSuitePage: React.FC = () => {
                             <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
                             <p className="text-gray-500 font-medium font-sans">Loading Test Cases...</p>
                         </div>
+                    ) : isTrulyEmpty ? (
+                         <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
+                             <p className="text-gray-500 font-medium text-lg mb-2">Workspace is currently empty</p>
+                             <p className="text-gray-400">Add your first test case to get started.</p>
+                         </div>
                     ) : (
                         <>
                             <TestCaseTable
-                                testCases={paginatedCases}
+                                testCases={testCases}
                                 onNavigate={(caseId) => navigate(`/project/${projectId}/suite/${suiteId}/case/${caseId}`)}
                                 onEdit={handleEditClick}
                                 onDelete={handleDeleteClick}
                                 canManageCases={canManageCases}
                             />
-                            {filteredCases.length === 0 && !isLoading && (
+                            {isSearchEmpty && (
                                 <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
                                     <p className="text-gray-500 font-medium">No test cases match your search.</p>
                                 </div>
@@ -175,12 +200,12 @@ export const TestSuitePage: React.FC = () => {
                     )}
                 </>
             }
-            pagination={filteredCases.length > 0 && (
+            pagination={totalCases > 0 && (
                 <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
                     itemsPerPage={itemsPerPage}
-                    totalItems={filteredCases.length}
+                    totalItems={totalCases}
                     onPageChange={setCurrentPage}
                 />
             )}

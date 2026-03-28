@@ -27,31 +27,46 @@ export const AdminUsersPage: React.FC = () => {
     const [modalError, setModalError] = useState<string | null>(null);
     const [passwordModal, setPasswordModal] = useState<{ pass: string; name: string; title: string } | null>(null);
 
-    const itemsPerPage = 8;
+    const [totalUsers, setTotalUsers] = useState(0);
+    const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+
+    const itemsPerPage = 6;
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            setIsLoading(true);
-            setError(null);
-            try {
-                const data = await adminService.getAllUsers();
-                setUsers(data);
-            } catch (err: any) {
-                setError(err.response?.data?.detail || 'Failed to fetch users. Ensure the backend admin endpoints are implemented.');
-            } finally {
-                setIsLoading(false);
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+            setCurrentPage(1);
+        }, 500);
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const fetchUsers = React.useCallback(async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const offset = (currentPage - 1) * itemsPerPage;
+            const result = await adminService.getAllUsers(offset, itemsPerPage, debouncedSearch);
+            
+            if (result.users.length === 0 && currentPage > 1 && result.total > 0) {
+                setCurrentPage(prev => prev - 1);
+                return;
             }
-        };
+
+            setUsers(result.users);
+            setTotalUsers(result.total);
+        } catch (err: any) {
+            setError(err.response?.data?.detail || 'Failed to fetch users.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [currentPage, debouncedSearch]);
+
+    useEffect(() => {
         fetchUsers();
-    }, []);
+    }, [fetchUsers]);
 
-    const filteredUsers = adminService.filterUsers(users, searchQuery);
+    const totalPages = Math.ceil(totalUsers / itemsPerPage);
 
-    const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
-    const paginatedUsers = filteredUsers.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-    );
 
     const handleDeleteClick = (id: string, name: string) => {
         setModalError(null);
@@ -65,7 +80,7 @@ export const AdminUsersPage: React.FC = () => {
         setModalError(null);
         try {
             await adminService.deleteUser(deleteConfirmation.id);
-            setUsers(users.filter(u => u.id !== deleteConfirmation.id));
+            await fetchUsers();
             setDeleteConfirmation(null);
         } catch (err: any) {
             setModalError(err.response?.data?.detail || 'Failed to delete user.');
@@ -84,8 +99,8 @@ export const AdminUsersPage: React.FC = () => {
         setModalLoading(true);
         setModalError(null);
         try {
-            const updatedUser = await adminService.updateUser(id, data);
-            setUsers(users.map(u => u.id === id ? updatedUser : u));
+            await adminService.updateUser(id, data);
+            await fetchUsers();
             setIsModalOpen(false);
             setEditingUser(null);
         } catch (err: any) {
@@ -101,13 +116,14 @@ export const AdminUsersPage: React.FC = () => {
         setModalError(null);
         try {
             const { user: newUser, temporaryPassword } = await adminService.createUser(data);
-            setUsers([...users, newUser]);
+            setCurrentPage(1);
+            await fetchUsers();
             setIsModalOpen(false);
             setEditingUser(null);
-            
+
             if (temporaryPassword) {
-                setPasswordModal({ 
-                    pass: temporaryPassword, 
+                setPasswordModal({
+                    pass: temporaryPassword,
                     name: `${newUser.firstName} ${newUser.lastName}`,
                     title: 'User Created Successfully'
                 });
@@ -135,15 +151,16 @@ export const AdminUsersPage: React.FC = () => {
         }
     };
 
-    const isEmpty = users.length === 0 && !isLoading;
+    const isTrulyEmpty = totalUsers === 0 && debouncedSearch === '' && !isLoading;
+    const isSearchEmpty = users.length === 0 && debouncedSearch !== '' && !isLoading;
 
     return (
         <ProjectsLayout
-            header={!isEmpty && <AdminUsersHeader onAddUser={() => {
+            header={<AdminUsersHeader onAddUser={() => {
                 setModalError(null);
                 setIsModalOpen(true);
             }} />}
-            searchBar={!isEmpty && (
+            searchBar={(
                 <SearchBar
                     value={searchQuery}
                     onChange={setSearchQuery}
@@ -159,7 +176,7 @@ export const AdminUsersPage: React.FC = () => {
                             <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
                             <p className="text-gray-500 font-bold text-lg">Syncing user directory...</p>
                         </div>
-                    ) : isEmpty ? (
+                    ) : isTrulyEmpty ? (
                         <AdminUsersEmptyState onCreateNew={() => {
                             setModalError(null);
                             setIsModalOpen(true);
@@ -167,13 +184,13 @@ export const AdminUsersPage: React.FC = () => {
                     ) : (
                         <>
                             <AdminUsersTable
-                                users={paginatedUsers}
+                                users={users}
                                 onEdit={handleEditClick}
                                 onDelete={handleDeleteClick}
                                 onRegeneratePassword={handleRegeneratePassword}
                             />
 
-                            {filteredUsers.length === 0 && !isLoading && (
+                            {isSearchEmpty && (
                                 <div className="text-center py-12 text-gray-500 font-medium bg-white rounded-[2rem] border border-dashed border-gray-200">
                                     No users match your search.
                                 </div>
@@ -182,12 +199,12 @@ export const AdminUsersPage: React.FC = () => {
                     )}
                 </>
             }
-            pagination={!isEmpty && filteredUsers.length > 0 && (
+            pagination={totalUsers > 0 && (
                 <Pagination
                     currentPage={currentPage}
                     totalPages={totalPages}
                     itemsPerPage={itemsPerPage}
-                    totalItems={filteredUsers.length}
+                    totalItems={totalUsers}
                     onPageChange={setCurrentPage}
                 />
             )}

@@ -53,9 +53,19 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
                             className="hover:bg-primary/[0.02] cursor-pointer group transition-all duration-200"
                         >
                             <td className="px-6 py-5">
-                                <span className="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors">
-                                    {testCase.name}
-                                </span>
+                                <div className="flex flex-col max-w-[300px]">
+                                    <span className="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors">
+                                        {testCase.name}
+                                    </span>
+                                    {testCase.description && (
+                                        <p 
+                                            className="text-[11px] text-gray-400 mt-1 line-clamp-2 leading-relaxed"
+                                            title={testCase.description}
+                                        >
+                                            {testCase.description}
+                                        </p>
+                                    )}
+                                </div>
                             </td>
                             <td className="px-6 py-5">
                                 <div className="flex items-center justify-center gap-3">

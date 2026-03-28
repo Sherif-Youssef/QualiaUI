@@ -15,7 +15,8 @@ export const profileService = {
 
     updateProfile: async (profile: Partial<UserProfile>): Promise<UserProfile> => {
         try {
-            const response = await api.put<UserDTO>('/auth/me', mapProfileToDTO(profile));
+            if (!profile.id) throw new Error('User ID is required for update');
+            const response = await api.put<UserDTO>(`/users/${profile.id}`, mapProfileToDTO(profile));
             return mapUserToViewModel(response.data);
         }
         catch (error) {
