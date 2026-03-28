@@ -52,4 +52,5 @@ export interface ActionStep {
     description?: string;
     screenshot?: string;
     type?: 'do' | 'check' | 'wait';
+    status?: TestStatus;
 }

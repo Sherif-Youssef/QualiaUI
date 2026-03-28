@@ -4,7 +4,7 @@ import { Circle } from "lucide-react";
 import { DashboardLayout } from "./DashboardLayout";
 import { DashboardMetrics } from "./DashboardMetrics";
 import { DashboardCharts } from "./DashboardCharts";
-import { dashboardService } from "@/services/dashboardService";
+import { dashboardService } from "@/services/dashboard/dashboardService";
 import { DashboardData } from "@/types/dashboard";
 import { authService } from "@/services/auth/auth";
 

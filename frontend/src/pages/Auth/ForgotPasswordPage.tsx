@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail } from 'lucide-react';
-import { passwordService } from '@/services/password';
+import { passwordService } from '@/services/password/password';
 import { ErrorMessage, SuccessMessage } from '@/components/GeneralComponents';
 import { AuthHeader } from './AuthHeader';
 import { AuthForm } from './AuthForm';

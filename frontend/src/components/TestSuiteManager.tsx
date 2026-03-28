@@ -13,6 +13,8 @@ interface TestSuiteManagerProps {
   onStepClick: (step: ActionStep, testCase: TestCase) => void;
   onInstructionChange: (testId: string, newInstruction: string) => void;
   onStepTextChange: (testId: string, stepId: string, newText: string) => void;
+  isReadOnly?: boolean;
+  header?: React.ReactNode;
 }
 
 export const TestSuiteManager: React.FC<TestSuiteManagerProps> = ({
@@ -24,32 +26,40 @@ export const TestSuiteManager: React.FC<TestSuiteManagerProps> = ({
   onStepClick,
   onInstructionChange,
   onStepTextChange,
+  isReadOnly,
+  header,
 }) => {
   return (
-    <aside className="w-full lg:w-[35%] bg-gray-50 border-r border-border flex flex-col">
-      <div className="p-6 border-b border-border bg-card">
-        <h2 className="text-headline-md font-sans font-semibold text-foreground mb-5">
-          Test Suite Manager
-        </h2>
-        
-        <div className="flex gap-3">
-          <Button
-            onClick={onAddTestCase}
-            className="bg-primary text-primary-foreground hover:bg-primary/90 font-body font-normal"
-          >
-            <Plus className="w-5 h-5 mr-2" strokeWidth={1.5} />
-            Add Test Case
-          </Button>
-          
-          <Button
-            onClick={onRunAllTests}
-            variant="outline"
-            className="bg-transparent text-foreground border-border hover:bg-muted hover:text-foreground font-body font-normal"
-          >
-            <Play className="w-5 h-5 mr-2" strokeWidth={1.5} />
-            Run All
-          </Button>
-        </div>
+    <aside className="w-full lg:w-[400px] xl:w-[450px] bg-white border-r border-border flex flex-col h-full overflow-hidden shadow-sm z-10">
+      <div className={`px-6 flex flex-col justify-center border-b border-border bg-white ${isReadOnly ? 'py-6' : 'h-[100px]'}`}>
+        {header ? header : (
+          <>
+            <h2 className="text-xl font-sans font-bold text-foreground">
+              {isReadOnly ? 'Run Details' : 'Suite Manager'}
+            </h2>
+            
+            {!isReadOnly && (
+              <div className="flex gap-3">
+                <Button
+                  onClick={onAddTestCase}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-body font-normal"
+                >
+                  <Plus className="w-5 h-5 mr-2" strokeWidth={1.5} />
+                  Add Test Case
+                </Button>
+                
+                <Button
+                  onClick={onRunAllTests}
+                  variant="ghost"
+                  className="bg-transparent text-gray-700 border border-gray-200 hover:bg-gray-100 hover:!text-gray-900 font-body font-normal"
+                >
+                  <Play className="w-5 h-5 mr-2" strokeWidth={1.5} />
+                  Run All
+                </Button>
+              </div>
+            )}
+          </>
+        )}
       </div>
       
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
@@ -62,6 +72,7 @@ export const TestSuiteManager: React.FC<TestSuiteManagerProps> = ({
             onStepClick={onStepClick}
             onInstructionChange={onInstructionChange}
             onStepTextChange={onStepTextChange}
+            isReadOnly={isReadOnly}
           />
         ))}
       </div>

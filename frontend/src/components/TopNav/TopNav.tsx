@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Database, Users } from 'lucide-react';
 import { authService } from '@/services/auth/auth';
-import { notificationService } from '@/services/notificationService';
+import { notificationService } from '@/services/notifications/notificationService';
 import { NotificationViewModel } from '@/types/notification';
 
 import { Brand } from './Brand';

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
@@ -21,6 +21,16 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <h2 className="text-2xl font-sans font-semibold text-gray-800 tracking-tight uppercase">Test Suites</h2>
             
             <div className="flex items-center gap-3">
+                <Link to={`/project/${projectId}/history`}>
+                    <Button
+                        variant="ghost"
+                        className="text-gray-500 hover:text-primary hover:bg-primary/5 font-bold transition-all px-4 flex items-center gap-2"
+                    >
+                        <History className="w-5 h-5" />
+                        Run History
+                    </Button>
+                </Link>
+
                 <Link to={`/project/${projectId}/members`}>
                     <Button
                         variant="ghost"

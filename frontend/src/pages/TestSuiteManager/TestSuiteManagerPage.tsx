@@ -7,19 +7,13 @@ import { TestCase, ActionStep } from '@/types/test-case';
 import { TestSuiteManagerLayout } from './TestSuiteManagerLayout';
 import { testCaseService } from '@/services/testCase/testCaseService';
 import { ErrorMessage } from '@/components/GeneralComponents';
-import { TestExecutionService } from '@/services/testSuit/TestExecutionService';
-
-interface BackendAction {
-    timestamp: string;
-    reasoning?: string;
-    success?: boolean;
-    error?: string;
-    recreation_prompt?: string;
-    screenshot?: string;
-}
+import { runService } from '@/services/runs/runService';
+import { mapActiveStepToActionStep } from '@/utils/mappers';
+import { TestSuiteManagerLoading } from './TestSuiteManagerLoading';
+import { ActiveTestStepRun } from '@/types/run';
 
 export const TestSuiteManagerPage: React.FC = () => {
-    const { suiteId } = useParams<{ suiteId: string }>();
+    const { projectId, suiteId } = useParams<{ projectId: string; suiteId: string }>();
     const [testCases, setTestCases] = useState<TestCase[]>([]);
     const [currentScreenshot, setCurrentScreenshot] = useState('');
     const [currentUrl, setCurrentUrl] = useState('');
@@ -34,12 +28,12 @@ export const TestSuiteManagerPage: React.FC = () => {
 
     useEffect(() => {
         const fetchTestCases = async () => {
-            if (!suiteId) return;
+            if (!projectId || !suiteId) return;
             setIsLoading(true);
             setError(null);
             try {
-                const data = await testCaseService.getTestCases(suiteId);
-                setTestCases(data);
+                const data = await testCaseService.getTestCases(projectId, suiteId, 0, 100);
+                setTestCases(data.testCases);
             } catch (err: any) {
                 setError(err.response?.data?.detail || 'Failed to load test cases.');
             } finally {
@@ -47,53 +41,15 @@ export const TestSuiteManagerPage: React.FC = () => {
             }
         };
         fetchTestCases();
-
-        const socket = TestExecutionService.connectToWebSocket();
-        socketRef.current = socket;
-
-        socket.onmessage = (event) => {
-            const data: { test_id: string; action: BackendAction } = JSON.parse(event.data);
-
-            setTestCases(prev =>
-                prev.map(tc => {
-                    if (tc.id !== data.test_id) return tc;
-
-                    const steps = tc.steps || [];
-                    const newStep: ActionStep = {
-                        id: crypto.randomUUID(),
-                        number: (steps as any[]).length + 1,
-                        text: data.action.reasoning || data.action.recreation_prompt || 'No description',
-                        screenshot: data.action.screenshot ? `data:image/png;base64,${data.action.screenshot}` : '',
-                        type: 'do',
-                    };
-
-                    const updatedStatus =
-                        data.action.success === undefined
-                            ? 'running'
-                            : data.action.success
-                                ? 'success'
-                                : 'failure';
-
-                    if (newStep.screenshot) setCurrentScreenshot(newStep.screenshot);
-                    setCurrentUrl(tc.url || '');
-                    return {
-                        ...tc,
-                        status: updatedStatus,
-                        steps: [...steps, newStep] as ActionStep[],
-                    };
-                })
-            );
-        };
-
-        return () => socket.close();
-    }, [suiteId]);
+        return () => { if (socketRef.current) socketRef.current.close(); };
+    }, [projectId, suiteId]);
 
     const handleSaveTestCase = async (data: { name: string; url: string; mode: 'plain' | 'step-based' }) => {
-        if (!suiteId) return;
+        if (!projectId || !suiteId) return;
         setModalLoading(true);
         setModalError(null);
         try {
-            const newCase = await testCaseService.createTestCase(suiteId, data);
+            const newCase = await testCaseService.createTestCase(projectId, suiteId, data);
             setTestCases(prev => [...prev, newCase]);
             setIsModalOpen(false);
         } catch (err: any) {
@@ -104,77 +60,87 @@ export const TestSuiteManagerPage: React.FC = () => {
     };
 
     const handleRunAllTests = async () => {
-        const idleTests = testCases.filter(tc => tc.status === 'idle');
+        if (!projectId || !suiteId) return;
+        try {
+            const run = await runService.startRun(projectId, suiteId);
+            setTestCases(prev => prev.map(tc => ({ ...tc, status: 'running', steps: [] })));
+            const socket = runService.subscribeToRun(projectId, run.run_id, (data: any) => {
+                if (data.event === 'done') {
+                    setTestCases(prev => prev.map(tc => 
+                        tc.status === 'running' ? { ...tc, status: 'success' } : tc
+                    ));
+                    return;
+                }
+                if (data.event === 'error') {
+                    setError(data.detail || 'Test execution encountered an error.');
+                    return;
+                }
+                const stepRun = data as ActiveTestStepRun;
+                setTestCases(prev => prev.map((tc, idx) => {
+                    if (idx !== stepRun.index) return tc;
+                    const steps = tc.steps || [];
+                    const newStep = mapActiveStepToActionStep(stepRun, steps.length);
+                    if (newStep.screenshot) setCurrentScreenshot(newStep.screenshot);
+                    setCurrentUrl(tc.url || '');
 
-        for (const tc of idleTests) {
-            setTestCases(prev =>
-                prev.map(t => (t.id === tc.id ? { ...t, status: 'running', steps: [] } : t))
-            );
+                    let finalStatus = tc.status;
+                    if (['FAILED', 'ERROR', 'ABORTED'].includes(stepRun.status)) {
+                        finalStatus = 'failure';
+                    } else if (tc.status === 'running' || tc.status === 'idle') {
+                        finalStatus = 'running';
+                    }
 
-            await TestExecutionService.executeTestCase(tc.url, tc.prompt || '');
+                    return {
+                        ...tc,
+                        status: finalStatus,
+                        steps: [...steps, newStep] as ActionStep[],
+                    };
+                }));
+            });
+            socketRef.current = socket;
+            socket.onclose = () => {};
+        } catch (err: any) {
+            setError(err.response?.data?.detail || 'Failed to start the run.');
         }
     };
 
-    const handleStepClick = (step: ActionStep, testCase: TestCase) => {
-        setCurrentScreenshot(step.screenshot || '');
-        setCurrentUrl(testCase.url || '');
-    };
-
-    if (isLoading) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
-                <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
-                <p className="text-gray-500 font-medium font-sans">Syncing Test Cases...</p>
-            </div>
-        );
-    }
+    if (isLoading) return <TestSuiteManagerLoading />;
 
     return (
         <TestSuiteManagerLayout
+            error={error && <ErrorMessage message={error} />}
             sidebar={
-                <div className="flex flex-col h-full">
-                    {error && <div className="p-4"><ErrorMessage message={error} /></div>}
-                    <TestSuiteManager
+                <TestSuiteManager
                         testCases={testCases}
                         onAddTestCase={() => {
                             setModalError(null);
                             setIsModalOpen(true);
                         }}
                         onRunAllTests={handleRunAllTests}
-                        onRunSingleTest={(id) => console.log('Run single test', id)}
-                        onEditTestCase={(tc) => console.log('Edit test case', tc)}
+                        onRunSingleTest={() => {}}
+                        onEditTestCase={() => {}}
                         onInstructionChange={async (testId, newInstruction) => {
+                            if (!projectId || !suiteId) return;
                             try {
-                                await testCaseService.updateTestCase(testId, { prompt: newInstruction });
-                                setTestCases(prev =>
-                                    prev.map(tc => (tc.id === testId ? { ...tc, prompt: newInstruction } : tc))
-                                );
-                            } catch (err) {
-                                console.error("Failed to update instruction", err);
-                            }
+                                await testCaseService.updateTestCase(projectId, suiteId, testId, { prompt: newInstruction });
+                                setTestCases(prev => prev.map(tc => (tc.id === testId ? { ...tc, prompt: newInstruction } : tc)));
+                            } catch (err) {}
                         }}
                         onStepTextChange={async (testId, stepId, newText) => {
+                            if (!projectId || !suiteId) return;
                             try {
                                 const testCase = testCases.find(tc => tc.id === testId);
                                 if (!testCase) return;
-                                const updatedSteps = (testCase.steps || []).map(s =>
-                                    s.id === stepId ? { ...s, text: newText } : s
-                                );
-                                await testCaseService.updateTestCase(testId, { steps: updatedSteps });
-                                setTestCases(prev =>
-                                    prev.map(tc =>
-                                        tc.id === testId
-                                            ? { ...tc, steps: updatedSteps as ActionStep[] }
-                                            : tc
-                                    )
-                                );
-                            } catch (err) {
-                                console.error("Failed to update step text", err);
-                            }
+                                const updatedSteps = (testCase.steps || []).map(s => s.id === stepId ? { ...s, text: newText } : s);
+                                await testCaseService.updateTestCase(projectId, suiteId, testId, { steps: updatedSteps });
+                                setTestCases(prev => prev.map(tc => tc.id === testId ? { ...tc, steps: updatedSteps as ActionStep[] } : tc));
+                            } catch (err) {}
                         }}
-                        onStepClick={handleStepClick}
+                        onStepClick={(step, tc) => {
+                            setCurrentScreenshot(step.screenshot || '');
+                            setCurrentUrl(tc.url || '');
+                        }}
                     />
-                </div>
             }
             content={
                 <ScreenshotViewer
@@ -189,10 +155,7 @@ export const TestSuiteManagerPage: React.FC = () => {
             modals={
                 <AddTestCaseModal
                     isOpen={isModalOpen}
-                    onClose={() => {
-                        setIsModalOpen(false);
-                        setModalError(null);
-                    }}
+                    onClose={() => { setIsModalOpen(false); setModalError(null); }}
                     onSave={handleSaveTestCase}
                     isLoading={modalLoading}
                     error={modalError}

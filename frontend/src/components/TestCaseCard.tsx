@@ -13,6 +13,7 @@ interface TestCaseCardProps {
   onStepClick: (step: ActionStep, testCase: TestCase) => void;
   onInstructionChange: (testId: string, newInstruction: string) => void;
   onStepTextChange: (testId: string, stepId: string, newText: string) => void;
+  isReadOnly?: boolean;
 }
 
 export const TestCaseCard: React.FC<TestCaseCardProps> = ({
@@ -22,6 +23,7 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
   onStepClick,
   onInstructionChange,
   onStepTextChange,
+  isReadOnly
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [editingStep, setEditingStep] = useState<ActionStep | null>(null);
@@ -115,8 +117,9 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
           </h3>
           <div className="group/prompt relative">
             <p 
-              className="text-body-sm font-body text-muted-foreground truncate italic cursor-pointer hover:text-primary transition-colors"
+              className={`text-body-sm font-body text-muted-foreground truncate italic ${!isReadOnly ? 'cursor-pointer hover:text-primary' : ''} transition-colors`}
               onClick={() => {
+                if (isReadOnly) return;
                 const newPrompt = prompt('Edit Instruction:', testCase.prompt || '');
                 if (newPrompt !== null && newPrompt !== testCase.prompt) {
                   onInstructionChange(testCase.id, newPrompt);
@@ -128,41 +131,43 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
           </div>
         </div>
 
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <Button
-            onClick={() => onRunTest(testCase.id)}
-            variant="ghost"
-            size="icon"
-            className="bg-transparent text-secondary hover:bg-secondary/10 hover:text-secondary h-8 w-8"
-            aria-label="Re-run test"
-          >
-            <RotateCw className="w-4 h-4" strokeWidth={1.5} />
-          </Button>
+        {!isReadOnly && (
+          <div className="flex items-center gap-1 flex-shrink-0">
+            <Button
+              onClick={() => onRunTest(testCase.id)}
+              variant="ghost"
+              size="icon"
+              className="bg-transparent text-secondary hover:bg-secondary/10 hover:text-secondary h-8 w-8"
+              aria-label="Re-run test"
+            >
+              <RotateCw className="w-4 h-4" strokeWidth={1.5} />
+            </Button>
 
-          <Button
-            onClick={() => onEditTest(testCase)}
-            variant="ghost"
-            size="icon"
-            className="bg-transparent text-foreground hover:bg-muted hover:text-foreground h-8 w-8"
-            aria-label="Edit test"
-          >
-            <Pencil className="w-4 h-4" strokeWidth={1.5} />
-          </Button>
+            <Button
+              onClick={() => onEditTest(testCase)}
+              variant="ghost"
+              size="icon"
+              className="bg-transparent text-foreground hover:bg-muted hover:text-foreground h-8 w-8"
+              aria-label="Edit test"
+            >
+              <Pencil className="w-4 h-4" strokeWidth={1.5} />
+            </Button>
+          </div>
+        )}
 
-          <Button
-            onClick={() => setIsExpanded(!isExpanded)}
-            variant="ghost"
-            size="icon"
-            className="bg-transparent text-foreground hover:bg-muted hover:text-foreground h-8 w-8"
-            aria-label={isExpanded ? 'Collapse steps' : 'Expand steps'}
-          >
-            {isExpanded ? (
-              <ChevronDown className="w-5 h-5" strokeWidth={1.5} />
-            ) : (
-              <ChevronRight className="w-5 h-5" strokeWidth={1.5} />
-            )}
-          </Button>
-        </div>
+        <Button
+          onClick={() => setIsExpanded(!isExpanded)}
+          variant="ghost"
+          size="icon"
+          className="bg-transparent text-foreground hover:bg-muted hover:text-foreground h-8 w-8 flex-shrink-0"
+          aria-label={isExpanded ? 'Collapse steps' : 'Expand steps'}
+        >
+          {isExpanded ? (
+            <ChevronDown className="w-5 h-5" strokeWidth={1.5} />
+          ) : (
+            <ChevronRight className="w-5 h-5" strokeWidth={1.5} />
+          )}
+        </Button>
       </div>
 
       <div
@@ -197,9 +202,16 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
                 </div>
               </div>
 
-              <span className="flex-1 text-body-md font-body text-foreground min-w-0">
-                {collapsedSteps.has(step.id) ? getPreviewText(step.text) : step.text}
-              </span>
+              <div className="flex-1 min-w-0 flex flex-col">
+                <span className="text-body-md font-body text-foreground truncate">
+                  {collapsedSteps.has(step.id) ? getPreviewText(step.text) : step.text}
+                </span>
+                {step.description && !collapsedSteps.has(step.id) && (
+                  <span className="text-[10px] font-medium text-failure mt-1 bg-failure/5 px-2 py-1 rounded border border-failure/10">
+                    {step.description}
+                  </span>
+                )}
+              </div>
 
               <div className="flex items-center gap-1 flex-shrink-0">
                 <Button
@@ -215,18 +227,20 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
                   <ChevronsUpDown className="w-4 h-4" strokeWidth={1.5} />
                 </Button>
 
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleEditStep(step);
-                  }}
-                  variant="ghost"
-                  size="icon"
-                  className="bg-transparent text-foreground hover:bg-muted hover:text-foreground h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                  aria-label="Edit step"
-                >
-                  <Pencil className="w-3 h-3" strokeWidth={1.5} />
-                </Button>
+                {!isReadOnly && (
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditStep(step);
+                    }}
+                    variant="ghost"
+                    size="icon"
+                    className="bg-transparent text-foreground hover:bg-muted hover:text-foreground h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                    aria-label="Edit step"
+                  >
+                    <Pencil className="w-3 h-3" strokeWidth={1.5} />
+                  </Button>
+                )}
               </div>
             </div>
           ))}
