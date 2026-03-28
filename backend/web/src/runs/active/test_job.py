@@ -1,7 +1,7 @@
 import asyncio
 from typing import AsyncGenerator, Optional, Union, Coroutine
 
-from automation_engine import TestingEngine, TestStep, TestTermination, ExecAction, TestRun, TestStatus
+from automation_engine import TestingEngine, TestStep, TestTermination, ExecAction, TestRun, TestStatus, Complete, Fail
 
 StepType = Union["TestStep", "TestTermination"]
 
@@ -67,6 +67,8 @@ class TestJob:
 
                 session.finalize()
                 self._final_run = session.summary
+                if self._final_run.status != TestStatus.PASSED:
+                    self._queue.put(TestTermination(term_signal=Fail(reason="Test didn't pass")))
 
         except asyncio.CancelledError:
             await self._queue.put(self._abort_event())
@@ -96,6 +98,10 @@ class TestJob:
                 session.finalize_group()
                 session.finalize()
                 self._final_run = session.summary
+                if self._final_run.status == TestStatus.PASSED:
+                    self._queue.put(TestTermination(term_signal=Complete(reason="All steps passed")))
+                else:
+                    self._queue.put(TestTermination(term_signal=Fail(reason="At least one step failed")))
 
         except asyncio.CancelledError:
             await self._queue.put(self._abort_event())
