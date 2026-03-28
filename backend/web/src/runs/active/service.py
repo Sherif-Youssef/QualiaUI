@@ -300,8 +300,6 @@ async def start_run(
         project_id=project_id,
         testsuite_id=testsuite_id,
         mode=mode,
-        name=testsuite.name,
-        description=testsuite.description,
         started_at=datetime.now(),
     )
     _runs[run_id] = ctx
