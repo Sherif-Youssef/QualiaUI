@@ -305,7 +305,7 @@ async def start_run(
     _runs[run_id] = ctx
 
     # auto-save when complete
-    asyncio.create_task(_auto_save(run_id))
+    asyncio.create_task(_auto_save(run_id, session))
 
     return ActiveTestRun(
         run_id=run_id,

@@ -7,10 +7,7 @@ import { DashboardDTO, DashboardData } from "@/types/dashboard";
 import { ActiveTestStepRun, TestCaseRunRead, TestStepRunRead } from "@/types/run";
 
 export const mapTestStepRunToActionStep = (sr: TestStepRunRead, index: number): ActionStep => {
-    const actionType = sr.executable?.action || '';
-    const actionText = sr.executable?.thought 
-        ? `${sr.executable.thought}${actionType ? ` (${actionType})` : ''}`
-        : actionType || 'Action Step';
+    const actionText = sr.llm_action || 'Action Step';
     
     const screenshot = sr.screenshot_after || sr.screenshot_before;
     
@@ -49,7 +46,7 @@ export const mapActiveStepToActionStep = (stepRun: ActiveTestStepRun, currentSte
     return {
         id: crypto.randomUUID(),
         number: currentStepCount + 1,
-        text: stepRun.executable?.description || 'Executing Action...',
+        text: stepRun.llm_action || 'Executing Action...',
         screenshot: screenshot ? `data:image/png;base64,${screenshot}` : '',
         type: 'do',
     };

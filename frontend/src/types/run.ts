@@ -8,6 +8,7 @@ export interface ActiveTestRun {
     run_id: string;
     indices: number[];
     name: string;
+    llm_action?: string;
     description: string;
     mode: TestRunMode;
     started_at: string;
@@ -65,6 +66,7 @@ export interface TestStepRunRead {
     id: number;
     testcaserun_id: number;
     executable?: any;
+    llm_action?: string;
     screenshot_before?: string;
     screenshot_after?: string;
     started_at: string;
