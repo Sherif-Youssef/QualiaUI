@@ -11,6 +11,16 @@ from . import service
 
 router = APIRouter(prefix="/active", tags=["active"])
 
+# list all active runs
+
+@router.get("", response_model=list[ActiveTestRun])
+async def list_runs_route(
+    session: SessionDep,
+    user: UserDep,
+    project_id: int,
+):
+    return service.list_testsuite_runs(session, user, project_id)
+
 
 # trigger a run
 

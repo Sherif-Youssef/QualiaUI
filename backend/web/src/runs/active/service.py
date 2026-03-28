@@ -322,6 +322,14 @@ async def start_run(
 
 
 # status
+def list_testsuite_runs(
+    session: Session,
+    user: User,
+    project_id: int,
+) -> list[ActiveTestRun]:
+    run_ids = [ctx.run_id for ctx in _runs.values() if ctx.project_id == project_id]
+    return [get_run_status(session, user, project_id, run_id) for run_id in run_ids]
+
 
 def get_run_status(
     session: Session,
