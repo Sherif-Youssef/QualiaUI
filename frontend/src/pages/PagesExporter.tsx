@@ -9,6 +9,8 @@ import { AuthCallbackPage } from './Auth/AuthCallbackPage';
 import { ForgotPasswordPage } from './Auth/ForgotPasswordPage';
 import { AdminUsersPage } from './Admin/AdminUsersPage';
 import { ProjectMembersPage } from './Project/ProjectMembersPage';
+import { ProjectHistoryPage } from './Project/ProjectHistoryPage';
+import { ProjectHistoryDetailsPage } from './Project/ProjectHistoryDetailsPage';
 
 export {
     LoginPage,
@@ -21,5 +23,7 @@ export {
     ForgotPasswordPage,
     TestSuiteManagerPage,
     AdminUsersPage,
-    ProjectMembersPage
+    ProjectMembersPage,
+    ProjectHistoryPage,
+    ProjectHistoryDetailsPage
 }

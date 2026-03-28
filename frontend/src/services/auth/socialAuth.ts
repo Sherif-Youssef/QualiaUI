@@ -1,5 +1,5 @@
 import api from '@/lib/api';
-
+// not handled yet in the backend
 export const socialAuthService = {
     loginWithGoogle: async () => {
         try {

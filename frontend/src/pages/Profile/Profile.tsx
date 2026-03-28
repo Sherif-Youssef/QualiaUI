@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Settings } from 'lucide-react';
-import { profileService } from "@/services/profile";
+import { profileService } from "@/services/profile/profile";
 import { adminService } from "@/services/admin/adminService";
 import { useParams } from "react-router-dom";
 import { ImageCropModal } from "@/components/Modal/ImageCropModal";

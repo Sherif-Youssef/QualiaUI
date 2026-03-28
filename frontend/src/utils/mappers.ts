@@ -1,9 +1,60 @@
 import { ProjectDTO, Project } from "@/types/project";
 import { TestSuiteDTO, TestSuite } from "@/types/test-suit";
-import { TestCaseDTO, TestCase } from "@/types/test-case";
+import { TestCaseDTO, TestCase, ActionStep } from "@/types/test-case";
 import { UserDTO, UserProfile, PasswordDTO, UpdatePasswordForm } from "@/types/user";
 import { NotificationDTO, NotificationViewModel } from "@/types/notification";
 import { DashboardDTO, DashboardData } from "@/types/dashboard";
+import { ActiveTestStepRun, TestCaseRunRead, TestStepRunRead } from "@/types/run";
+
+export const mapTestStepRunToActionStep = (sr: TestStepRunRead, index: number): ActionStep => {
+    const actionType = sr.executable?.action || '';
+    const actionText = sr.executable?.thought 
+        ? `${sr.executable.thought}${actionType ? ` (${actionType})` : ''}`
+        : actionType || 'Action Step';
+    
+    const screenshot = sr.screenshot_after || sr.screenshot_before;
+    
+    return {
+        id: sr.id.toString(),
+        number: index + 1,
+        text: actionText,
+        screenshot: screenshot ? (screenshot.startsWith('data:') ? screenshot : `data:image/png;base64,${screenshot}`) : '',
+        status: sr.status === 'PASSED' ? 'success' : 'failure' as any,
+        description: sr.error_message || undefined
+    };
+};
+
+export const mapTestCaseRunToViewModel = (cr: TestCaseRunRead, steps: TestStepRunRead[] = []): TestCase => {
+    const statusMapping: Record<string, TestCase['status']> = {
+        'PASSED': 'success',
+        'FAILED': 'failure',
+        'ABORTED': 'failure',
+        'ERROR': 'failure'
+    };
+
+    return {
+        id: cr.id.toString(),
+        suiteId: '',
+        name: cr.name || `Test Case ${cr.id}`,
+        prompt: cr.instruction || cr.description || '',
+        status: statusMapping[cr.status] || 'idle',
+        url: cr.base_url,
+        mode: 'plain',
+        steps: steps.map((sr, idx) => mapTestStepRunToActionStep(sr, idx))
+    };
+};
+
+export const mapActiveStepToActionStep = (stepRun: ActiveTestStepRun, currentStepCount: number): ActionStep => {
+    const screenshot = stepRun.screenshot_after || stepRun.screenshot_before;
+    return {
+        id: crypto.randomUUID(),
+        number: currentStepCount + 1,
+        text: stepRun.executable?.description || 'Executing Action...',
+        screenshot: screenshot ? `data:image/png;base64,${screenshot}` : '',
+        type: 'do',
+    };
+};
+
 export const mapProjectToViewModel = (dto: ProjectDTO): Project => ({
     id: String(dto.id),
     name: dto.name,

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Lock, Eye, EyeOff } from 'lucide-react';
-import { passwordService } from '@/services/password';
+import { passwordService } from '@/services/password/password';
 import { ModalHeader, ErrorMessage, SuccessMessage } from '@/components/GeneralComponents';
 
 interface Props {

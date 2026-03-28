@@ -21,7 +21,6 @@ export const TestSuitePage: React.FC = () => {
     const [editingTestCase, setEditingTestCase] = useState<TestCase | null>(null);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
     const [runVersion, setRunVersion] = useState('v1.0');
-    const [isRunningAll, setIsRunningAll] = useState(false);
     const [testCases, setTestCases] = useState<TestCase[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -107,17 +106,8 @@ export const TestSuitePage: React.FC = () => {
         setIsModalOpen(true);
     };
     const handleRunAll = () => {
-        setIsRunningAll(true);
-        setTestCases(testCases.map(tc => ({ ...tc, status: 'running', runVersion })));
-
-        setTimeout(() => {
-            setTestCases(prev => prev.map(tc => ({
-                ...tc,
-                status: Math.random() > 0.3 ? 'passed' : 'failed',
-                runVersion,
-            })));
-            setIsRunningAll(false);
-        }, 2000);
+        if (!projectId || !suiteId) return;
+        navigate(`/project/${projectId}/suite/${suiteId}/manager`);
     };
 
     const handleSaveTestCase = async (data: any) => {
@@ -147,11 +137,12 @@ export const TestSuitePage: React.FC = () => {
 
     return (
         <TestSuiteLayout
+            error={pageError && <ErrorMessage message={pageError} />}
             header={
                 <TestSuiteHeader
                     runVersion={runVersion}
                     setRunVersion={setRunVersion}
-                    isRunningAll={isRunningAll}
+                    isRunningAll={false}
                     onRunAll={handleRunAll}
                     onAddTestCase={() => {
                         setEditingTestCase(null);
@@ -170,8 +161,6 @@ export const TestSuitePage: React.FC = () => {
             }
             content={
                 <>
-                    {pageError && <div className="mb-6"><ErrorMessage message={pageError} /></div>}
-
                     {isPageLoading && testCases.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
                             <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>

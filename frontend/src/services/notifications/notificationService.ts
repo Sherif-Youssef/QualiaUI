@@ -1,10 +1,12 @@
 import api from "@/lib/api";
-import { NotificationDTO, NotificationViewModel } from "@/types/notification";
-import { mapNotificationToViewModel } from "@/utils/mappers";
+import { NotificationViewModel } from "@/types/notification";
+
 
 export const notificationService = {
     getLatestNotifications: async (): Promise<NotificationViewModel[]> => {
         try {
+            // const response = await api.get<NotificationDTO[]>('/notifications');
+            // return response.data.map(mapNotificationToViewModel);
             return [
                 {
                     id: '1',

@@ -5,7 +5,7 @@ import { Pagination } from '@/components/Pagination';
 import { AddTestSuiteModal } from '@/components/Modal/AddTestSuiteModal';
 import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
 import { TestSuite } from '@/types/test-suit';
-import { testSuiteService } from '@/services/testSuiteService';
+import { testSuiteService } from '@/services/testSuit/testSuiteService';
 import { projectService } from '@/services/project/projectService';
 
 import { useProjectPermissions } from '@/hooks/useProjectPermissions';

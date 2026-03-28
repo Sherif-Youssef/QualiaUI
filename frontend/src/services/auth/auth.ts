@@ -12,14 +12,6 @@ export const authService = {
             throw error;
         }
     },
-    register: async (userData: any) => {
-        try {
-            const response = await api.post('/auth/register', userData);
-            return response.data;
-        } catch (error: any) {
-            throw error;
-        }
-    },
     getCurrentUser: async () => {
         try {
             const response = await api.get('/auth/me');

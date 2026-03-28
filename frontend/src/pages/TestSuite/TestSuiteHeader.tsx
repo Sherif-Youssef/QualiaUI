@@ -40,15 +40,15 @@ export const TestSuiteHeader: React.FC<TestSuiteHeaderProps> = ({
                         <Button
                             onClick={onRunAll}
                             disabled={isRunningAll}
-                            variant="outline"
-                            className="h-10 border-primary text-primary hover:bg-primary/5 rounded-lg px-4"
+                            variant="ghost"
+                            className="h-10 border border-primary text-primary hover:bg-primary/10 hover:!text-primary rounded-lg px-4 transition-colors"
                         >
                             {isRunningAll ? (
                                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                             ) : (
                                 <Play className="w-4 h-4 mr-2" />
                             )}
-                            Run All
+                            Go to Manager
                         </Button>
 
                         <Button

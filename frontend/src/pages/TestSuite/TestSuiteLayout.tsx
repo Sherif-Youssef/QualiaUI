@@ -1,4 +1,3 @@
-import React from 'react';
 import { TopNav } from '@/components/TopNav';
 
 interface TestSuiteLayoutProps {
@@ -7,6 +6,7 @@ interface TestSuiteLayoutProps {
     content: React.ReactNode;
     pagination?: React.ReactNode;
     modals: React.ReactNode;
+    error?: React.ReactNode;
 }
 
 export const TestSuiteLayout: React.FC<TestSuiteLayoutProps> = ({
@@ -14,13 +14,15 @@ export const TestSuiteLayout: React.FC<TestSuiteLayoutProps> = ({
     searchBar,
     content,
     pagination,
-    modals
+    modals,
+    error
 }) => {
     return (
         <div className="min-h-screen bg-gray-50 text-left">
             <TopNav />
             <main className="max-w-7xl mx-auto px-4 md:px-8 py-8">
                 <div className="space-y-6">
+                    {error}
                     {header}
                     {searchBar}
                     {content}

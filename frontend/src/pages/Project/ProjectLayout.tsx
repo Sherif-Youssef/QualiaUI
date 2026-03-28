@@ -3,10 +3,10 @@ import { TopNav } from '@/components/TopNav';
 
 interface ProjectLayoutProps {
     header: React.ReactNode;
-    searchBar: React.ReactNode;
+    searchBar?: React.ReactNode;
     content: React.ReactNode;
     pagination?: React.ReactNode;
-    modals: React.ReactNode;
+    modals?: React.ReactNode;
 }
 
 export const ProjectLayout: React.FC<ProjectLayoutProps> = ({
