@@ -180,7 +180,7 @@ class PlaywrightBrowser:
         handler = self._dispatch.get(type(action))
         if handler is None:
             raise NotImplementedError(f"No compiler for {type(action).__name__}")
-        return await handler(self, **action.model_dump())
+        return await handler(self, **action.model_dump(exclude={"action_type"}))
 
     # Interactions
 

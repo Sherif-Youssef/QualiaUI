@@ -25,7 +25,19 @@ from src.testsuites.models import TestSuite
 from src.testsuites.router import router as testsuites_router
 from src.testcases.models import TestCase
 from src.testcases.router import router as testcases_router
+from src.runs.active.router import router as active_router
+from src.runs.history.router import router as history_router
+
 from src.database import get_session
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Single event loop for the entire test session."""
+    import asyncio
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
 
 
 @pytest.fixture()
@@ -137,6 +149,8 @@ def client(session: Session) -> Generator[TestClient, None, None]:
     app.include_router(projects_router, prefix="/api/v1")
     app.include_router(testsuites_router, prefix="/api/v1")
     app.include_router(testcases_router, prefix="/api/v1")
+    app.include_router(active_router, prefix="/api/v1/projects/{project_id}/runs")
+    app.include_router(history_router, prefix="/api/v1/projects/{project_id}/runs")
 
     def _override_get_session() -> Generator[Session, None, None]:
         yield session

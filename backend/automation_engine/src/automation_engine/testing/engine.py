@@ -163,6 +163,9 @@ class TestingSession:
         return self._test_run.current_group.steps
 
     def finalize(self) -> TestRun:
+        if self._test_run.current_group and not self._test_run.current_group.is_finalized:
+            raise ValueError("Current group is not finalized, call `finalize_group()` first")
+        
         self._test_run.finalize()
         logger.info("Finalized run")
         return self._test_run
@@ -296,7 +299,7 @@ class TestingSession:
     @__fail_fast
     async def __run_exec(self, raw_exec: ExecAction) -> TestStep:
         """Run a single executable action"""
-        step = TestStep(snapshot_before=await self.__capture_snapshot(), executable=raw_exec)
+        step = TestStep(executable=raw_exec)
         compiler = ActionCompiler(CompileContext(variables=self._engine._variable_store))
 
         # 1. Resolve
@@ -306,6 +309,8 @@ class TestingSession:
             logger.error(f"Failed to resolve action: {e}", exc_info=True)
             step.finalize(status=TestStatus.ERROR, error_message=f"Failed to resolve action: {e}")
             return step
+
+        step.snapshot_before = await self.__capture_snapshot()
 
         # 2. Execute
         try:
@@ -320,7 +325,8 @@ class TestingSession:
             logger.error(f"Error executing standalone action: {e}", exc_info=True)            
             return step
         
-        step.finalize(status=TestStatus.PASSED, snapshot_after=await self.__capture_snapshot())
+        step.snapshot_after = await self.__capture_snapshot()
+        step.finalize(status=TestStatus.PASSED)
         return step
 
     @__fail_fast
