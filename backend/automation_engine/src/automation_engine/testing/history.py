@@ -8,7 +8,6 @@ from pydantic import BaseModel, Field, computed_field
 from ..actions.terminations import Complete, Fail
 from ..actions.base import BaseAction, TerminationSignal
 from ..compilation import ExecAction
-from ..planning import BrowserState
 
 
 class TestStatus(StrEnum):

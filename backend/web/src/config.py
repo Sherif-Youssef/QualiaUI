@@ -9,5 +9,8 @@ ENV_FILE_PATH = Path(__file__).resolve().parents[2] / ".env"
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=str(ENV_FILE_PATH), extra="ignore")
     DATABASE_URL: str
+    LLM_MODEL: str = "gpt-5-nano-2025-08-07"
+    OPENAI_API_KEY: str
+
 
 settings = Settings()
