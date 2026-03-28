@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import asyncio
-from typing import AsyncGenerator, Optional, Union, Coroutine
+from typing import AsyncGenerator, Optional, Coroutine
 
 from automation_engine import TestingEngine, TestStep, TestTermination, ExecAction, TestRun, TestStatus, Complete, Fail
 
-StepType = Union["TestStep", "TestTermination"]
+StepType = TestStep | TestTermination
 
 
 class TestJob:
