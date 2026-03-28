@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import asyncio
 from typing import AsyncGenerator, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from automation_engine import TestingEngine, ExecAction, TestRun
 
@@ -21,12 +23,16 @@ class TestCaseSpec(BaseModel):
 
 
 class TestCaseEntry(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
     spec: TestCaseSpec
     job: TestJob
     steps: list[StepType] = Field(default_factory=list)
     completed: bool = False
     condition: asyncio.Condition = Field(default_factory=asyncio.Condition)
 
+
+TestCaseEntry.model_rebuild()
 
 class TestRunManager:
     """
