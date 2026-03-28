@@ -5,5 +5,7 @@ services:
       - ./:/app
     ports:
       - "8000:8000"
+    environment:
+      - PYTHONPATH=/app/automation_engine/src
     env_file:
       - .env

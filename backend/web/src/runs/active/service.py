@@ -176,7 +176,7 @@ async def _persist_run(
                 overall_status = nxt
 
     if overall_status is None:
-        overall_status = TestStatus.PASSED
+        overall_status = TestStatus.PASSED if statuses else TestStatus.ERROR
 
     testsuite = get_testsuite_by_id(
         session,

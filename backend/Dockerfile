@@ -17,7 +17,7 @@ RUN pip install --upgrade pip \
 
 # install the automation_engine
 COPY automation_engine /app/automation_engine
-RUN pip install --no-cache-dir /app/automation_engine
+RUN pip install -e /app/automation_engine
 RUN playwright install --with-deps chromium
 
 COPY web /app/web

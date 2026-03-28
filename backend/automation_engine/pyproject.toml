@@ -16,4 +16,4 @@ package-dir = {"" = "src"}
 where = ["src"]
 
 [tool.setuptools.package-data]
-my_package = ["src\automation_engine\serialization\js\assets"]
+"*" = ["**/assets/*.js", "**/assets/*.html", "**/assets/*.css"]

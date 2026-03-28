@@ -17,7 +17,7 @@ export interface ActiveTestRun {
 }
 
 export interface ActiveTestCaseRun {
-    index: number;
+    test_index: number;
     base_url: string;
     name: string;
     description: string;
@@ -28,13 +28,20 @@ export interface ActiveTestCaseRun {
 }
 
 export interface ActiveTestStepRun {
-    index: number;
+    test_index: number;
     executable?: any;
     screenshot_before?: string;
     screenshot_after?: string;
+    llm_action?: string;
     started_at: string;
     finished_at: string;
     status: TestStatus;
+}
+
+export interface ActiveTestCaseTermination {
+    test_index: number;
+    status: TestStatus;
+    reason: string | null;
 }
 
 
