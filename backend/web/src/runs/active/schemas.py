@@ -55,7 +55,7 @@ class ActiveTestCaseRun(BaseModel):
 
 class ActiveTestStepRun(BaseModel):
     """A finished step in an active run."""
-    index: int
+    test_index: int
     executable: dict | None = None
     screenshot_before: Base64Bytes | None = None
     screenshot_after: Base64Bytes | None = None
@@ -66,5 +66,6 @@ class ActiveTestStepRun(BaseModel):
 
 
 class ActiveTestCaseTermination(BaseModel):
+    test_index: int
     status: TestStatus
     reason: str | None

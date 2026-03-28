@@ -130,7 +130,7 @@ def _step_to_active(
 
     if isinstance(step, EngineTestStep):
         return ActiveTestStepRun(
-            index=index,
+            test_index=index,
             executable=step.executable.model_dump() if step.executable else None,
             screenshot_before=step.snapshot_before.screenshot if step.snapshot_before else None,
             screenshot_after=step.snapshot_after.screenshot if step.snapshot_after else None,
@@ -141,6 +141,7 @@ def _step_to_active(
         )
     elif isinstance(step, EngineTestTermination):
         return ActiveTestCaseTermination(
+            test_index=index,
             status=TestStatus.PASSED if isinstance(step.term_signal, EngineComplete) else TestStatus.FAILED,
             reason=step.term_signal.reason,
         )
