@@ -59,6 +59,7 @@ class ActiveTestStepRun(BaseModel):
     executable: dict | None = None
     screenshot_before: Base64Bytes | None = None
     screenshot_after: Base64Bytes | None = None
+    llm_action: str | None
     started_at: datetime
     finished_at: datetime
     status: TestStatus
