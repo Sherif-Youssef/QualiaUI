@@ -1,6 +1,5 @@
 import asyncio
 import uuid
-import logging
 
 from typing import AsyncGenerator
 from dataclasses import dataclass
@@ -9,9 +8,14 @@ from datetime import datetime
 from fastapi import HTTPException
 from sqlmodel import Session
 
-from automation_engine import TestingEngine, ExecActionInput, TestStep as EngineTestStep
+from automation_engine import (
+    TestingEngine,
+    ExecActionInput,
+    TestStep as EngineTestStep,
+    TestTermination as EngineTestTermination,
+    Complete as EngineComplete
+)
 
-from src.database import get_session
 from src.auth.models import User
 from src.projects.models import Role as ProjectRole
 from src.projects.queries import get_with_link
@@ -20,7 +24,7 @@ from src.testsuites.queries import get_by_id as get_testsuite_by_id
 
 from ..models import TestRun, TestCaseRun, TestStepRun, TestStatus, TestRunMode
 from .queries import get_all_testcases
-from .schemas import ActiveRunStatus, ActiveTestRun, ActiveTestCaseRun, ActiveTestStepRun
+from .schemas import ActiveRunStatus, ActiveTestRun, ActiveTestCaseRun, ActiveTestStepRun, ActiveTestCaseTermination
 from .run_manager import TestRunManager, TestCaseSpec
 
 
@@ -122,19 +126,28 @@ def _resolve_case_status(ctx: RunContext, index: int) -> ActiveRunStatus:
     return ActiveRunStatus.PENDING
 
 
-def _step_to_active(index: int, step: EngineTestStep) -> ActiveTestStepRun | None:
-    if not isinstance(step, EngineTestStep):
-        return None
+def _step_to_active(
+    index: int,
+    step: EngineTestStep | EngineTestTermination
+) -> ActiveTestStepRun | ActiveTestCaseTermination | None:
 
-    return ActiveTestStepRun(
-        index=index,
-        executable=step.executable.model_dump() if step.executable else None,
-        screenshot_before=step.snapshot_before.screenshot,
-        screenshot_after=step.snapshot_after.screenshot,
-        started_at=step.started_at,
-        finished_at=step.finished_at,
-        status=TestStatus(step.status),
-    )
+    if isinstance(step, EngineTestStep):
+        return ActiveTestStepRun(
+            index=index,
+            executable=step.executable.model_dump() if step.executable else None,
+            screenshot_before=step.snapshot_before.screenshot if step.snapshot_before else None,
+            screenshot_after=step.snapshot_after.screenshot if step.snapshot_after else None,
+            started_at=step.started_at,
+            finished_at=step.finished_at,
+            status=TestStatus(step.status),
+        )
+    elif isinstance(step, EngineTestTermination):
+        return ActiveTestCaseTermination(
+            status=TestStatus.PASSED if isinstance(step.term_signal, EngineComplete) else TestStatus.FAILED,
+            reason=step.term_signal.reason,
+        )
+    else:
+        return None
 
 
 # Database
@@ -197,6 +210,11 @@ async def _persist_run(
             started_at=ctx.started_at,
             finished_at=finished_at,
             status=case_status,
+            termination_reason=(
+                engine_run.groups[-1].term.term_signal.reason
+                if engine_run.groups[-1].term
+                else None
+            )
         )
         session.add(case_run)
         session.flush()
@@ -207,8 +225,8 @@ async def _persist_run(
             step_run = TestStepRun(
                 testcaserun_id=case_run.id,
                 executable=step.executable.model_dump() if step.executable else None,
-                screenshot_before=step.snapshot_before.screenshot,
-                screenshot_after=step.snapshot_after.screenshot,
+                screenshot_before=step.snapshot_before.screenshot if step.snapshot_before else None,
+                screenshot_after=step.snapshot_after.screenshot if step.snapshot_after else None,
                 started_at=step.started_at,
                 finished_at=step.finished_at,
                 status=TestStatus(step.status),

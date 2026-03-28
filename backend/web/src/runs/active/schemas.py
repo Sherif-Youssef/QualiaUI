@@ -62,3 +62,8 @@ class ActiveTestStepRun(BaseModel):
     started_at: datetime
     finished_at: datetime
     status: TestStatus
+
+
+class ActiveTestCaseTermination(BaseModel):
+    status: TestStatus
+    reason: str | None

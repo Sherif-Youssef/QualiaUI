@@ -50,6 +50,7 @@ class TestCaseRun(SQLModel, table=True):
     started_at: datetime
     finished_at: datetime
     status: TestStatus
+    termination_reason: str | None = Field(default=None)
 
     testrun: TestRun = Relationship(back_populates="testcases")
     teststeps: list["TestStepRun"] = Relationship(back_populates="testcaserun")

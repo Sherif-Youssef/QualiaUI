@@ -1,4 +1,5 @@
 import warnings
+from .actions import *
 from .testing.engine import TestingEngine, TestingSession
 from .testing.history import *
 from .testing.config import *

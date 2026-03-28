@@ -1,7 +1,6 @@
 import asyncio
 from typing import AsyncGenerator, Optional
 from pydantic import BaseModel, Field
-from enum import Enum
 
 from automation_engine import TestingEngine, ExecAction, TestRun
 
