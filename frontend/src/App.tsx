@@ -1,5 +1,7 @@
+import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
+import { UpdatePasswordModal } from './components/Modal/UpdatePasswordModal';
 import {
   LoginPage,
   ProjectPage,
@@ -15,8 +17,36 @@ import {
 } from './pages/PagesExporter';
 
 function App() {
+  const [mustChangePassword, setMustChangePassword] = useState(false);
+
+  useEffect(() => {
+    const checkPasswordStatus = () => {
+      setMustChangePassword(localStorage.getItem('must_change_password') === 'true');
+    };
+
+    checkPasswordStatus();
+
+    window.addEventListener('storage', checkPasswordStatus);
+
+    const interval = setInterval(checkPasswordStatus, 1000);
+
+    return () => {
+      window.removeEventListener('storage', checkPasswordStatus);
+      clearInterval(interval);
+    };
+  }, []);
+
   return (
     <Router>
+      {mustChangePassword && (
+        <UpdatePasswordModal
+          isForced={true}
+          onClose={() => {
+            localStorage.removeItem('must_change_password');
+            setMustChangePassword(false);
+          }}
+        />
+      )}
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<LoginPage />} />
@@ -39,3 +69,4 @@ function App() {
 }
 
 export default App;
+

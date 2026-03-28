@@ -16,7 +16,7 @@ from .service import (
 )
 
 
-router = APIRouter(prefix="/history", tags=["testruns"])
+router = APIRouter(prefix="/history", tags=["history"])
 
 
 # TestRun
