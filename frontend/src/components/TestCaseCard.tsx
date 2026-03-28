@@ -129,6 +129,11 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
               {testCase.prompt || 'No instruction set'}
             </p>
           </div>
+          {testCase.status === 'failure' && testCase.description && (
+            <p className="text-[11px] font-medium text-failure bg-failure/10 px-2 py-0.5 rounded-sm inline-block mt-0.5 max-w-full truncate" title={testCase.description}>
+              {testCase.description}
+            </p>
+          )}
         </div>
 
         {!isReadOnly && (

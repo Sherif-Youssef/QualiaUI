@@ -10,7 +10,7 @@ import { ErrorMessage } from '@/components/GeneralComponents';
 import { runService } from '@/services/runs/runService';
 import { mapActiveStepToActionStep } from '@/utils/mappers';
 import { TestSuiteManagerLoading } from './TestSuiteManagerLoading';
-import { ActiveTestStepRun } from '@/types/run';
+import { ActiveTestStepRun, ActiveTestCaseTermination } from '@/types/run';
 
 export const TestSuiteManagerPage: React.FC = () => {
     const { projectId, suiteId } = useParams<{ projectId: string; suiteId: string }>();
@@ -23,6 +23,7 @@ export const TestSuiteManagerPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [modalLoading, setModalLoading] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
+    const [editingTestCase, setEditingTestCase] = useState<TestCase | null>(null);
 
     const socketRef = useRef<WebSocket | null>(null);
 
@@ -44,16 +45,22 @@ export const TestSuiteManagerPage: React.FC = () => {
         return () => { if (socketRef.current) socketRef.current.close(); };
     }, [projectId, suiteId]);
 
-    const handleSaveTestCase = async (data: { name: string; url: string; mode: 'plain' | 'step-based' }) => {
+    const handleSaveTestCase = async (data: any) => {
         if (!projectId || !suiteId) return;
         setModalLoading(true);
         setModalError(null);
         try {
-            const newCase = await testCaseService.createTestCase(projectId, suiteId, data);
-            setTestCases(prev => [...prev, newCase]);
+            if (editingTestCase) {
+                const updated = await testCaseService.updateTestCase(projectId, suiteId, editingTestCase.id, data);
+                setTestCases(prev => prev.map(tc => tc.id === editingTestCase.id ? { ...tc, ...updated } : tc));
+            } else {
+                const newCase = await testCaseService.createTestCase(projectId, suiteId, data);
+                setTestCases(prev => [...prev, newCase]);
+            }
             setIsModalOpen(false);
+            setEditingTestCase(null);
         } catch (err: any) {
-            setModalError(err.response?.data?.detail || 'Failed to create test case.');
+            setModalError(err.response?.data?.detail || `Failed to ${editingTestCase ? 'update' : 'create'} test case.`);
         } finally {
             setModalLoading(false);
         }
@@ -67,7 +74,7 @@ export const TestSuiteManagerPage: React.FC = () => {
             const socket = runService.subscribeToRun(projectId, run.run_id, (data: any) => {
                 if (data.event === 'done') {
                     setTestCases(prev => prev.map(tc => 
-                        tc.status === 'running' ? { ...tc, status: 'success' } : tc
+                        tc.status === 'running' ? { ...tc, status: 'idle' } : tc
                     ));
                     return;
                 }
@@ -75,9 +82,22 @@ export const TestSuiteManagerPage: React.FC = () => {
                     setError(data.detail || 'Test execution encountered an error.');
                     return;
                 }
+                if ('reason' in data) {
+                    const term = data as ActiveTestCaseTermination;
+                    setTestCases(prev => prev.map((tc, idx) => {
+                        if (idx !== term.test_index) return tc;
+                        return {
+                            ...tc,
+                            status: term.status === 'PASSED' ? 'success' : 'failure',
+                            description: term.reason || tc.description,
+                        };
+                    }));
+                    return;
+                }
+
                 const stepRun = data as ActiveTestStepRun;
                 setTestCases(prev => prev.map((tc, idx) => {
-                    if (idx !== stepRun.index) return tc;
+                    if (idx !== stepRun.test_index) return tc;
                     const steps = tc.steps || [];
                     const newStep = mapActiveStepToActionStep(stepRun, steps.length);
                     if (newStep.screenshot) setCurrentScreenshot(newStep.screenshot);
@@ -118,7 +138,10 @@ export const TestSuiteManagerPage: React.FC = () => {
                         }}
                         onRunAllTests={handleRunAllTests}
                         onRunSingleTest={() => {}}
-                        onEditTestCase={() => {}}
+                        onEditTestCase={(tc) => {
+                            setEditingTestCase(tc);
+                            setIsModalOpen(true);
+                        }}
                         onInstructionChange={async (testId, newInstruction) => {
                             if (!projectId || !suiteId) return;
                             try {
@@ -155,7 +178,12 @@ export const TestSuiteManagerPage: React.FC = () => {
             modals={
                 <AddTestCaseModal
                     isOpen={isModalOpen}
-                    onClose={() => { setIsModalOpen(false); setModalError(null); }}
+                    onClose={() => { 
+                        setIsModalOpen(false); 
+                        setModalError(null); 
+                        setEditingTestCase(null);
+                    }}
+                    editingTestCase={editingTestCase}
                     onSave={handleSaveTestCase}
                     isLoading={modalLoading}
                     error={modalError}

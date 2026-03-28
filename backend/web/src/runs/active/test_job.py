@@ -70,10 +70,13 @@ class TestJob:
                 session.finalize()
                 self._final_run = session.summary
                 if self._final_run.status != TestStatus.PASSED:
-                    self._queue.put(TestTermination(term_signal=Fail(reason="Test didn't pass")))
+                    await self._queue.put(TestTermination(term_signal=Fail(reason="Test didn't pass")))
 
         except asyncio.CancelledError:
             await self._queue.put(self._abort_event())
+            raise
+        except Exception as e:
+            await self._queue.put(TestTermination(term_signal=Fail(reason=f"Engine error: {str(e)}")))
             raise
 
         finally:
@@ -101,12 +104,15 @@ class TestJob:
                 session.finalize()
                 self._final_run = session.summary
                 if self._final_run.status == TestStatus.PASSED:
-                    self._queue.put(TestTermination(term_signal=Complete(reason="All steps passed")))
+                    await self._queue.put(TestTermination(term_signal=Complete(reason="All steps passed")))
                 else:
-                    self._queue.put(TestTermination(term_signal=Fail(reason="At least one step failed")))
+                    await self._queue.put(TestTermination(term_signal=Fail(reason="At least one step failed")))
 
         except asyncio.CancelledError:
             await self._queue.put(self._abort_event())
+            raise
+        except Exception as e:
+            await self._queue.put(TestTermination(term_signal=Fail(reason=f"Engine error: {str(e)}")))
             raise
 
         finally:
