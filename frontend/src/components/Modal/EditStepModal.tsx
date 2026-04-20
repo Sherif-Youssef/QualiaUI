@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
@@ -37,48 +38,57 @@ export const EditStepModal: React.FC<EditStepModalProps> = ({
     onSave(stepText);
   };
 
-  return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg border border-gray-200 animate-in fade-in zoom-in duration-200">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white rounded-t-xl">
-          <h2 className="text-xl font-bold text-gray-800 font-sans">Edit Step {step.number}</h2>
-          <button onClick={onCancel} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-            <X className="w-5 h-5 text-gray-500" strokeWidth={2} />
+  const modalContent = (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 backdrop-blur-md p-4 animate-in fade-in duration-300">
+      <div 
+        className="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg border border-gray-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-300"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between p-8 border-b border-gray-100 bg-white">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-black text-gray-900 tracking-tight uppercase">Edit Step {step.number}</h2>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Update the instruction for this test case</p>
+          </div>
+          <button 
+            onClick={onCancel} 
+            className="p-3 hover:bg-gray-50 rounded-2xl transition-all active:scale-90"
+          >
+            <X className="w-6 h-6 text-gray-400" strokeWidth={2.5} />
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
+        <div className="p-8 space-y-6">
           {error && <ErrorMessage message={error} onClose={onClearError} />}
 
-          <div>
-            <Label htmlFor="step-text" className="text-sm font-semibold text-gray-700 mb-2 block">
-              Step Description <span className="text-red-500">*</span>
+          <div className="space-y-2">
+            <Label htmlFor="step-text" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1 block">
+              Step Description <span className="text-primary">*</span>
             </Label>
             <Textarea
               id="step-text"
               value={stepText}
               onChange={(e) => setStepText(e.target.value)}
-              placeholder="What should happen in this step?"
-              className="mt-1 min-h-[150px] border-gray-200 focus:border-primary"
+              placeholder="Describe the action to be performed..."
+              className="mt-1 min-h-[180px] rounded-2xl border-gray-100 bg-gray-50/50 focus:bg-white focus:ring-4 focus:ring-primary/5 transition-all text-sm font-bold leading-relaxed p-5"
               autoFocus
               disabled={isLoading}
             />
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50/50 rounded-b-xl">
-          <Button onClick={onCancel} variant="secondary" className="px-6 h-11" disabled={isLoading}>
+        <div className="flex items-center justify-end gap-3 p-8 border-t border-gray-100 bg-gray-50/50">
+          <Button onClick={onCancel} variant="ghost" className="px-6 h-12 rounded-xl font-bold" disabled={isLoading}>
             Cancel
           </Button>
           <Button
             onClick={handleSave}
-            className="px-8 h-11 bg-primary hover:bg-primary/90 text-white font-bold"
+            className="px-10 h-12 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
             disabled={isLoading}
           >
             {isLoading ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                Saving...
+                <span>Saving...</span>
               </div>
             ) : (
               'Save Changes'
@@ -88,4 +98,6 @@ export const EditStepModal: React.FC<EditStepModalProps> = ({
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 };

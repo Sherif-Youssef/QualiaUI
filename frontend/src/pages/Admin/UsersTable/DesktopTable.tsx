@@ -52,11 +52,8 @@ export const DesktopTable: React.FC<DesktopTableProps> = ({
                                 </td>
                                 <td className="px-8 py-6">
                                     <div className="flex items-center gap-3">
-                                        <div className={`px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase flex items-center gap-2 ${user.isAdmin
-                                            ? 'bg-red-50 text-red-600 border border-red-100'
-                                            : 'bg-primary/5 text-primary border border-primary/10'
-                                            }`}>
-                                            {user.isAdmin ? <ShieldAlert className="w-3.5 h-3.5" strokeWidth={2.5} /> : <ShieldCheck className="w-3.5 h-3.5" strokeWidth={2.5} />}
+                                        <div className="px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase flex items-center gap-2 bg-primary/5 text-primary border border-primary/10">
+                                            <ShieldCheck className="w-3.5 h-3.5" strokeWidth={2.5} />
                                             {user.role}
                                         </div>
                                         {user.createdAt && (

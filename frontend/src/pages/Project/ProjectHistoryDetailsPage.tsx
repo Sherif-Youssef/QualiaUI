@@ -16,6 +16,7 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
     const navigate = useNavigate();
     const [run, setRun] = useState<TestRunRead | null>(null);
     const [testCases, setTestCases] = useState<TestCase[]>([]);
+    const [selectedStep, setSelectedStep] = useState<ActionStep | null>(null);
     const [currentScreenshot, setCurrentScreenshot] = useState('');
     const [currentUrl, setCurrentUrl] = useState('');
     const [zoomLevel, setZoomLevel] = useState(100);
@@ -34,6 +35,7 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
                 
                 if (fullTestCases.length > 0 && fullTestCases[0].steps && fullTestCases[0].steps.length > 0) {
                     const firstStep = fullTestCases[0].steps[0] as ActionStep;
+                    setSelectedStep(firstStep);
                     setCurrentScreenshot(firstStep.screenshot || '');
                     setCurrentUrl(fullTestCases[0].url || '');
                 }
@@ -120,6 +122,7 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
                     onInstructionChange={() => {}}
                     onStepTextChange={() => {}}
                     onStepClick={(step, tc) => {
+                        setSelectedStep(step);
                         setCurrentScreenshot(step.screenshot || '');
                         setCurrentUrl(tc.url || '');
                     }}
@@ -129,6 +132,7 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
                 <ScreenshotViewer
                     screenshot={currentScreenshot}
                     url={currentUrl}
+                    selectedStep={selectedStep}
                     zoomLevel={zoomLevel}
                     onZoomIn={() => setZoomLevel((z: number) => Math.min(z + 25, 200))}
                     onZoomOut={() => setZoomLevel((z: number) => Math.max(z - 25, 50))}
