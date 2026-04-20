@@ -35,8 +35,8 @@ export const MobileGrid: React.FC<MobileGridProps> = ({
                                 <span className="text-xs font-bold text-gray-400 mt-0.5 uppercase tracking-widest">@{user.username || 'user'}</span>
                             </div>
                         </div>
-                        <div className={`p-2 rounded-xl border ${user.isAdmin ? 'bg-red-50 text-red-600 border-red-100' : 'bg-primary/5 text-primary border-primary/10'}`}>
-                            {user.isAdmin ? <ShieldAlert className="w-5 h-5" /> : <ShieldCheck className="w-5 h-5" />}
+                        <div className="p-2 rounded-xl border bg-primary/5 text-primary border-primary/10">
+                            <ShieldCheck className="w-5 h-5" />
                         </div>
                     </div>
                     <div className="space-y-3">
