@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, User } from 'lucide-react';
+import { Trash2, User, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface ProjectMember {
@@ -72,15 +72,14 @@ export const ProjectMembers: React.FC<ProjectMembersProps> = ({
                                     <span className="text-sm font-medium text-gray-600">{member.user.email}</span>
                                 </td>
                                 <td className="px-8 py-5 text-center">
-                                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                                        member.role === 'admin' 
-                                            ? 'bg-primary/10 text-primary border-primary/20' 
-                                            : member.role === 'editor'
-                                            ? 'bg-blue-50 text-blue-600 border-blue-100'
-                                            : 'bg-gray-100 text-gray-500 border-gray-200'
-                                    }`}>
-                                        {member.role}
-                                    </span>
+                                    <div className="flex items-center justify-center">
+                                        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/5 text-primary border border-primary/10 shadow-sm transition-all hover:bg-primary/10">
+                                            <ShieldCheck className="w-3 h-3" />
+                                            <span className="text-[10px] font-black uppercase tracking-[0.05em]">
+                                                {member.role}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td className="px-8 py-5 hidden lg:table-cell">
                                     <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">

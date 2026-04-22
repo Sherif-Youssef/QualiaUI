@@ -2,6 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { X, User, Mail, Shield, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/components/GeneralComponents';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
 interface AddUserModalProps {
     isOpen: boolean;
@@ -34,6 +41,8 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
         if (editingUser) {
             setFirstName(editingUser.firstName);
             setLastName(editingUser.lastName);
+            setUsername(editingUser.username || '');
+            setEmail(editingUser.email || '');
             setRole(editingUser.role || 'viewer');
         } else {
             setFirstName('');
@@ -153,26 +162,31 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
 
                         <div className="space-y-2 pt-4">
                             <label className="text-xs font-extrabold text-gray-500 uppercase tracking-widest pl-1">Assign User Role</label>
-                            <div className="relative group">
-                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors">
-                                    <Shield className="w-5 h-5" />
+                            <Select value={role} onValueChange={setRole}>
+                                <div className="relative group">
+                                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors z-10 pointer-events-none">
+                                        <Shield className="w-5 h-5" />
+                                    </div>
+                                    <SelectTrigger className="w-full pl-12 pr-6 py-6 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-gray-900 focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/5 transition-all outline-none cursor-pointer h-auto">
+                                        <SelectValue placeholder="Select a role" />
+                                    </SelectTrigger>
                                 </div>
-                                <select
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value)}
-                                    className="w-full pl-12 pr-10 py-4 bg-gray-50 border border-gray-100 rounded-2xl text-sm font-bold text-gray-900 focus:bg-white focus:border-primary/30 focus:ring-4 focus:ring-primary/5 transition-all outline-none appearance-none cursor-pointer"
-                                >
-                                    <option value="guest">Guest (Limited access)</option>
-                                    <option value="viewer">Viewer (Read-only access)</option>
-                                    <option value="editor">Editor (Can create and modify)</option>
-                                    <option value="admin">Administrator (Full control)</option>
-                                </select>
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </div>
-                            </div>
+                                <SelectContent side="bottom" sideOffset={1} className="rounded-2xl border-gray-100 shadow-xl overflow-hidden z-[10000]">
+                                    <SelectItem value="guest" className="py-2.5 font-bold text-gray-600 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
+                                        Guest (Limited access)
+                                    </SelectItem>
+                                    <SelectItem value="viewer" className="py-2.5 font-bold text-gray-600 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
+                                        Viewer (Read-only access)
+                                    </SelectItem>
+                                    <SelectItem value="editor" className="py-2.5 font-bold text-gray-600 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
+                                        Editor (Can create and modify)
+                                    </SelectItem>
+                                    <SelectItem value="admin" className="py-2.5 font-bold text-gray-600 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
+                                        Administrator (Full control)
+                                    </SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <div className="h-10"></div>
                         </div>
                     </form>
                 </div>

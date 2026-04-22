@@ -1,5 +1,6 @@
 import React from 'react';
-import { Camera, Pencil, Trash2, Play, Loader2, CheckCircle2, XCircle } from 'lucide-react';
+import { Camera, Pencil, Trash2, Play, Loader2, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { TestStep, TestCase } from '@/types/test-case';
 
@@ -24,9 +25,22 @@ export const StepsSidebar: React.FC<StepsSidebarProps> = ({
     onEditStep,
     onDeleteStep
 }) => {
+    const navigate = useNavigate();
+    const { projectId, suiteId } = useParams<{ projectId: string; suiteId: string }>();
+
     return (
         <aside className="w-[400px] md:w-[450px] bg-white border-r border-gray-200 flex flex-col shadow-xl z-10">
             <div className="p-6 border-b border-gray-200 bg-gray-50/30">
+                <button
+                    onClick={() => navigate(`/project/${projectId}/suite/${suiteId}`)}
+                    className="flex items-center gap-2 text-gray-400 hover:text-primary transition-all group mb-4 w-fit"
+                >
+                    <div className="p-2 rounded-xl group-hover:bg-primary/5 transition-colors">
+                        <ArrowLeft className="w-4 h-4" />
+                    </div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] leading-none">Back to Suite</span>
+                </button>
+
                 <div className="flex items-start justify-between gap-4 mb-4">
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
