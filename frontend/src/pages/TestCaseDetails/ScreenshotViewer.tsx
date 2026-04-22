@@ -17,36 +17,34 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
 }) => {
     return (
         <section className="flex-1 bg-[#1a1c1e] flex flex-col items-stretch overflow-hidden">
-            <div className="flex-1 overflow-auto p-8 md:p-12 flex items-center justify-center custom-scrollbar">
-                {screenshot ? (
-                    <div className="relative group perspective-1000">
-                        <div className="absolute -inset-4 bg-primary/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-                        <img
-                            src={screenshot}
-                            alt={`Step ${number}`}
-                            className="max-w-[85vw] max-h-[70vh] rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/10 relative z-10"
-                            style={{
-                                transform: `scale(${zoomLevel / 100})`,
-                                transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                            }}
-                        />
-                        <div className="absolute bottom-6 left-6 z-20 bg-black/60 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-xl">
-                            <p className="text-white text-xs font-black uppercase tracking-widest">
-                                Step <span className="text-primary">{number}</span> Frame
-                            </p>
+            <div className="flex-1 overflow-auto bg-[#1a1c1e] relative custom-scrollbar">
+                <div className="min-w-full min-h-full flex items-center justify-center p-20 md:p-40">
+                    {screenshot ? (
+                        <div className="relative group perspective-1000 origin-center transition-transform duration-300 ease-out" style={{ transform: `scale(${zoomLevel / 100})` }}>
+                            <div className="absolute -inset-4 bg-primary/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                            <img
+                                src={screenshot}
+                                alt={`Step ${number}`}
+                                className="max-w-[85vw] max-h-[70vh] rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/10 relative z-10"
+                            />
+                            <div className="absolute bottom-6 left-6 z-20 bg-black/60 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-xl">
+                                <p className="text-white text-xs font-black uppercase tracking-widest">
+                                    Step <span className="text-primary">{number}</span> Frame
+                                </p>
+                            </div>
                         </div>
-                    </div>
-                ) : (
-                    <div className="text-center space-y-4 animate-in fade-in zoom-in duration-500">
-                        <div className="w-24 h-24 mx-auto bg-white/5 rounded-[40px] flex items-center justify-center border border-white/10">
-                            <Camera className="w-10 h-10 text-white/20" />
+                    ) : (
+                        <div className="text-center space-y-4 animate-in fade-in zoom-in duration-500">
+                            <div className="w-24 h-24 mx-auto bg-white/5 rounded-[40px] flex items-center justify-center border border-white/10">
+                                <Camera className="w-10 h-10 text-white/20" />
+                            </div>
+                            <div className="space-y-1">
+                                <p className="text-white/40 text-sm font-bold uppercase tracking-widest">No Capture Available</p>
+                                <p className="text-white/20 text-xs font-medium">Select a step or run the test to see screenshots</p>
+                            </div>
                         </div>
-                        <div className="space-y-1">
-                            <p className="text-white/40 text-sm font-bold uppercase tracking-widest">No Capture Available</p>
-                            <p className="text-white/20 text-xs font-medium">Select a step or run the test to see screenshots</p>
-                        </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             <div className="p-4 md:p-6 bg-black/40 backdrop-blur-2xl border-t border-white/10 flex items-center justify-center">

@@ -116,7 +116,7 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
             {testCase.name}
           </h3>
           <div className="group/prompt relative">
-            <p 
+            <p
               className={`text-body-sm font-body text-muted-foreground truncate italic ${!isReadOnly ? 'cursor-pointer hover:text-primary' : ''} transition-colors`}
               onClick={() => {
                 if (isReadOnly) return;
