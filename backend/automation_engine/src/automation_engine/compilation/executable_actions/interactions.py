@@ -60,13 +60,6 @@ class PressExec(ExecAction):
     timeout: float | None = None
 
 
-@maps(Focus)
-class FocusExec(ExecAction):
-    action_type: Literal[Interaction.FOCUS] = Interaction.FOCUS
-    target_selector: Annotated[str, SourcedFrom(source="target_id"), ElementRef()]
-    timeout: float | None = None
-
-
 @maps(Navigate)
 class NavigateExec(ExecAction):
     action_type: Literal[Interaction.NAVIGATE] = Interaction.NAVIGATE

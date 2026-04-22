@@ -4,16 +4,14 @@ from typing import Annotated
 from fastapi import Depends
 
 from automation_engine import TestingEngine, EngineConfig, BrowserConfig, LLMConfig
-from langchain_openai import ChatOpenAI
 
 from src.config import settings
 
 
 @lru_cache(maxsize=1)
 def get_testing_engine() -> TestingEngine:
-    llm = ChatOpenAI(model=settings.LLM_MODEL, api_key=settings.OPENAI_API_KEY)
     return TestingEngine(
-        llm=llm,
+        model=settings.LLM_MODEL,
         config=EngineConfig(
             browser=BrowserConfig(headless=True),
             llm=LLMConfig(use_screenshot=False, use_tool_calling=True, allow_grouped_steps=True)

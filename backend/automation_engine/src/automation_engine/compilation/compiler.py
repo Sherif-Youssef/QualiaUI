@@ -15,7 +15,7 @@ from pydantic import BaseModel, ConfigDict
 from ..actions import (
     BaseAction,
     Waiting, Click, Fill, Hover, SelectOption,
-    Press, Focus, Navigate, Scroll, DragDrop,
+    Press, Navigate, Scroll, DragDrop,
     UploadFile, ExecuteJS,
     AssertState, AssertTextRegex, AssertChecked,
     AssertElementCount, AssertJSEval,
@@ -23,7 +23,7 @@ from ..actions import (
 from .executable_actions import (
     ExecAction,
     WaitingExec, ClickExec, FillExec, HoverExec,
-    SelectOptionExec, PressExec, FocusExec, NavigateExec,
+    SelectOptionExec, PressExec, NavigateExec,
     ScrollExec, DragDropExec, UploadFileExec, ExecuteJSExec,
     AssertStateExec, AssertTextRegexExec, AssertCheckedExec,
     AssertElementCountExec, AssertJSEvalExec,
@@ -32,6 +32,7 @@ from .executable_actions.registry import EXEC_REGISTRY
 from .markers import SourcedFrom, ElementRef, TextResolvable, FileVarRef, JSResolvable
 from ..planning.state import DOMIndex
 from .variables import VariableStore
+from .exceptions import CompilationError
 
 
 class CompileContext(BaseModel):
@@ -162,14 +163,25 @@ class ActionCompiler:
 
     def _compile_select_option(self, action: SelectOption, resolve_vars: bool) -> SelectOptionExec:
         attrs = self._generic_compile(action, resolve_vars=resolve_vars)
-        if action.option_element_id is not None:
-            option_el = self._ctx.dom_index[action.option_element_id]
-
-            option_value = option_el.attr("value")
-            if option_value is not None and attrs.get("value") is None:
-                attrs["value"] = option_value
-            elif option_el.text is not None and attrs.get("label") is None:
-                attrs["label"] = option_el.text
+        
+        match action.select_by:
+            case "value":
+                attrs["value"] = str(action.select_value)
+            case "label":
+                attrs["label"] = str(action.select_value)
+            case "index":
+                attrs["index"] = int(action.select_value)
+            case "element":
+                option_el = self._ctx.dom_index[int(action.select_value)]
+                option_value = option_el.attr("value")
+                if option_value is not None:
+                    attrs["value"] = option_value
+                elif option_el.text is not None:
+                    attrs["label"] = option_el.text
+                else:
+                    raise CompilationError(
+                        f"Option element {action.select_value} has neither a value attribute nor text content."
+                    )
 
         return SelectOptionExec(**attrs)
     

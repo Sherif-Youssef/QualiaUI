@@ -20,13 +20,25 @@ class AssertState(AssertionAction):
 
 
 @action
+class AssertText(AssertionAction):
+    """Assert element text with simple matching."""
+    action_type: Literal[Assertion.TEXT] = Assertion.TEXT
+    
+    target_id: int
+    text: str
+    match_mode: Literal["exact", "contains", "starts_with", "ends_with"] = "contains"
+    case_sensitive: bool = True
+    negated: bool = False
+
+
+@action
 class AssertTextRegex(AssertionAction):
     """Asserts that an element's text content matches a regex pattern."""
     action_type: Literal[Assertion.TEXT_REGEX] = Assertion.TEXT_REGEX
 
     target_id: int
     target_type: Optional[Literal["title", "url"]] = Field(default=None, description="Check page title/URL instead of element text.")
-    pattern: str = Field(description='Regex. ".*foo.*" = contains, "^exact$" = exact.')
+    pattern: str = Field(description="Standard regex")
 
 
 @action

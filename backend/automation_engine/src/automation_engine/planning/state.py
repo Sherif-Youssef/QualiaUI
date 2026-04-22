@@ -6,11 +6,11 @@ from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 
 
-class FullInputState(BaseModel):
+class ModelState(BaseModel):
     instruction: str
     page: str
-    history: str
-    screenshot: Optional[bytes]
+    history: Optional[str] = None
+    screenshot: Optional[bytes] = None
 
 
 class Visibility(StrEnum):

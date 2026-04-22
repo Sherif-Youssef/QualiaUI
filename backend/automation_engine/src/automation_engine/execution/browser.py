@@ -18,10 +18,10 @@ from playwright.async_api import (
 from ..compilation.executable_actions import (
     ExecAction,
     WaitingExec, ClickExec, FillExec, HoverExec,
-    SelectOptionExec, PressExec, FocusExec, NavigateExec,
+    SelectOptionExec, PressExec, NavigateExec,
     ScrollExec, DragDropExec, UploadFileExec, ExecuteJSExec,
     AssertStateExec, AssertTextRegexExec, AssertCheckedExec,
-    AssertElementCountExec, AssertJSEvalExec,
+    AssertElementCountExec, AssertJSEvalExec, AssertTextExec
 )
 
 
@@ -180,7 +180,7 @@ class PlaywrightBrowser:
         handler = self._dispatch.get(type(action))
         if handler is None:
             raise NotImplementedError(f"No compiler for {type(action).__name__}")
-        return await handler(self, **action.model_dump(exclude={"action_type"}))
+        return await handler(self, **action.to_exec_kwargs())
 
     # Interactions
 
@@ -266,16 +266,6 @@ class PlaywrightBrowser:
             await self.page.locator(selector).press(key, **kwargs)
         else:
             await self.page.keyboard.press(key)
-
-    @register_action(FocusExec)
-    async def focus(
-        self,
-        *,
-        target_selector: str,
-        timeout: float | None = None,
-    ) -> None:
-        kwargs = {"timeout": timeout} if timeout else {}
-        await self.page.locator(target_selector).focus(**kwargs)
 
     @register_action(NavigateExec)
     async def goto(
@@ -417,6 +407,38 @@ class PlaywrightBrowser:
                 f"{op} {expected_count}"
             )
             await self.page.wait_for_function(js, **kwargs)
+    
+    @register_action(AssertTextExec)
+    async def expect_text(
+        self,
+        *,
+        target_selector: str,
+        text: str,
+        match_mode: Literal["exact", "contains", "starts_with", "ends_with"] = "contains",
+        case_sensitive: bool = True,
+        negated: bool = False,
+        timeout: float | None = None,
+    ) -> None:
+        kwargs = {"timeout": timeout} if timeout else {}
+        flags = 0 if case_sensitive else re.IGNORECASE
+
+        match match_mode:
+            case "exact":
+                pattern = re.compile(f"^{re.escape(text)}$", flags)
+            case "contains":
+                pattern = re.compile(re.escape(text), flags)
+            case "starts_with":
+                pattern = re.compile(f"^{re.escape(text)}", flags)
+            case "ends_with":
+                pattern = re.compile(f"{re.escape(text)}$", flags)
+
+        locator = self.page.locator(target_selector)
+        expectation = expect(locator)
+
+        if negated:
+            await expectation.not_to_have_text(pattern, **kwargs)
+        else:
+            await expectation.to_have_text(pattern, **kwargs)
 
     @register_action(AssertJSEvalExec)
     async def assert_js_eval(
