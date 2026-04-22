@@ -7,13 +7,12 @@ class Termination(StrEnum):
 
 
 class Interaction(StrEnum):
-    WAITING = "waiting"
+    WAITING = "wait"
     CLICK = "click"
     FILL = "fill"
     HOVER = "hover"
     SELECT = "select_option"
     PRESS = "press"
-    FOCUS = "focus"
     NAVIGATE = "navigate"
     SCROLL = "scroll"
     DRAG_DROP = "drag_drop"
@@ -23,6 +22,7 @@ class Interaction(StrEnum):
 
 class Assertion(StrEnum):
     STATE = "assert_state"
+    TEXT = "assert_text"
     TEXT_REGEX = "assert_text_regex"
     CHECKED = "assert_checked"
     URL = "assert_url"

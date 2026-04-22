@@ -4,6 +4,7 @@ from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 
 from ..serialization import DOMRendererConfig, HistoryRendererConfig
+from ..planning import PlanningMode, mode_presets
 
 
 class BrowserConfig(BaseModel):
@@ -19,19 +20,17 @@ class RendererConfig(BaseModel):
     """Serialization settings."""
     model_config = ConfigDict(frozen=True)
 
-
     dom: DOMRendererConfig = Field(default_factory=DOMRendererConfig)
     history: HistoryRendererConfig = Field(default_factory=HistoryRendererConfig)
 
 
 class LLMConfig(BaseModel):
     """Controls how the LLM is prompted and how its output is parsed."""
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
-    allow_grouped_steps: bool = Field(default=False, description="True = batch steps, False = one-at-a-time.")
+    planning_mode: PlanningMode = mode_presets.GROUP_FULL
     use_tool_calling: bool = Field(default=True, description="True = structured output / tool calling, False = raw JSON in prompt.")
     use_screenshot: bool = Field(default=True, description="Attach a page screenshot to every LLM call.")
-    system_prompt: Optional[str] = Field(default=None, description="Override the default system prompt.")
 
 
 class ExecutionConfig(BaseModel):

@@ -49,10 +49,8 @@ class SelectOption(InteractionAction):
     action_type: Literal[Interaction.SELECT] = Field(default=Interaction.SELECT, exclude=True)
 
     select_element_id: int = Field(description="The <select> element.")
-    option_element_id: Optional[int] = Field(default=None, description="The <option> element.")
-    value: Optional[str] = Field(default=None, description="Option value attr.")
-    label: Optional[str] = Field(default=None, description="Option visible text.")
-    index: Optional[int] = Field(default=None, ge=0, description="0-based index.")
+    select_by: Literal["value", "label", "index", "element"] = "value"
+    select_value: str | int = Field(description="The value, label text, 0-based index, or element id depending on select_by.")
 
 
 @action
@@ -62,14 +60,6 @@ class Press(InteractionAction):
 
     key: str = Field(min_length=1, description='Keys to press separated by "+". Uses Playwright key names: "Enter", "Tab", "ArrowDown", "Control+a", etc.')
     target_id: Optional[int] = Field(default=None, description="Focus target. None = page-level.")
-
-
-@action
-class Focus(InteractionAction):
-    """Move keyboard focus to an element."""
-    action_type: Literal[Interaction.FOCUS] = Field(default=Interaction.FOCUS, exclude=True)
-
-    target_id: int
 
 
 @action

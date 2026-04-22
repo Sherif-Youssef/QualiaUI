@@ -2,7 +2,7 @@
 Main orchestrator. Ties together:
   - PlaywrightBrowser (interface + execution)
   - ActionCompiler (action → exec mapping)
-  - LangChain chains (LLM)
+  - Planning agent (LLM)
   - State extraction
   - History tracking
 """
@@ -10,8 +10,6 @@ from __future__ import annotations
 
 import logging
 from typing import AsyncGenerator
-
-from langchain_core.language_models.chat_models import BaseChatModel
 
 from automation_engine.actions import BaseAction, TerminationSignal
 from automation_engine.testing.history import (
@@ -33,10 +31,8 @@ from automation_engine.planning import (
     DOMElement,
     DOMIndex,
     PageSnapshot,
-    TestingChain,
-    PlanningOutput,
-    build_chain,
-    FullInputState,
+    ModelState,
+    PlanningAgent,
 )
 from automation_engine.execution.browser import PlaywrightBrowser
 from automation_engine.compilation import ActionCompiler, CompileContext, ExecAction
@@ -65,11 +61,11 @@ class TestingEngine:
 
     def __init__(
         self,
-        llm: BaseChatModel,
+        model: str,
         variables: list[Variable] | None = None,
         config: EngineConfig | None = None,
     ) -> None:
-        self._llm = llm
+        self._model = model
         self._config = config or EngineConfig()
         self._variable_store = VariableStore(variables)
 
@@ -96,7 +92,8 @@ class TestingSession:
         self._url = url
         self._test_run: TestRun | None = None
         self._browser: PlaywrightBrowser | None = None
-        self._chain: TestingChain | None = None
+        self._planning_agent: PlanningAgent | None = None
+
 
     async def __aenter__(self) -> TestingSession:
         cfg = self._engine.config
@@ -112,11 +109,10 @@ class TestingSession:
         )
         self._test_run = TestRun(base_url=self._url)
 
-        self._chain = build_chain(
-            self._engine._llm,
-            system_prompt=cfg.llm.system_prompt,
-            tooling=cfg.llm.use_tool_calling,
-            allow_grouped_steps=cfg.llm.allow_grouped_steps,
+        self._planning_agent = PlanningAgent(
+            mode=cfg.llm.planning_mode,
+            default_model=self._engine._model,
+            use_tool_calling=cfg.llm.use_tool_calling,
         )
 
         logger.info(f"Session started: url={self._url}")
@@ -359,33 +355,13 @@ class TestingSession:
     async def __decide(self, instruction: str, snapshot: PageSnapshot) -> list[BaseAction] | TerminationSignal:
         """Ask the LLM for the next action(s)."""
 
-        input_state = FullInputState(
+        input_state = ModelState(
             instruction=instruction,
             page=self._engine._dom_renderer.render_browser_state(snapshot.state),
             history=self._engine._history_renderer.render_history(self._test_run),
             screenshot=snapshot.state.screenshot if self._engine.config.llm.use_screenshot else None,
         )
-
-        response = await self._chain.ainvoke(input_state)
-
-        if not isinstance(response, PlanningOutput):
-            raise TypeError(f"Unexpected response type: {type(response)}")
-        output = response.output
-        
-        if isinstance(output, TerminationSignal):
-            logger.info(f"LLM sent termination signal: {output.termination_type} - {response.reasoning}")
-            return output
-        
-        if isinstance(output, BaseAction):
-            actions = [output]
-        elif isinstance(output, list):
-            actions = output
-        else:
-            raise TypeError(f"Unexpected output type: {type(output)}")
-        
-        logger.info(f"LLM decided: ({len(actions)} actions(s)) - {response.reasoning}")
-
-        return actions
+        return await self._planning_agent.run(input_state)
 
     async def __capture_snapshot(self) -> StateSnapshot:
         screenshot = await self._browser.screenshot()

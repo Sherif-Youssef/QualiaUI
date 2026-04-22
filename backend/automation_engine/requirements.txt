@@ -1,7 +1,5 @@
+python-dotenv
 pydantic
 playwright
-langchain
-langchain_core
-langchain_openai
-langchain_google_genai
-langchain_openrouter
+pydantic_ai
+logfire
