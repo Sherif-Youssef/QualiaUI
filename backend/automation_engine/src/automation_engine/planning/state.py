@@ -63,7 +63,6 @@ class DOMElement(BaseModel):
             return dataset.get(name, default)
         return default
 
-
     @property
     def is_disabled(self) -> bool:
         return "disabled" in self.attributes

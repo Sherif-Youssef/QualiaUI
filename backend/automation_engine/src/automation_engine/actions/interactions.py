@@ -90,6 +90,7 @@ class DragDrop(InteractionAction):
 
 @action
 class UploadFile(InteractionAction):
+    """Upload one or more files into a file input."""
     action_type: Literal[Interaction.UPLOAD] = Field(default=Interaction.UPLOAD)
 
     target_id: int = Field(description="Element id of the file <input> element.")
