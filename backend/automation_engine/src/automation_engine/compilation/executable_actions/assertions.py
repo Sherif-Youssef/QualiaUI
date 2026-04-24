@@ -18,6 +18,7 @@ class AssertStateExec(ExecAction):
     negated: bool = Field(default=False)
     timeout: float | None = None
 
+
 @maps(AssertText)
 class AssertTextExec(ExecAction):
     action_type: Literal[Assertion.TEXT] = Assertion.TEXT

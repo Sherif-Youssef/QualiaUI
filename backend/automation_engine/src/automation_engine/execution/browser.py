@@ -174,6 +174,27 @@ class PlaywrightBrowser:
     async def screenshot(self) -> bytes:
         return await self.page.screenshot(type="png")
 
+    async def wait_for_page_load(self, timeout=30000) -> None:
+        """
+        Waits until the page is fully loaded by combining multiple strategies.
+        """
+        try:
+            await self.page.wait_for_load_state("domcontentloaded", timeout=timeout)
+            await self.page.wait_for_load_state("load", timeout=timeout)
+            await self.page.wait_for_load_state("networkidle", timeout=timeout)
+        except PlaywrightError:
+            # Fallback: if networkidle times out (e.g., long-polling, websockets),
+            # ensure at least DOM + load are done
+            await self.page.wait_for_load_state("load", timeout=timeout)
+        
+        await self.page.wait_for_function(
+            "document.readyState === 'complete'",
+            timeout=timeout
+        )
+
+        # Final safety delay to allow any late scripts to execute
+        await self.page.wait_for_timeout(300)
+
     # Dispatch
 
     async def execute(self, action: ExecAction) -> Any:
@@ -258,12 +279,12 @@ class PlaywrightBrowser:
         self,
         *,
         key: str,
-        selector: str | None = None,
+        target_selector: str | None = None,
         timeout: float | None = None,
     ) -> None:
-        if selector is not None:
+        if target_selector is not None:
             kwargs = {"timeout": timeout} if timeout else {}
-            await self.page.locator(selector).press(key, **kwargs)
+            await self.page.locator(target_selector).press(key, **kwargs)
         else:
             await self.page.keyboard.press(key)
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import logfire
 from pathlib import Path
 from typing import Any
 
@@ -13,11 +12,6 @@ from .deps import PlanningDeps
 from .output_mode.base import PlanningMode
 from .prompt.builder import PromptBuilder
 from .state import ModelState
-
-
-# For ovservability
-logfire.configure()
-logfire.instrument_pydantic_ai()
 
 logger = logging.getLogger(__name__)
 

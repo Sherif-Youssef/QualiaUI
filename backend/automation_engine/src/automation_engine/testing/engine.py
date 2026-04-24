@@ -328,7 +328,7 @@ class TestingSession:
     @__fail_fast
     async def __observe(self) -> PageSnapshot:
         """Capture page state."""
-        await self._browser.wait_for_load_state("domcontentloaded")
+        await self._browser.wait_for_page_load()
 
         raw: dict = await self._browser.evaluate_js(code=get_js_serializer_api_code())
         root = DOMElement(**raw)

@@ -111,14 +111,14 @@ def action_catalog(action_set: ActionSet) -> str:
     if action_set.actions:
         for action_cls in action_set.actions:
             doc = (action_cls.__doc__ or "").strip().split("\n")[0]
-            name = action_cls.__name__
+            name = action_cls.model_fields["action_type"].default
             lines.append(f"- **{name}** — {doc}")
 
     if action_set.terminations:
         lines.append("\n### Termination Signals\n")
         for term_cls in action_set.terminations:
             doc = (term_cls.__doc__ or "").strip().split("\n")[0]
-            name = term_cls.__name__
+            name = term_cls.model_fields["termination_type"].default
             lines.append(f"- **{name}** — {doc}")
 
     return "\n".join(lines)
