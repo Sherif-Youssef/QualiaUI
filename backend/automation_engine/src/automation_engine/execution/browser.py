@@ -15,13 +15,11 @@ from playwright.async_api import (
     expect,
 )
 
-from ..compilation.executable_actions import (
+from automation_engine.compilation.executable_actions import (
     ExecAction,
     WaitingExec, ClickExec, FillExec, HoverExec,
     SelectOptionExec, PressExec, NavigateExec,
-    ScrollExec, DragDropExec, UploadFileExec, ExecuteJSExec,
-    AssertStateExec, AssertTextRegexExec, AssertCheckedExec,
-    AssertElementCountExec, AssertJSEvalExec, AssertTextExec
+    DragDropExec, UploadFileExec, ExecuteJSExec
 )
 
 
@@ -69,6 +67,13 @@ class PlaywrightBrowser:
         self._context: BrowserContext | None = None
         self._page: Page | None = None
 
+    def _on_new_page(self, page: Page) -> None:
+        """
+        Callback fired whenever a new tab/page is opened in the browser context.
+        """
+        # NOTE: Temp fix for tabs opening from links
+        self._page = page
+
     async def start(
         self,
         url: str | None = None,
@@ -91,6 +96,15 @@ class PlaywrightBrowser:
                 await self._context.add_init_script(path=script)
             else:
                 await self._context.add_init_script(script)
+        
+        await self._context.add_cookies([{
+            "name": "session-username",
+            "value": "standard_user",
+            "secure": False,
+            "url": "https://www.saucedemo.com/inventory.html",
+        }])
+        
+        self._context.on("page", self._on_new_page)
 
         self._page = await self._context.new_page()
 
@@ -98,6 +112,8 @@ class PlaywrightBrowser:
             await self._page.goto(url)
 
     async def close(self) -> None:
+        if self._context:
+            self._context.remove_listener("page", self._on_new_page)
         if self._page:
             await self._page.close()
             self._page = None
@@ -128,6 +144,9 @@ class PlaywrightBrowser:
     @property
     def viewport_height(self) -> int:
         return self._viewport_height
+
+    async def scroll_dim(self) -> tuple[int, int]:
+        return await self.page.evaluate("() => [window.scrollX, window.scrollY]")
 
     async def title(self) -> str:
         return await self.page.title()
@@ -197,11 +216,11 @@ class PlaywrightBrowser:
 
     # Dispatch
 
-    async def execute(self, action: ExecAction) -> Any:
+    async def execute(self, action: ExecAction) -> None:
         handler = self._dispatch.get(type(action))
         if handler is None:
             raise NotImplementedError(f"No compiler for {type(action).__name__}")
-        return await handler(self, **action.to_exec_kwargs())
+        await handler(self, **action.to_exec_kwargs())
 
     # Interactions
 
@@ -301,16 +320,6 @@ class PlaywrightBrowser:
             kwargs["timeout"] = timeout
         await self.page.goto(url, **kwargs)
 
-    @register_action(ScrollExec)
-    async def scroll_into_view(
-        self,
-        *,
-        target_selector: str,
-        timeout: float | None = None,
-    ) -> None:
-        kwargs = {"timeout": timeout} if timeout else {}
-        await self.page.locator(target_selector).scroll_into_view_if_needed(**kwargs)
-
     @register_action(DragDropExec)
     async def drag_to(
         self,
@@ -348,127 +357,5 @@ class PlaywrightBrowser:
             if "Execution context was destroyed" not in str(e):
                 raise
             return None
-
-    # Assertions
-
-    @register_action(AssertStateExec)
-    async def expect_state(
-        self,
-        *,
-        target_selector: str,
-        state: str,
-        negated: bool = False,
-        timeout: float | None = None,
-    ) -> None:
-        locator = self.page.locator(target_selector)
-        kwargs = {"timeout": timeout} if timeout else {}
-
-        if state == "readonly":
-            method = "to_be_editable" if negated else "not_to_be_editable"
-        else:
-            base = f"to_be_{state}"
-            method = base.replace("to_be_", "not_to_be_") if negated else base
-
-        await getattr(expect(locator), method)(**kwargs)
-
-    @register_action(AssertTextRegexExec)
-    async def expect_text_regex(
-        self,
-        *,
-        target_selector: str | None = None,
-        target_type: str | None = None,
-        pattern: str,
-        timeout: float | None = None,
-    ) -> None:
-        kwargs = {"timeout": timeout} if timeout else {}
-        pattern = re.compile(pattern)
-
-        if target_type == "title":
-            await expect(self.page).to_have_title(pattern, **kwargs)
-        elif target_type == "url":
-            await expect(self.page).to_have_url(pattern, **kwargs)
-        else:
-            await expect(self.page.locator(target_selector)).to_have_text(pattern, **kwargs)
-
-    @register_action(AssertCheckedExec)
-    async def expect_checked(
-        self,
-        *,
-        target_selector: str,
-        checked: bool = True,
-        timeout: float | None = None,
-    ) -> None:
-        locator = self.page.locator(target_selector)
-        kwargs = {"timeout": timeout} if timeout else {}
-
-        if checked:
-            await expect(locator).to_be_checked(**kwargs)
-        else:
-            await expect(locator).not_to_be_checked(**kwargs)
-
-    @register_action(AssertElementCountExec)
-    async def expect_count(
-        self,
-        *,
-        target_selector: str,
-        expected_count: int,
-        comparison: Literal["eq", "gt", "gte", "lt", "lte"] = "eq",
-        timeout: float | None = None,
-    ) -> None:
-        kwargs = {"timeout": timeout} if timeout else {}
-
-        if comparison == "eq":
-            locator = self.page.locator(target_selector)
-            await expect(locator).to_have_count(expected_count, **kwargs)
-        else:
-            op_map = {"gt": ">", "gte": ">=", "lt": "<", "lte": "<="}
-            op = op_map[comparison]
-            js = (
-                f"() => document.querySelectorAll({target_selector!r}).length "
-                f"{op} {expected_count}"
-            )
-            await self.page.wait_for_function(js, **kwargs)
-    
-    @register_action(AssertTextExec)
-    async def expect_text(
-        self,
-        *,
-        target_selector: str,
-        text: str,
-        match_mode: Literal["exact", "contains", "starts_with", "ends_with"] = "contains",
-        case_sensitive: bool = True,
-        negated: bool = False,
-        timeout: float | None = None,
-    ) -> None:
-        kwargs = {"timeout": timeout} if timeout else {}
-        flags = 0 if case_sensitive else re.IGNORECASE
-
-        match match_mode:
-            case "exact":
-                pattern = re.compile(f"^{re.escape(text)}$", flags)
-            case "contains":
-                pattern = re.compile(re.escape(text), flags)
-            case "starts_with":
-                pattern = re.compile(f"^{re.escape(text)}", flags)
-            case "ends_with":
-                pattern = re.compile(f"{re.escape(text)}$", flags)
-
-        locator = self.page.locator(target_selector)
-        expectation = expect(locator)
-
-        if negated:
-            await expectation.not_to_have_text(pattern, **kwargs)
-        else:
-            await expectation.to_have_text(pattern, **kwargs)
-
-    @register_action(AssertJSEvalExec)
-    async def assert_js_eval(
-        self,
-        *,
-        code: str,
-        arg: Any = None,
-    ) -> Any:
-        await self.page.wait_for_function(code, arg=arg)
-
 
 PlaywrightBrowser.build_dispatch()

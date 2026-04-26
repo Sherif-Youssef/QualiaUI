@@ -21,19 +21,15 @@ from automation_engine.testing.history import (
     TestTermination,
 )
 from automation_engine.serialization import (
+    DOMElement,
+    DOMIndex,
+    PageState,
     HistoryRenderer,
-    DOMRenderer,
+    PageRenderer,
     get_js_serializer_path,
     get_js_serializer_api_code,
 )
-from automation_engine.planning import (
-    BrowserState,
-    DOMElement,
-    DOMIndex,
-    PageSnapshot,
-    ModelState,
-    PlanningAgent,
-)
+from automation_engine.planning import PageSnapshot, ModelState, PlanningAgent
 from automation_engine.execution.browser import PlaywrightBrowser
 from automation_engine.compilation import ActionCompiler, CompileContext, ExecAction
 from automation_engine.testing.config import EngineConfig
@@ -68,9 +64,6 @@ class TestingEngine:
         self._model = model
         self._config = config or EngineConfig()
         self._variable_store = VariableStore(variables)
-
-        self._dom_renderer = DOMRenderer(self._config.renderer.dom)
-        self._history_renderer = HistoryRenderer(self._config.renderer.history)
 
     @property
     def config(self) -> EngineConfig:
@@ -179,6 +172,10 @@ class TestingSession:
         if self._test_run.current_group and not self._test_run.current_group.is_finalized:
             raise ValueError("Can't start a new group when the first one isn't finalized, call `finalize_group()` first")
         
+        # TEMP
+        self._engine._page_renderer = PageRenderer(instruction)
+        self._engine._history_renderer = HistoryRenderer()
+
         exe_cfg = self._engine.config.execution
         cap = min(max_steps or exe_cfg.max_steps, exe_cfg.max_steps - len(self._test_run.all_steps))
 
@@ -334,11 +331,14 @@ class TestingSession:
         root = DOMElement(**raw)
         index = DOMIndex(root)
 
-        state = BrowserState(
+        scroll_x, scroll_y = await self._browser.scroll_dim()
+        state = PageState(
             current_url=self._browser.url,
             page_title=await self._browser.title(),
             viewport_width=self._browser.viewport_width,
             viewport_height=self._browser.viewport_height,
+            scroll_x=scroll_x,
+            scroll_y=scroll_y,
             root=root,
             screenshot=(
                 await self._browser.screenshot()
@@ -357,7 +357,7 @@ class TestingSession:
 
         input_state = ModelState(
             instruction=instruction,
-            page=self._engine._dom_renderer.render_browser_state(snapshot.state),
+            page=self._engine._page_renderer.render(snapshot.state),
             history=self._engine._history_renderer.render_history(self._test_run),
             screenshot=snapshot.state.screenshot if self._engine.config.llm.use_screenshot else None,
         )

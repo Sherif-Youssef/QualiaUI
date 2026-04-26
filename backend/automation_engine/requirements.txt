@@ -3,3 +3,4 @@ pydantic
 playwright
 pydantic_ai
 logfire
+rapidfuzz

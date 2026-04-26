@@ -6,8 +6,8 @@ from pydantic import Field
 
 from .base import ExecAction
 from .registry import maps
-from ..markers import ElementRef, SourcedFrom, TextResolvable, JSResolvable, FileVarRef
-from ...actions.interactions import *
+from automation_engine.compilation.markers import ElementRef, SourcedFrom, TextResolvable, JSResolvable, FileVarRef
+from automation_engine.actions.interactions import *
 
 
 @maps(Waiting)
@@ -65,14 +65,6 @@ class NavigateExec(ExecAction):
     action_type: Literal[Interaction.NAVIGATE] = Interaction.NAVIGATE
     url: Annotated[str, TextResolvable()]
     wait_until: Literal["commit", "domcontentloaded", "load", "networkidle"] = "load"
-    timeout: float | None = None
-
-
-@maps(Scroll)
-class ScrollExec(ExecAction):
-    action_type: Literal[Interaction.SCROLL] = Interaction.SCROLL
-    # TODO: Support artbitrary scroll positions, not just element-based
-    target_selector: Annotated[str, SourcedFrom(source="target_id"), ElementRef()]
     timeout: float | None = None
 
 
