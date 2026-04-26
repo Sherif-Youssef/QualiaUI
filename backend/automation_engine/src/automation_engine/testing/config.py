@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from typing import Optional
 from pydantic import BaseModel, Field, ConfigDict
 
-from ..serialization import DOMRendererConfig, HistoryRendererConfig
-from ..planning import PlanningMode, mode_presets
+from automation_engine.planning import PlanningMode, mode_presets
 
 
 class BrowserConfig(BaseModel):
@@ -14,14 +12,6 @@ class BrowserConfig(BaseModel):
     headless: bool = False
     viewport_width: int = 1280
     viewport_height: int = 780
-
-
-class RendererConfig(BaseModel):
-    """Serialization settings."""
-    model_config = ConfigDict(frozen=True)
-
-    dom: DOMRendererConfig = Field(default_factory=DOMRendererConfig)
-    history: HistoryRendererConfig = Field(default_factory=HistoryRendererConfig)
 
 
 class LLMConfig(BaseModel):
@@ -47,6 +37,5 @@ class EngineConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     browser: BrowserConfig = Field(default_factory=BrowserConfig)
-    renderer: RendererConfig = Field(default_factory=RendererConfig)
     llm: LLMConfig = Field(default_factory=LLMConfig)
     execution: ExecutionConfig = Field(default_factory=ExecutionConfig)

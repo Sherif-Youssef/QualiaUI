@@ -1,1 +1,1 @@
-# TODO: Support tabs
+# TODO: Support tabs (browser, actions, & state)

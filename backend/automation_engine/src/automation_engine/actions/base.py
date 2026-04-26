@@ -17,12 +17,6 @@ class InteractionAction(BaseAction):
     pass
 
 
-class AssertionAction(BaseAction):
-    """Verifies something on the page."""
-    # TODO: Support soft assertions
-    # soft: bool = Field(default=False, description="If True, log failure but don't abort.")
-    pass
-
 class TerminationSignal(BaseModel):
     """Signals end-of-task (success or failure)."""
     model_config = ConfigDict(use_enum_values=True)

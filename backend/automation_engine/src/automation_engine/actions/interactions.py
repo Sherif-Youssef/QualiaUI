@@ -4,17 +4,14 @@ from typing import Literal, Optional
 from pydantic import Field
 
 from .base import InteractionAction
-from .registry import action
 from .types import Interaction
 
 
-@action
 class Waiting(InteractionAction):
     """Pause execution for a fixed duration."""
     action_type: Literal[Interaction.WAITING] = Field(default=Interaction.WAITING, exclude=True)
 
 
-@action
 class Click(InteractionAction):
     """Click an element."""
     action_type: Literal[Interaction.CLICK] = Field(default=Interaction.CLICK, exclude=True)
@@ -25,7 +22,6 @@ class Click(InteractionAction):
     modifiers: list[Literal["Alt", "ControlOrMeta", "Shift"]] | None = Field(default=None, description="Keyboard modifiers held during click.")
 
 
-@action
 class Fill(InteractionAction):
     """Clear a field and type a new value. Emit multiple Fills for multiple fields."""
     action_type: Literal[Interaction.FILL] = Field(default=Interaction.FILL, exclude=True)
@@ -35,7 +31,6 @@ class Fill(InteractionAction):
     clear_first: bool = True
 
 
-@action
 class Hover(InteractionAction):
     """Move the cursor over an element (e.g. to reveal a tooltip or dropdown)."""
     action_type: Literal[Interaction.HOVER] = Field(default=Interaction.HOVER, exclude=True)
@@ -43,7 +38,6 @@ class Hover(InteractionAction):
     target_id: int
 
 
-@action
 class SelectOption(InteractionAction):
     """Pick an <option> from a <select>. Supply exactly one of value/label/index/option_element_id."""
     action_type: Literal[Interaction.SELECT] = Field(default=Interaction.SELECT, exclude=True)
@@ -53,7 +47,6 @@ class SelectOption(InteractionAction):
     select_value: str | int = Field(description="The value, label text, 0-based index, or element id depending on select_by.")
 
 
-@action
 class Press(InteractionAction):
     """Send keystrokes, optionally focused on an element."""
     action_type: Literal[Interaction.PRESS] = Field(default=Interaction.PRESS, exclude=True)
@@ -62,7 +55,6 @@ class Press(InteractionAction):
     target_id: Optional[int] = Field(default=None, description="Focus target. None = page-level.")
 
 
-@action
 class Navigate(InteractionAction):
     """Go to a URL."""
     action_type: Literal[Interaction.NAVIGATE] = Field(default=Interaction.NAVIGATE, exclude=True)
@@ -70,16 +62,6 @@ class Navigate(InteractionAction):
     url: str = Field(description="Absolute or relative URL to navigate to.")
     wait_until: Literal["commit", "domcontentloaded", "load", "networkidle"] = "load"
 
-
-@action
-class Scroll(InteractionAction):
-    """Scroll an element into the visible viewport."""
-    action_type: Literal[Interaction.SCROLL] = Field(default=Interaction.SCROLL, exclude=True)
-
-    target_id: int
-
-
-@action
 class DragDrop(InteractionAction):
     """Drag one element and drop it onto another."""
     action_type: Literal[Interaction.DRAG_DROP] = Field(default=Interaction.DRAG_DROP, exclude=True)
@@ -88,7 +70,6 @@ class DragDrop(InteractionAction):
     target_id: int
 
 
-@action
 class UploadFile(InteractionAction):
     """Upload one or more files into a file input."""
     action_type: Literal[Interaction.UPLOAD] = Field(default=Interaction.UPLOAD)
@@ -98,7 +79,6 @@ class UploadFile(InteractionAction):
 
 
 # TODO: Support turning off JS executions, and support turning on & off actions dynamically
-@action
 class ExecuteJS(InteractionAction):
     """Run arbitrary JavaScript in page context. Use only when no other action works."""
 

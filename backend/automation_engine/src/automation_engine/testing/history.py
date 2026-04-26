@@ -5,9 +5,8 @@ from typing import Optional
 from enum import StrEnum
 from pydantic import BaseModel, Field, computed_field
 
-from ..actions.terminations import Complete, Fail
-from ..actions.base import BaseAction, TerminationSignal
-from ..compilation import ExecAction
+from automation_engine.actions import Complete, Fail, BaseAction, TerminationSignal
+from automation_engine.compilation import ExecAction
 
 
 class TestStatus(StrEnum):

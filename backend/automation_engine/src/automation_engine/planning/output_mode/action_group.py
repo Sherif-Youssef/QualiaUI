@@ -62,11 +62,6 @@ class ActionGroupMode(PlanningMode):
             "- All targets are currently visible and stable in the DOM.\n"
             "- No action in the group triggers a navigation or major re-render.\n"
             "- Actions are logically sequential (e.g., fill multiple form fields).\n\n"
-            "**Keep separate** (return fewer actions) when:\n"
-            "- An action triggers navigation, a modal, or a dynamic re-render.\n"
-            "- The next action depends on the result or side-effect of the current one.\n"
-            "- You are unsure whether a target will still exist after a prior action.\n\n"
-            "Verify every `target_id` exists in the current DOM before including it.\n"
             "When in doubt, return fewer actions — you will get another turn."
         )
 

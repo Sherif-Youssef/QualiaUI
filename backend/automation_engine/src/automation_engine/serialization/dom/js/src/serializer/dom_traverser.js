@@ -1,4 +1,3 @@
-// traversers/DOMTraverser.js
 import { ElementValidator } from './element_validator.js';
 import { ElementDataExtractor } from './data_extractor.js';
 import { SelectorGenerator } from './selector_generator.js';
@@ -9,15 +8,18 @@ export class DOMTraverser {
         this.extractor = new ElementDataExtractor(this.validator);
     }
 
-    traverse(node, selectorGen, depth = 0, root = true, elementId = 0) {
+    traverse(node, selectorGen, depth = 0, isRoot = true, elementId = 0) {
         selectorGen.enter(node);
 
         const elementData = this.extractor.extract(node);
         const children = [];
         const interactive = this.validator.isInteractive(node);
         const semantic = this.validator.isSemantic(node);
-        const worthKeeping = interactive || (semantic && this.extractor.hasImportantData(elementData)) || root;
-        
+        const worthKeeping = (
+            elementData.visibility != "hidden" 
+            && (interactive || (semantic && this.extractor.hasImportantData(elementData)))
+        ) || isRoot;
+
         elementData.depth = depth;
         elementData.selector = selectorGen.getSelector();
         elementData.is_interactive = interactive;
