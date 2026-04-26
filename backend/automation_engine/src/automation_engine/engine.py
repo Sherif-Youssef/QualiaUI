@@ -86,6 +86,7 @@ class TestingSession:
                 BuildModelStateStep(),
                 CallAgentStep(),
                 CompileActionsStep(),
+                StuckDetectionStep(),
                 ResolveVariablesStep(),
                 ExecuteActionsStep(),
             ]
