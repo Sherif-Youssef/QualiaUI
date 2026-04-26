@@ -1,5 +1,8 @@
 from __future__ import annotations
+
+from typing import Any
 from pydantic import BaseModel, Field, ConfigDict
+
 from enum import StrEnum
 
 
@@ -36,7 +39,7 @@ class DOMElement(BaseModel):
     text: str | None = Field(default=None, description="Visible text content of the element.")
     position: ElementPosition = Field(description="Bounding box of the element.")
     visibility: Visibility = Field(description="Viewport-relative visibility status.")
-    attributes: dict[str, str | dict[str, str]] = Field(default_factory=dict, description="HTML attributes; 'dataset' key holds data-* as a nested dict.")
+    attributes: dict[str, Any] = Field(default_factory=dict, description="HTML attributes; 'dataset' key holds data-* as a nested dict.")
     selector: str = Field(description="Unique CSS selector for engine resolution.")
     depth: int = Field(default=0, description="Nesting depth in the visual hierarchy.")
     children: list[DOMElement] = Field(default_factory=list, description="Direct child elements.")
@@ -55,19 +58,19 @@ class DOMElement(BaseModel):
 
     @property
     def is_disabled(self) -> bool:
-        return "disabled" in self.attributes
+        return self.attributes.get("disabled", False)
 
     @property
     def is_checked(self) -> bool:
-        return "checked" in self.attributes
+        return self.attributes.get("checked", False)
 
     @property
     def is_required(self) -> bool:
-        return "required" in self.attributes
+        return self.attributes.get("required", False)
 
     @property
     def is_selected(self) -> bool:
-        return "selected" in self.attributes
+        return self.attributes.get("selected", False)
 
 
 class PageState(BaseModel):
@@ -77,8 +80,6 @@ class PageState(BaseModel):
     page_title: str = Field(default="", description="Document title.")
     viewport_width: int = Field(default=1280, description="Viewport width in pixels.")
     viewport_height: int = Field(default=720, description="Viewport height in pixels.")
-    scroll_x: int = Field(default=0, description="Horizontal scroll offset in pixels.")
-    scroll_y: int = Field(default=0, description="Vertical scroll offset in pixels.")
     root: DOMElement = Field(description="Root of the serialized DOM tree.")
     screenshot: bytes | None = Field(default=None, description="Optional PNG screenshot of the page.")
 

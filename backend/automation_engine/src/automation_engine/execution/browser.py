@@ -97,12 +97,6 @@ class PlaywrightBrowser:
             else:
                 await self._context.add_init_script(script)
         
-        await self._context.add_cookies([{
-            "name": "session-username",
-            "value": "standard_user",
-            "secure": False,
-            "url": "https://www.saucedemo.com/inventory.html",
-        }])
         
         self._context.on("page", self._on_new_page)
 
