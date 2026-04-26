@@ -2,6 +2,7 @@ from .observe import ObserveStep
 from .decide import BuildModelStateStep, CallAgentStep
 from .compile import CompileActionsStep, ResolveVariablesStep
 from .execute import ExecuteActionsStep
+from .detect_stuck import StuckDetectionStep
 
 __all__ = [
     "ObserveStep",
@@ -9,5 +10,6 @@ __all__ = [
     "CallAgentStep",
     "CompileActionsStep",
     "ResolveVariablesStep",
-    "ExecuteActionsStep"
+    "StuckDetectionStep",
+    "ExecuteActionsStep",
 ]

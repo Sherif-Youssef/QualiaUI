@@ -67,12 +67,10 @@ class PlaywrightBrowser:
         self._context: BrowserContext | None = None
         self._page: Page | None = None
 
-    def _on_new_page(self, page: Page) -> None:
-        """
-        Callback fired whenever a new tab/page is opened in the browser context.
-        """
-        # NOTE: Temp fix for tabs opening from links
-        self._page = page
+    def _on_new_page(self, new_page: Page) -> None:
+        url = new_page.url
+        self.new_page.close()
+        self._page.goto(url)
 
     async def start(
         self,
