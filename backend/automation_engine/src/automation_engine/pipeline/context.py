@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from automation_engine.planning import PageSnapshot, PlanningAgent, ModelState
     from automation_engine.serialization import PageRenderer, HistoryRenderer
     from automation_engine.compilation.variables import VariableStore
-    from automation_engine.testing.history import TestRun, TestStep, TestTermination
+    from automation_engine.history import TestRun, TestStep, TestTermination
 
 
 class IterationStatus(Enum):

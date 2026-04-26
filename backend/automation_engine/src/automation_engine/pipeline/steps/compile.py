@@ -7,7 +7,7 @@ from automation_engine.pipeline.context import (
     IterationStatus,
     CompiledAction,
 )
-from automation_engine.testing.history import TestStep, TestStatus
+from automation_engine.history import TestStep, TestStatus
 
 logger = logging.getLogger(__name__)
 

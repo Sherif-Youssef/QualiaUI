@@ -3,7 +3,7 @@ import logging
 from automation_engine.pipeline.context import IterationContext, IterationStatus
 from automation_engine.planning import ModelState
 from automation_engine.actions import TerminationSignal
-from automation_engine.testing.history import TestTermination
+from automation_engine.history import TestTermination
 
 logger = logging.getLogger(__name__)
 
