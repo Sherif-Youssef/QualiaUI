@@ -68,9 +68,10 @@ class PlaywrightBrowser:
         self._page: Page | None = None
 
     def _on_new_page(self, new_page: Page) -> None:
-        url = new_page.url
-        self.new_page.close()
-        self._page.goto(url)
+        if self._page is not None:
+            url = new_page.url
+            new_page.close()
+            self._page.goto(url)
 
     async def start(
         self,

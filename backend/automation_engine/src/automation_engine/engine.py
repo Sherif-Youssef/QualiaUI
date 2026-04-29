@@ -55,7 +55,7 @@ class TestingEngine:
     ) -> None:
         self._model = model
         self._config = config or EngineConfig()
-        self._variable_store = VariableStore(variables)
+        self._variables = variables or []
         self._page_renderer = PageRenderer()
         self._history_renderer = HistoryRenderer()
 
@@ -63,8 +63,13 @@ class TestingEngine:
     def config(self) -> EngineConfig:
         return self._config
 
-    def launch(self, url: str) -> TestingSession:
-        return TestingSession(self, url)
+    def launch(
+        self,
+        url: str,
+        variables: list[Variable] | None = None
+    ) -> TestingSession:
+        session_variables = (variables or []) + self._variables
+        return TestingSession(self, url=url, variables=session_variables)
 
 
 class TestingSession:
@@ -72,9 +77,15 @@ class TestingSession:
     A live browser session. Created via engine.launch(url).
     """
 
-    def __init__(self, engine: TestingEngine, url: str) -> None:
+    def __init__(
+        self,
+        engine: TestingEngine,
+        url: str,
+        variables: list[Variable] | None = None,
+    ) -> None:
         self._engine = engine
         self._url = url
+        self._variable_store = VariableStore(variables)
         self._test_run: TestRun | None = None
         self._browser: PlaywrightBrowser | None = None
         self._planning_agent: PlanningAgent | None = None
@@ -276,7 +287,7 @@ class TestingSession:
             planning_agent=self._planning_agent,
             page_renderer=self._engine._page_renderer,
             history_renderer=self._engine._history_renderer,
-            variable_store=self._engine._variable_store,
+            variable_store=self._variable_store,
             test_run=self._test_run,
             use_screenshot=self._engine.config.llm.use_screenshot,
         )
