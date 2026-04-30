@@ -31,7 +31,7 @@ export const TestSuiteList: React.FC<TestSuiteListProps> = ({
                                 {suite.name}
                             </h3>
                             {suite.description && (
-                                <p 
+                                <p
                                     className="text-sm text-gray-500 mt-2 line-clamp-2 leading-relaxed"
                                     title={suite.description}
                                 >

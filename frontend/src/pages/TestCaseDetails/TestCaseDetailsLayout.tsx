@@ -4,13 +4,13 @@ import { TopNav } from '@/components/TopNav';
 interface TestCaseDetailsLayoutProps {
     sidebar: React.ReactNode;
     content: React.ReactNode;
-    modals: React.ReactNode;
+    modals?: React.ReactNode;
 }
 
 export const TestCaseDetailsLayout: React.FC<TestCaseDetailsLayoutProps> = ({
     sidebar,
     content,
-    modals
+    modals = null
 }) => {
     return (
         <div className="min-h-screen bg-gray-50 flex flex-col overflow-hidden text-left">

@@ -5,19 +5,16 @@ import {
     CheckCircle2, 
     XCircle, 
     AlertCircle,
-    Trash2,
     ChevronRight 
 } from 'lucide-react';
-import { TestRunRead } from '@/types/run';
-import { Button } from '@/components/ui/button';
+import { ProjectRun } from '@/services/runService';
 
 interface ProjectHistoryTableProps {
-    runs: TestRunRead[];
-    onDelete: (id: string) => void;
-    onView?: (id: string) => void;
+    runs: ProjectRun[];
+    onView?: (id: number) => void;
 }
 
-export const ProjectHistoryTable: React.FC<ProjectHistoryTableProps> = ({ runs, onDelete, onView }) => {
+export const ProjectHistoryTable: React.FC<ProjectHistoryTableProps> = ({ runs, onView }) => {
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'PASSED': return <CheckCircle2 className="w-5 h-5 text-success" />;
@@ -62,19 +59,19 @@ export const ProjectHistoryTable: React.FC<ProjectHistoryTableProps> = ({ runs, 
                                 </td>
                                 <td className="px-8 py-6">
                                     <div className="flex flex-col gap-0.5">
-                                        <span className="text-base font-bold text-gray-800 group-hover:text-primary transition-colors">{run.name}</span>
-                                        <span className="text-xs font-medium text-gray-400 truncate max-w-[250px]">{run.description || 'No description provided'}</span>
+                                        <span className="text-base font-bold text-gray-800 group-hover:text-primary transition-colors">Run #{run.id}</span>
+                                        <span className="text-xs font-medium text-gray-400 truncate max-w-[250px] font-mono">{run.job_uid}</span>
                                     </div>
                                 </td>
                                 <td className="px-8 py-6 whitespace-nowrap">
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center gap-2 text-xs font-bold text-gray-700">
                                             <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                                            {new Date(run.started_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            {new Date(run.started_at || run.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </div>
                                         <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 tracking-wider">
                                             <Clock className="w-3.5 h-3.5" />
-                                            {new Date(run.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {new Date(run.started_at || run.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
                                     </div>
                                 </td>
@@ -85,17 +82,6 @@ export const ProjectHistoryTable: React.FC<ProjectHistoryTableProps> = ({ runs, 
                                 </td>
                                 <td className="px-8 py-6 text-right">
                                     <div className="flex items-center justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all translate-x-4 group-hover:translate-x-0">
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="text-failure/60 hover:text-failure hover:bg-failure/5 rounded-xl w-10 h-10"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onDelete(run.id);
-                                            }}
-                                        >
-                                            <Trash2 className="w-5 h-5" />
-                                        </Button>
                                         <div className="w-10 h-10 bg-muted rounded-xl flex items-center justify-center text-gray-400 group-hover:bg-primary/5 group-hover:text-primary transition-colors">
                                             <ChevronRight className="w-5 h-5" />
                                         </div>
