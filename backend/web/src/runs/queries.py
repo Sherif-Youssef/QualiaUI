@@ -1,5 +1,7 @@
+from sqlalchemy import func
 from sqlmodel import Session, and_, col, select
 
+from src.base.schemas import PaginationParams
 from src.projects.models import Project, UserProjectLink
 from src.testsuites.models import TestSuite
 from src.testcases.models import TestCase
@@ -91,3 +93,75 @@ def get_testcase_run_by_id_with_user_link(
 
     testcase_run, user_project_link = row
     return testcase_run, user_project_link
+
+
+def get_all_testcase_runs_by_testcase_id(
+    session: Session,
+    testcase_id: int,
+    pagination_params: PaginationParams,
+) -> list[TestCaseRun]:
+    statement = (
+        select(TestCaseRun)
+        .where(TestCaseRun.testcase_id == testcase_id)
+        .order_by(col(TestCaseRun.id).desc())
+        .limit(pagination_params.limit)
+        .offset(pagination_params.offset)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_testcase_runs_by_testcase_id(session: Session, testcase_id: int) -> int:
+    statement = (
+        select(func.count())
+        .select_from(TestCaseRun)
+        .where(TestCaseRun.testcase_id == testcase_id)
+    )
+    return session.exec(statement).one()  # type: ignore[arg-type]
+
+
+def get_all_testsuite_runs_by_testsuite_id(
+    session: Session,
+    testsuite_id: int,
+    pagination_params: PaginationParams,
+) -> list[TestSuiteRun]:
+    statement = (
+        select(TestSuiteRun)
+        .where(TestSuiteRun.testsuite_id == testsuite_id)
+        .order_by(col(TestSuiteRun.id).desc())
+        .limit(pagination_params.limit)
+        .offset(pagination_params.offset)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_testsuite_runs_by_testsuite_id(session: Session, testsuite_id: int) -> int:
+    statement = (
+        select(func.count())
+        .select_from(TestSuiteRun)
+        .where(TestSuiteRun.testsuite_id == testsuite_id)
+    )
+    return session.exec(statement).one()  # type: ignore[arg-type]
+
+
+def get_all_project_runs_by_project_id(
+    session: Session,
+    project_id: int,
+    pagination_params: PaginationParams,
+) -> list[ProjectRun]:
+    statement = (
+        select(ProjectRun)
+        .where(ProjectRun.project_id == project_id)
+        .order_by(col(ProjectRun.id).desc())
+        .limit(pagination_params.limit)
+        .offset(pagination_params.offset)
+    )
+    return list(session.exec(statement).all())
+
+
+def count_project_runs_by_project_id(session: Session, project_id: int) -> int:
+    statement = (
+        select(func.count())
+        .select_from(ProjectRun)
+        .where(ProjectRun.project_id == project_id)
+    )
+    return session.exec(statement).one()  # type: ignore[arg-type]

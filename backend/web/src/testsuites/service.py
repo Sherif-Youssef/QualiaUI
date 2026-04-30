@@ -1,6 +1,11 @@
 from sqlmodel import Session
 
 from src.base.schemas import Page, PaginationParams
+from src.runs.schemas import TestSuiteRunRead
+from src.runs.queries import (
+    get_all_testsuite_runs_by_testsuite_id as get_runs_all,
+    count_testsuite_runs_by_testsuite_id as count_runs,
+)
 from src.projects.models import Project
 
 from .models import TestSuite
@@ -12,9 +17,10 @@ def list_testsuites(
     session: Session,
     project_id: int,
     pagination_params: PaginationParams,
+    name: str | None = None,
 ) -> Page[TestSuiteRead]:
-    testsuites = get_all(session, project_id, pagination_params)
-    total_items = count(session, project_id)
+    testsuites = get_all(session, project_id, pagination_params, name=name)
+    total_items = count(session, project_id, name=name)
 
     return Page(
         items=[
@@ -25,6 +31,25 @@ def list_testsuites(
                 description=testsuite.description,
             )
             for testsuite in testsuites
+        ],
+        offset=pagination_params.offset,
+        limit=pagination_params.limit,
+        total_items=total_items,
+    )
+
+
+def list_testsuite_runs(
+    session: Session,
+    testsuite_id: int,
+    pagination_params: PaginationParams,
+) -> Page[TestSuiteRunRead]:
+    runs = get_runs_all(session, testsuite_id, pagination_params)
+    total_items = count_runs(session, testsuite_id)
+
+    return Page(
+        items=[
+            TestSuiteRunRead.model_validate(run, from_attributes=True)
+            for run in runs
         ],
         offset=pagination_params.offset,
         limit=pagination_params.limit,

@@ -51,10 +51,22 @@ def get_by_id_with_user_link(
     return testsuite, user_project_link  
 
 
-def get_all(session: Session, project_id: int, pagination_params: PaginationParams) -> list[TestSuite]:
+def get_all(
+    session: Session,
+    project_id: int,
+    pagination_params: PaginationParams,
+    name: str | None = None,
+) -> list[TestSuite]:
     statement = (
         select(TestSuite)
         .where(TestSuite.project_id == project_id)
+    )
+
+    if name:
+        statement = statement.where(func.lower(col(TestSuite.name)).ilike(f"%{name.lower()}%"))
+
+    statement = (
+        statement
         .order_by(col(TestSuite.id).asc())
         .limit(pagination_params.limit)
         .offset(pagination_params.offset)
@@ -62,10 +74,11 @@ def get_all(session: Session, project_id: int, pagination_params: PaginationPara
     return list(session.exec(statement).all())
 
 
-def count(session: Session, project_id: int) -> int:
+def count(session: Session, project_id: int, name: str | None = None) -> int:
     statement = select(func.count()).select_from(TestSuite).where(TestSuite.project_id == project_id)
-    return session.exec(statement).one()  
-
+    if name:
+        statement = statement.where(func.lower(col(TestSuite.name)).ilike(f"%{name.lower()}%"))
+    return session.exec(statement).one()
 
 def delete(session: Session, testsuite: TestSuite) -> None:
     session.delete(testsuite)

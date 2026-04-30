@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 
 from src.auth.dependencies import UserDep, AdminUserDep
 from src.database import SessionDep
@@ -6,7 +6,8 @@ from src.base.schemas import Page, PaginationParams
 from src.projects.dependencies import ViewerProjectDep, EditorProjectDep, AdminProjectDep
 
 from .schemas import ProjectCreate, ProjectRead, ProjectSummaryRead, ProjectUpdate
-from .service import create_project, delete_project, list_projects, update_project
+from .service import create_project, delete_project, list_projects, update_project, list_project_runs
+from src.runs.schemas import ProjectRunRead
 
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -23,8 +24,26 @@ async def list_projects_route(
 	session: SessionDep,
 	user: UserDep,
 	pagination_params: PaginationParams = Depends(),
+	name: str | None = Query(None),
 ):
-	return list_projects(session=session, user=user, pagination_params=pagination_params)
+	return list_projects(
+		session=session,
+		user=user,
+		pagination_params=pagination_params,
+		name=name,
+	)
+
+@router.get("/{project_id}/runs", response_model=Page[ProjectRunRead])
+async def list_project_runs_route(
+	session: SessionDep,
+	project: ViewerProjectDep,
+	pagination_params: PaginationParams = Depends(),
+):
+	return list_project_runs(
+		session=session,
+		project_id=project.id, # type: ignore[arg-type]
+		pagination_params=pagination_params,
+	)
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=ProjectRead)
 async def create_project_route(
