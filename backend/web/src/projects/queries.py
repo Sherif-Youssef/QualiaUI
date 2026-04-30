@@ -1,10 +1,8 @@
 from typing import TYPE_CHECKING, Tuple
 
-
 from sqlmodel import Session, and_, col, select
 from sqlalchemy import func
 from sqlalchemy.orm import selectinload, subqueryload
-
 
 from src.base.schemas import PaginationParams
 from .models import Project, Role, UserProjectLink

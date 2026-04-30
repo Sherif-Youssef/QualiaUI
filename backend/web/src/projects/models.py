@@ -3,12 +3,12 @@ from typing import TYPE_CHECKING, Literal
 
 from sqlalchemy import Column, Enum as SAEnum
 from sqlmodel import Field, Relationship, SQLModel
-from src.config import timezone
 from src.base.schemas import RoleEnum
 
 if TYPE_CHECKING:
 	from src.auth.models import User
 	from src.testsuites.models import TestSuite
+	from src.runs.models import ProjectRun
 
 
 class Role(RoleEnum):
@@ -31,7 +31,7 @@ class UserProjectLink(SQLModel, table=True):
 		# 	nullable=False,
 		# ),
 	)
-	joined_at: datetime = Field(default_factory=lambda: datetime.now(timezone), nullable=False)
+	joined_at: datetime = Field(default_factory=lambda: datetime.now(), nullable=False)
 
 	user: "User" = Relationship(back_populates="projects_links")
 	project: "Project" = Relationship(back_populates="users_links")
@@ -43,3 +43,4 @@ class Project(SQLModel, table=True):
 	description: str = Field(default="")
 	users_links: list[UserProjectLink] = Relationship(back_populates="project", cascade_delete=True)
 	testsuites: list["TestSuite"] = Relationship(back_populates="project", cascade_delete=True)
+	runs: list["ProjectRun"] = Relationship(back_populates="project")

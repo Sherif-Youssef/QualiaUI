@@ -4,30 +4,18 @@ from fastapi import Depends, HTTPException, Path
 from sqlmodel import Session
 
 from src.auth.dependencies import UserDep
-from src.auth.service import is_admin
+from src.auth.models import User, Role
 from src.database import SessionDep
 
 from .models import Project, Role, UserProjectLink
-from .queries import get_by_id, get_with_link
+from .queries import get_by_id
 
-
-def _get_project_with_link(
-    session: Session,
-    project_id: int,
-    user_id: int,
-) -> tuple[Project, UserProjectLink | None]:
-    result = get_with_link(session, project_id, user_id)
-    if not result:
-        raise HTTPException(status_code=404, detail="Project not found")
-    return result  # (project, link | None)
-
-
-def _check_role(
-    user,
+def check_project_role(
+    user: User,
     link: UserProjectLink | None,
     minimum_role: Role,
 ) -> None:
-    if is_admin(user):
+    if user.role == Role.ADMIN:
         return
     if link and link.role >= minimum_role:
         return
@@ -45,13 +33,24 @@ def _project_dep_factory(minimum_role: Role):
         user: UserDep,
         project_id: int = Path(...),
     ) -> Project:
-        project, link = _get_project_with_link(session, project_id, user.id)
-        _check_role(user, link, minimum_role)
+        project = get_by_id(session, project_id, load_links=True)
+        if not project:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+        user_project_link = next(
+            (link for link in project.users_links if link.user_id == user.id),
+            None,
+        )
+
+        check_project_role(user, user_project_link, minimum_role)
         return project
 
     return dependency
 
+get_viewer_project = _project_dep_factory(Role.VIEWER)
+get_editor_project = _project_dep_factory(Role.EDITOR)
+get_admin_project = _project_dep_factory(Role.ADMIN)
 
-ViewerProjectDep = Annotated[Project, Depends(_project_dep_factory(Role.VIEWER))]
-EditorProjectDep = Annotated[Project, Depends(_project_dep_factory(Role.EDITOR))]
-AdminProjectDep  = Annotated[Project, Depends(_project_dep_factory(Role.ADMIN))]
+ViewerProjectDep = Annotated[Project, Depends(get_viewer_project)]
+EditorProjectDep = Annotated[Project, Depends(get_editor_project)]
+AdminProjectDep  = Annotated[Project, Depends(get_admin_project)]

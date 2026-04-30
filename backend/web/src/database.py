@@ -18,14 +18,26 @@ def create_all():
     from src.projects.models import Project, UserProjectLink
     from src.testsuites.models import TestSuite
     from src.testcases.models import TestCase
-    from src.runs.models import TestRun, TestCaseRun, TestStepRun
-    User.model_rebuild()
-    Project.model_rebuild()
-    UserProjectLink.model_rebuild()
-    TestSuite.model_rebuild()
-    TestCase.model_rebuild()
-    TestRun.model_rebuild()
-    TestCaseRun.model_rebuild()
-    TestStepRun.model_rebuild()
-    
+    from src.runs.models import ProjectRun, TestSuiteRun, TestCaseRun, TestStepRun
+    ns = {
+        "Project": Project,
+        "TestSuite": TestSuite,
+        "TestCase": TestCase,
+        "ProjectRun": ProjectRun,
+        "TestSuiteRun": TestSuiteRun,
+        "TestCaseRun": TestCaseRun,
+        "TestStepRun": TestStepRun,
+    }
+
+    User.model_rebuild(_types_namespace=ns)
+    Project.model_rebuild(_types_namespace=ns)
+    UserProjectLink.model_rebuild(_types_namespace=ns)
+    TestSuite.model_rebuild(_types_namespace=ns)
+    TestCase.model_rebuild(_types_namespace=ns)
+    ProjectRun.model_rebuild(_types_namespace=ns)
+    TestSuiteRun.model_rebuild(_types_namespace=ns)
+    TestCaseRun.model_rebuild(_types_namespace=ns)
+    TestStepRun.model_rebuild(_types_namespace=ns)
+
     SQLModel.metadata.create_all(engine)
+

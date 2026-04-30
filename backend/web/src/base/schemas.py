@@ -78,3 +78,9 @@ class RoleEnum(Enum):
     
 	def __repr__(self):
 		return "'%s'" % self._value_[0]
+
+
+class Scope(StrEnum):
+    TESTCASE = "TESTCASE"
+    TESTSUITE = "TESTSUITE"
+    PROJECT = "PROJECT"
