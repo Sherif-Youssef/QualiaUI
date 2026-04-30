@@ -45,10 +45,22 @@ def get_by_id_with_user_link(
     return testcase, user_project_link
 
 
-def get_all(session: Session, testsuite_id: int, pagination_params: PaginationParams) -> list[TestCase]:
+def get_all(
+	session: Session,
+	testsuite_id: int,
+	pagination_params: PaginationParams,
+	name: str | None = None,
+) -> list[TestCase]:
 	statement = (
 		select(TestCase)
 		.where(TestCase.testsuite_id == testsuite_id)
+	)
+
+	if name:
+		statement = statement.where(func.lower(col(TestCase.name)).ilike(f"%{name.lower()}%"))
+
+	statement = (
+		statement
 		.order_by(col(TestCase.id).asc())
 		.limit(pagination_params.limit)
 		.offset(pagination_params.offset)
@@ -56,8 +68,10 @@ def get_all(session: Session, testsuite_id: int, pagination_params: PaginationPa
 	return list(session.exec(statement).all())
 
 
-def count(session: Session, testsuite_id: int) -> int:
+def count(session: Session, testsuite_id: int, name: str | None = None) -> int:
 	statement = select(func.count()).select_from(TestCase).where(TestCase.testsuite_id == testsuite_id)
+	if name:
+		statement = statement.where(func.lower(col(TestCase.name)).ilike(f"%{name.lower()}%"))
 	return session.exec(statement).one()  # type: ignore[arg-type]
 
 

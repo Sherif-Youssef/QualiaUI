@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 
 from src.base.schemas import Page, PaginationParams
 from src.database import SessionDep
@@ -18,7 +18,9 @@ from .service import (
 	delete_testcase,
 	list_testcases,
 	update_testcase,
+	list_testcase_runs,
 )
+from src.runs.schemas import TestCaseRunRead
 
 router = APIRouter(prefix="/projects/{project_id}/testsuites/{testsuite_id}/testcases", tags=["testcases"])
 
@@ -34,10 +36,24 @@ async def list_testcases_route(
 	session: SessionDep,
 	testsuite: ViewerTestSuiteDep,
 	pagination_params: PaginationParams = Depends(),
+	name: str | None = Query(None),
 ):
 	return list_testcases(
 		session=session,
 		testsuite_id=testsuite.id,  # type: ignore[arg-type]
+		pagination_params=pagination_params,
+		name=name,
+	)
+
+@router.get("/{testcase_id}/runs", response_model=Page[TestCaseRunRead])
+async def list_testcase_runs_route(
+	session: SessionDep,
+	testcase: ViewerTestCaseDep,
+	pagination_params: PaginationParams = Depends(),
+):
+	return list_testcase_runs(
+		session=session,
+		testcase_id=testcase.id,  # type: ignore[arg-type]
 		pagination_params=pagination_params,
 	)
 

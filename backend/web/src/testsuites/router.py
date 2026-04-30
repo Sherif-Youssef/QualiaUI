@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 
 from src.auth.dependencies import UserDep
 from src.base.schemas import Page, PaginationParams
@@ -12,7 +12,9 @@ from .service import (
 	delete_testsuite,
 	list_testsuites,
 	update_testsuite,
+	list_testsuite_runs,
 )
+from src.runs.schemas import TestSuiteRunRead
 
 
 router = APIRouter(prefix="/projects/{project_id}/testsuites", tags=["testsuites"])
@@ -23,11 +25,13 @@ async def list_testsuites_route(
 	session: SessionDep,
 	project: ViewerProjectDep,
 	pagination_params: PaginationParams = Depends(),
+	name: str | None = Query(None),
 ):
 	return list_testsuites(
 		session=session,
 		project_id=project.id, # type: ignore[arg-type]
 		pagination_params=pagination_params,
+		name=name,
 	)
 
 
@@ -36,6 +40,18 @@ async def get_testsuite_route(
 	testsuite: ViewerTestSuiteDep,
 ):
 	return testsuite
+
+@router.get("/{testsuite_id}/runs", response_model=Page[TestSuiteRunRead])
+async def list_testsuite_runs_route(
+	session: SessionDep,
+	testsuite: ViewerTestSuiteDep,
+	pagination_params: PaginationParams = Depends(),
+):
+	return list_testsuite_runs(
+		session=session,
+		testsuite_id=testsuite.id, # type: ignore[arg-type]
+		pagination_params=pagination_params,
+	)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=TestSuiteRead)
