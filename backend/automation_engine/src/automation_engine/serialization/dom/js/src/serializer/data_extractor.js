@@ -30,9 +30,10 @@ export class ElementDataExtractor {
 
         // Extract key attributes
         for (const attr of this.keyAttributes) {
-            const value = element.getAttribute(attr);
+            const value = this._getPropOrAttr(element, attr);
             if (value !== null && value !== "") {
-                elementData.attributes[attr] = value.trim();
+                elementData.attributes[attr] =
+                    typeof value === "string" ? value.trim() : value;
             }
         }
 
@@ -53,6 +54,13 @@ export class ElementDataExtractor {
         }
         
         return false;
+    }
+
+    _getPropOrAttr(element, name, defaultValue = null) {
+        if (name in element) {
+            return element[name] ?? defaultValue;
+        }
+        return element.getAttribute(name) ?? defaultValue;
     }
 
     _extractDirectText(element) {

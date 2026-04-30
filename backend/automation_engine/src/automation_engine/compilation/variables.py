@@ -15,13 +15,13 @@ class Variable(BaseModel):
 
 class TextVariable(Variable):
     """A text variable whose value is substituted into string fields."""
-    var_type: Literal["text"] = "text"
+    var_type: Literal["text"] = Field(default="text", init=False)
     value: str = Field(description="Actual text value (never shown to LLM).")
 
 
 class FileVariable(Variable):
     """A file variable resolved into file-related actions (e.g. upload)."""
-    var_type: Literal["file"] = "file"
+    var_type: Literal["file"] = Field(default="file", init=False)
     paths: list[Path] = Field(min_length=1, description="Absolute path(s) to file(s) on disk.")
     display_name: str | None = Field(default=None, description="File name shown to LLM.")
 

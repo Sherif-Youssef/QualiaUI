@@ -43,7 +43,8 @@ export class ElementValidator {
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
         const elAtPoint = document.elementFromPoint(centerX, centerY);
-        return element.contains(elAtPoint);
+        if (!elAtPoint) return true; // point is outside viewport/document
+        return !element.contains(elAtPoint);
     }
 
     isInViewport(element) {

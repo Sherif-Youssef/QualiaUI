@@ -6,8 +6,8 @@ from pydantic import Field
 
 from .base import ExecAction
 from .registry import maps
-from ..markers import ElementRef, SourcedFrom, TextResolvable, JSResolvable, FileVarRef
-from ...actions.interactions import *
+from automation_engine.compilation.markers import ElementRef, SourcedFrom, TextResolvable, JSResolvable, FileVarRef
+from automation_engine.actions.interactions import *
 
 
 @maps(Waiting)
@@ -56,7 +56,7 @@ class SelectOptionExec(ExecAction):
 class PressExec(ExecAction):
     action_type: Literal[Interaction.PRESS] = Interaction.PRESS
     key: str = Field(description='Key combo string, e.g. "Enter", "Control+a".')
-    target_selector: Annotated[Optional[str], ElementRef()] = None
+    target_selector: Annotated[Optional[str], SourcedFrom(source="target_id"), ElementRef()] = None
     timeout: float | None = None
 
 
@@ -65,13 +65,6 @@ class NavigateExec(ExecAction):
     action_type: Literal[Interaction.NAVIGATE] = Interaction.NAVIGATE
     url: Annotated[str, TextResolvable()]
     wait_until: Literal["commit", "domcontentloaded", "load", "networkidle"] = "load"
-    timeout: float | None = None
-
-
-@maps(Scroll)
-class ScrollExec(ExecAction):
-    action_type: Literal[Interaction.SCROLL] = Interaction.SCROLL
-    target_selector: Annotated[str, SourcedFrom(source="target_id"), ElementRef()]
     timeout: float | None = None
 
 
@@ -96,4 +89,5 @@ class ExecuteJSExec(ExecAction):
     action_type: Literal[Interaction.EXECUTE_JS] = Interaction.EXECUTE_JS
     code: Annotated[str, JSResolvable(), TextResolvable()]
     # TODO: Support timeouts
+    # TODO: Support some context functions for the JS to call to get info about the page, element id to selector conversion, variables, etc.
     # timeout: float | None = None

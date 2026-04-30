@@ -49,9 +49,7 @@ class SingleStepMode(PlanningMode):
             "Return exactly **one** action or **one** termination signal per turn.\n\n"
             "After your action is executed, you will receive a fresh observation of the "
             "page before your next turn. Do not anticipate future state — act only on "
-            "what you can see now.\n\n"
-            "If a prior action failed or the page is in an unexpected state, "
-            "terminate with `fail`. Do not retry failed actions."
+            "what you can see now."
         )
 
     def unpack(self, raw: object) -> list[BaseAction] | TerminationSignal:

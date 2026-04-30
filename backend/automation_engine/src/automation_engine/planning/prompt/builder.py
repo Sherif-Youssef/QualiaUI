@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from . import sections
-from ..output_mode.base import PlanningMode
+from pathlib import Path
+
+from automation_engine.planning.output_mode.base import PlanningMode
 
 
 class PromptBuilder:
@@ -9,8 +10,12 @@ class PromptBuilder:
 
     def __init__(self, mode: PlanningMode) -> None:
         self._mode = mode
+        self._static_system_prompt = self._read_system_prompt()
         self._prepend: list[str] = []
         self._append: list[str] = []
+
+    def _read_system_prompt(self) -> str:
+        return (Path(__file__).parent.resolve() / "system.md").read_text()
 
     def prepend(self, text: str) -> PromptBuilder:
         """Add a section before the standard sections."""
@@ -28,14 +33,7 @@ class PromptBuilder:
         """
         parts = [
             *self._prepend,
-            sections.ROLE,
-            sections.PAGE_FORMAT,
-            sections.action_catalog(self._mode.action_set),
-            sections.VARIABLES,
-            sections.TERMINATION,
-            sections.HISTORY,
-            sections.DECISION_PROCESS,
-            sections.RULES,
+            self._static_system_prompt,
             self._mode.get_mode_prompt(),
             *self._append,
         ]

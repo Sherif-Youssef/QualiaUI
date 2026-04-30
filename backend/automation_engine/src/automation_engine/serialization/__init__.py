@@ -1,36 +1,23 @@
-from pathlib import Path
-from .rendering import (
-    HistoryRenderer,
-    HistoryRendererConfig,
-    DOMRenderer,
-    DOMRendererConfig,
+from .history import HistoryRenderer
+from .dom import (
+    DOMElement,
+    PageState,
+    Visibility,
+    PageRenderer,
+    get_js_serializer_api_code,
+    get_js_serializer_code,
+    get_js_serializer_path,
+    DOMIndex,
 )
 
 
-def get_js_serializer_path() -> Path:
-    p = Path(__file__).parent.resolve() / "js" / "assets" / "dom_serializer.bundle.js"
-    if not p.exists():
-        # Fallback to absolute source path if in Docker dev environment (/app is standard)
-        docker_fallback = Path("/app/automation_engine/src/automation_engine/serialization/js/assets/dom_serializer.bundle.js")
-        if docker_fallback.exists():
-            return docker_fallback
-    return p
-
-
-def get_js_serializer_code() -> str:
-    return get_js_serializer_path().read_text()
-
-
-def get_js_serializer_api_code() -> str:
-    return "window.getSimplifiedDOMInJSON()"
-
-
 __all__ = [
-    "get_js_serializer_path",
-    "get_js_serializer_code",
+    "DOMElement",
+    "PageState",
+    "Visibility",
+    "PageRenderer",
     "get_js_serializer_api_code",
-    "DOMRenderer",
-    "DOMRendererConfig",
-    "HistoryRenderer",
-    "HistoryRendererConfig",
+    "get_js_serializer_code",
+    "get_js_serializer_path",
+    "DOMIndex",
 ]
