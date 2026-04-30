@@ -10,7 +10,6 @@ from passlib.context import CryptContext
 import jwt
 
 from src.base.schemas import Page, PaginationParams
-from src.config import timezone
 from .models import (
     User, Role, ADMIN_FIELDS, NON_ADMIN_FIELDS
 )
@@ -116,7 +115,7 @@ def validate_username(username: str):
 
 def create_token(user_id: int, token_type: TokenType, expires_delta: timedelta) -> str:
     auth_settings = _get_auth_settings()
-    time_now = datetime.now(tz=timezone)
+    time_now = datetime.now()
     payload = TokenPayload(
         user_id=user_id,
         exp=time_now + expires_delta,
@@ -398,7 +397,3 @@ def refresh_tokens(session: Session, refresh_token: str) -> RefreshTokenResponse
         expires_delta=timedelta(minutes=auth_settings.JWT_ACCESS_TOKEN_EXPIRATION_MINUTES),
     )
     return RefreshTokenResponse(access_token=access_token)
-
-
-def is_admin(user: User) -> bool:
-    return user.role == Role.ADMIN

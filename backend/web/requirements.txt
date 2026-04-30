@@ -7,5 +7,5 @@ sqlmodel>=0.0.32,<1.0
 passlib>=1.7,<2.0
 argon2-cffi>=25.1.0,<26.0
 click>=8.3.1,<9.0
-pydantic_ai
-logfire
+celery==5.6.3
+redis==7.4.0

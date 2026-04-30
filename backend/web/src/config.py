@@ -1,17 +1,24 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pathlib import Path
-import pytz
 
-timezone = pytz.timezone("Europe/Zurich")
 
-ENV_FILE_PATH = Path(__file__).resolve().parents[2] / ".env"
+ENV_FILE_PATH = Path(__file__).resolve().parents[2] / ".env" 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=str(ENV_FILE_PATH), extra="ignore")
     DATABASE_URL: str
     LLM_MODEL: str = "openai:gpt-5.4-nano"
     OPENAI_API_KEY: str
-    # TODO: support all providers, not just OpenAI, all should be configurable by the user
 
+    CELERY_BROKER: str = "redis://redis:6379/0"
+    REDIS_STREAM: str = "redis://redis:6379/1"
+    CELERY_BACKEND: str = "redis://redis:6379/2" 
+    LOGFIRE_TOKEN: str
 
-settings = Settings()
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_REGION: str
+    AWS_SCREENSHOTS_BUCKET: str = "screenshots"
+    S3_PROVIDER: str = 'AWS'
+
+settings = Settings() # pyright: ignore[reportCallIssue]
