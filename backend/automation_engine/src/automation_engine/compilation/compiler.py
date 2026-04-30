@@ -15,22 +15,18 @@ from pydantic import BaseModel, ConfigDict
 from ..actions import (
     BaseAction,
     Waiting, Click, Fill, Hover, SelectOption,
-    Press, Navigate, Scroll, DragDrop,
+    Press, Navigate, DragDrop,
     UploadFile, ExecuteJS,
-    AssertState, AssertTextRegex, AssertChecked,
-    AssertElementCount, AssertJSEval,
 )
 from .executable_actions import (
     ExecAction,
     WaitingExec, ClickExec, FillExec, HoverExec,
     SelectOptionExec, PressExec, NavigateExec,
-    ScrollExec, DragDropExec, UploadFileExec, ExecuteJSExec,
-    AssertStateExec, AssertTextRegexExec, AssertCheckedExec,
-    AssertElementCountExec, AssertJSEvalExec,
+    DragDropExec, UploadFileExec, ExecuteJSExec
 )
+from automation_engine.serialization.dom import DOMIndex
 from .executable_actions.registry import EXEC_REGISTRY
 from .markers import SourcedFrom, ElementRef, TextResolvable, FileVarRef, JSResolvable
-from ..planning.state import DOMIndex
 from .variables import VariableStore
 from .exceptions import CompilationError
 

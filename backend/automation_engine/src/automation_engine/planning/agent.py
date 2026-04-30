@@ -1,23 +1,15 @@
 from __future__ import annotations
 
 import logging
-import logfire
 from pathlib import Path
-from typing import Any
 
 from pydantic_ai import Agent, BinaryContent, PromptedOutput
 
 from automation_engine.actions import BaseAction, TerminationSignal
 
-from .deps import PlanningDeps
 from .output_mode.base import PlanningMode
 from .prompt.builder import PromptBuilder
 from .state import ModelState
-
-
-# For ovservability
-logfire.configure()
-logfire.instrument_pydantic_ai()
 
 logger = logging.getLogger(__name__)
 
@@ -77,10 +69,9 @@ class PlanningAgent:
         Returns:
             A list of actions to execute, or a termination signal.
         """
-        deps = PlanningDeps(input_state=state, mode=self._mode)
         user_message = self._build_user_message(state)
 
-        result = await self._agent.run(user_message, deps=deps, model=model)
+        result = await self._agent.run(user_message, model=model)
         output = self._mode.unpack(result.output)
 
         if isinstance(output, TerminationSignal):
@@ -94,7 +85,7 @@ class PlanningAgent:
         mode: PlanningMode,
         default_model: str | None,
         extra_sections: list[str] | None,
-    ) -> Agent[PlanningDeps, Any]:
+    ) -> Agent:
         prompt_builder = PromptBuilder(mode)
         for section in extra_sections or []:
             prompt_builder.append(section)
@@ -107,14 +98,12 @@ class PlanningAgent:
                 model=default_model,
                 output_type=output_type,
                 system_prompt=system_prompt,
-                deps_type=PlanningDeps,
             )
 
         return Agent(
             model=default_model,
             output_type=PromptedOutput(output_type),
             system_prompt=system_prompt,
-            deps_type=PlanningDeps,
         )
 
     @staticmethod

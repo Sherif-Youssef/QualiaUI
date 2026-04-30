@@ -1,9 +1,6 @@
 from .agent import PlanningAgent
 from .state import (
     ModelState,
-    BrowserState,
-    DOMElement,
-    DOMIndex,
     PageSnapshot,
 )
 from .output_mode.base import PlanningMode
