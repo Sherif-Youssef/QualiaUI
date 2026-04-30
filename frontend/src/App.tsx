@@ -15,7 +15,9 @@ import {
   AdminUsersPage,
   ProjectMembersPage,
   ProjectHistoryPage,
-  ProjectHistoryDetailsPage
+  ProjectHistoryDetailsPage,
+  ProjectSuiteHistoryDetailsPage,
+  ProjectCaseHistoryDetailsPage
 } from './pages/PagesExporter';
 
 function App() {
@@ -60,6 +62,8 @@ function App() {
           <Route path="/project/:projectId/members" element={<ProjectMembersPage />} />
           <Route path="/project/:projectId/history" element={<ProjectHistoryPage />} />
           <Route path="/project/:projectId/history/:runId" element={<ProjectHistoryDetailsPage />} />
+          <Route path="/project/:projectId/history/:runId/suite/:suiteRunId" element={<ProjectSuiteHistoryDetailsPage />} />
+          <Route path="/project/:projectId/history/:runId/suite/:suiteRunId/case/:caseRunId" element={<ProjectCaseHistoryDetailsPage />} />
           <Route path="/project/:projectId/suite/:suiteId" element={<TestSuitePage />} />
           <Route path="/project/:projectId/suite/:suiteId/case/:caseId" element={<TestCaseDetailsPage />} />
           <Route path="/project/:projectId/suite/:suiteId/manager" element={<TestSuiteManagerPage />} />

@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-    History, 
+import {
+    History,
     ChevronLeft,
 } from 'lucide-react';
-import { runHistoryService } from '@/services/runs/runHistoryService';
-import { TestRunRead } from '@/types/run';
+import { runService, ProjectRun } from '@/services/runService';
 import { Button } from '@/components/ui/button';
 import { ProjectLayout } from './ProjectLayout';
 import { ErrorMessage } from '@/components/GeneralComponents';
@@ -16,13 +15,13 @@ import { ProjectHistoryEmptyState } from './ProjectHistoryEmptyState';
 export const ProjectHistoryPage: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
     const navigate = useNavigate();
-    
-    const [runs, setRuns] = useState<TestRunRead[]>([]);
+
+    const [runs, setRuns] = useState<ProjectRun[]>([]);
     const [total, setTotal] = useState(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    
+
     const limit = 10;
 
     const fetchHistory = React.useCallback(async () => {
@@ -31,9 +30,9 @@ export const ProjectHistoryPage: React.FC = () => {
         setError(null);
         try {
             const offset = (currentPage - 1) * limit;
-            const data = await runHistoryService.getHistory(projectId, offset, limit);
-            setRuns(data.items);
-            setTotal(data.total_items);
+            const data = await runService.getProjectRuns(projectId, offset, limit);
+            setRuns(data.runs);
+            setTotal(data.total);
         } catch (err: any) {
             setError(err.response?.data?.detail || 'Failed to fetch run history.');
         } finally {
@@ -45,24 +44,14 @@ export const ProjectHistoryPage: React.FC = () => {
         fetchHistory();
     }, [fetchHistory]);
 
-    const handleDeleteRun = async (runId: string) => {
-        if (!projectId || !window.confirm('Are you sure you want to delete this run record?')) return;
-        try {
-            await runHistoryService.deleteRun(projectId, runId);
-            fetchHistory();
-        } catch (err) {
-            console.error("Failed to delete run", err);
-        }
-    };
-
     return (
         <ProjectLayout
             header={
                 <div className="flex items-center justify-between pb-2">
                     <div className="flex items-center gap-4">
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
+                        <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => navigate(`/project/${projectId}`)}
                             className="rounded-xl hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200"
                         >
@@ -90,9 +79,8 @@ export const ProjectHistoryPage: React.FC = () => {
                     ) : runs.length === 0 ? (
                         <ProjectHistoryEmptyState onRunTests={() => navigate(`/project/${projectId}`)} />
                     ) : (
-                        <ProjectHistoryTable 
-                            runs={runs} 
-                            onDelete={handleDeleteRun}
+                        <ProjectHistoryTable
+                            runs={runs}
                             onView={(id) => navigate(`/project/${projectId}/history/${id}`)}
                         />
                     )}

@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { ZoomIn, ZoomOut, Activity, AlertCircle, CheckCircle2, Info } from 'lucide-react';
+import { ZoomIn, ZoomOut, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { ActionStep } from '@/types/test-case';
 import gsap from 'gsap';
@@ -64,8 +64,8 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
 
           {selectedStep && (
             <div className={`px-4 py-3 rounded-2xl border flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300 ${selectedStep.status === 'success'
-                ? 'bg-success/5 text-success border-success/10'
-                : 'bg-failure/5 text-failure border-failure/10'
+              ? 'bg-success/5 text-success border-success/10'
+              : 'bg-failure/5 text-failure border-failure/10'
               }`}>
               {selectedStep.status === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
               <span className="text-xs font-black uppercase tracking-widest">{selectedStep.status || 'Executed'}</span>
@@ -91,47 +91,6 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
           </div>
         </div>
 
-        {/* Professional Info Panel */}
-        {selectedStep && (
-          <div
-            ref={infoRef}
-            className="w-[320px] border-l border-border bg-white/80 backdrop-blur-md p-6 flex flex-col gap-6 overflow-y-auto z-10"
-          >
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-primary">
-                <Activity className="w-4 h-4" />
-                <h4 className="text-[10px] font-black uppercase tracking-[0.2em]">Step Execution Result</h4>
-              </div>
-
-              <div className="p-5 bg-gray-50 rounded-[1.5rem] border border-gray-100 shadow-inner">
-                <p className="text-sm font-bold text-gray-900 leading-relaxed italic">
-                  "{selectedStep.text}"
-                </p>
-              </div>
-            </div>
-
-            {selectedStep.description && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-failure">
-                  <Info className="w-4 h-4" />
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.2em]">Error Details</h4>
-                </div>
-
-                <div className="p-5 bg-red-50/50 rounded-[1.5rem] border border-red-100/50">
-                  <p className="text-xs font-semibold text-red-600 leading-relaxed">
-                    {selectedStep.description}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <div className="mt-auto pt-6 border-t border-gray-100">
-              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">
-                Step {selectedStep.number} of History Run
-              </p>
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="p-6 border-t border-border bg-white z-20">

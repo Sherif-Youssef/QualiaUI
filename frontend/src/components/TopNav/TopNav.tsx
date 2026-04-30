@@ -2,12 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Database, Users } from 'lucide-react';
 import { authService } from '@/services/auth/auth';
-import { notificationService } from '@/services/notifications/notificationService';
-import { NotificationViewModel } from '@/types/notification';
 
 import { Brand } from './Brand';
 import { NavLinks } from './NavLinks';
-import { NotificationHub } from './NotificationHub';
 import { ProfilePortal } from './ProfilePortal';
 import { MobileMenu } from './MobileMenu';
 
@@ -15,16 +12,13 @@ export const TopNav: React.FC = () => {
   const navigate = useNavigate();
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [userName, setUserName] = useState<string>('Loading...');
   const [role, setRole] = useState<string>('');
   const [isAdmin, setIsAdmin] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationViewModel[]>([]);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const notificationRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -38,10 +32,6 @@ export const TopNav: React.FC = () => {
 
         setRole(userRole.charAt(0).toUpperCase() + userRole.slice(1));
         setIsAdmin(isUserAdmin);
-
-        const data = await notificationService.getLatestNotifications();
-
-        setNotifications(data);
       } catch (err) {
         console.error("Error fetching nav data:", err);
         setUserName('Guest User');
@@ -51,15 +41,14 @@ export const TopNav: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const isAnyMenuOpen = isProfileOpen || isNotificationsOpen || isMobileMenuOpen;
+    const isAnyMenuOpen = isProfileOpen || isMobileMenuOpen;
     document.body.style.overflow = isAnyMenuOpen ? 'hidden' : '';
-  }, [isProfileOpen, isNotificationsOpen, isMobileMenuOpen]);
+  }, [isProfileOpen, isMobileMenuOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
       if (dropdownRef.current && !dropdownRef.current.contains(target)) setIsProfileOpen(false);
-      if (notificationRef.current && !notificationRef.current.contains(target)) setIsNotificationsOpen(false);
       if (mobileMenuRef.current && !mobileMenuRef.current.contains(target)) setIsMobileMenuOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -69,13 +58,6 @@ export const TopNav: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
-  };
-
-  const handleMarkAllRead = async () => {
-    const success = await notificationService.markAllAsRead();
-    if (success) {
-      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
-    }
   };
 
   const navLinks = [
@@ -95,19 +77,11 @@ export const TopNav: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4 h-full relative">
-            <NotificationHub
-              notifications={notifications}
-              isOpen={isNotificationsOpen}
-              onToggle={() => { setIsNotificationsOpen(!isNotificationsOpen); setIsProfileOpen(false); setIsMobileMenuOpen(false); }}
-              onMarkAllRead={handleMarkAllRead}
-              innerRef={notificationRef}
-            />
-
             <ProfilePortal
               userName={userName}
               role={role}
               isOpen={isProfileOpen}
-              onToggle={() => { setIsProfileOpen(!isProfileOpen); setIsNotificationsOpen(false); setIsMobileMenuOpen(false); }}
+              onToggle={() => { setIsProfileOpen(!isProfileOpen); setIsMobileMenuOpen(false); }}
               onLogout={handleLogout}
               innerRef={dropdownRef}
             />
@@ -115,7 +89,7 @@ export const TopNav: React.FC = () => {
             <MobileMenu
               navLinks={navLinks}
               isOpen={isMobileMenuOpen}
-              onToggle={() => { setIsMobileMenuOpen(!isMobileMenuOpen); setIsNotificationsOpen(false); setIsProfileOpen(false); }}
+              onToggle={() => { setIsMobileMenuOpen(!isMobileMenuOpen); setIsProfileOpen(false); }}
               onLogout={handleLogout}
               innerRef={mobileMenuRef}
             />
