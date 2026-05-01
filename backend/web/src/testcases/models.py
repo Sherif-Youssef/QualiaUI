@@ -1,7 +1,9 @@
 from typing import TYPE_CHECKING
 from sqlmodel import SQLModel, Field, Relationship, JSON, Column
 
-from src.testsuites.models import TestSuite
+if TYPE_CHECKING:
+    from src.testsuites.models import TestSuite
+    from src.runs.models import TestCaseRun
 
 
 class TestCase(SQLModel, table=True):
@@ -14,4 +16,6 @@ class TestCase(SQLModel, table=True):
     instruction: str
     executable_steps: list[dict] | None = Field(default=None, sa_column=Column(JSON))
 
-    testsuite: TestSuite = Relationship(back_populates="testcases")
+    testsuite: "TestSuite" = Relationship(back_populates="testcases")
+
+    runs: list["TestCaseRun"] = Relationship(back_populates="testcase")

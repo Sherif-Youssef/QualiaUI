@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 
-from src.auth.dependencies import UserDep
+from src.auth.dependencies import UserDep, AdminUserDep
 from src.database import SessionDep
 from src.base.schemas import Page, PaginationParams
+from src.projects.dependencies import ViewerProjectDep, EditorProjectDep, AdminProjectDep
 
 from .schemas import ProjectCreate, ProjectRead, ProjectSummaryRead, ProjectUpdate
-from .service import create_project, delete_project, get_project, list_projects, update_project
+from .service import create_project, delete_project, list_projects, update_project, list_project_runs
+from src.runs.schemas import ProjectRunRead
 
 
 router = APIRouter(prefix="/projects", tags=["projects"])
@@ -13,48 +15,59 @@ router = APIRouter(prefix="/projects", tags=["projects"])
 
 @router.get("/{project_id}", response_model=ProjectRead)
 async def get_project_route(
-	session: SessionDep,
-	user: UserDep,
-	project_id: int,
+	project: ViewerProjectDep,
 ):
-	return get_project(session=session, user=user, project_id=project_id)
-
+	return project
 
 @router.get("", response_model=Page[ProjectSummaryRead])
 async def list_projects_route(
 	session: SessionDep,
 	user: UserDep,
 	pagination_params: PaginationParams = Depends(),
+	name: str | None = Query(None),
 ):
-	return list_projects(session=session, user=user, pagination_params=pagination_params)
+	return list_projects(
+		session=session,
+		user=user,
+		pagination_params=pagination_params,
+		name=name,
+	)
+
+@router.get("/{project_id}/runs", response_model=Page[ProjectRunRead])
+async def list_project_runs_route(
+	session: SessionDep,
+	project: ViewerProjectDep,
+	pagination_params: PaginationParams = Depends(),
+):
+	return list_project_runs(
+		session=session,
+		project_id=project.id, # type: ignore[arg-type]
+		pagination_params=pagination_params,
+	)
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=ProjectRead)
 async def create_project_route(
 	session: SessionDep,
-	user: UserDep,
+	user: AdminUserDep,
 	project_create: ProjectCreate,
 ):
-	return create_project(session=session, user=user, project_create=project_create)
+	return create_project(session=session, project_create=project_create)
 
 @router.put("/{project_id}", response_model=ProjectRead)
 async def update_project_route(
 	session: SessionDep,
-	user: UserDep,
-	project_id: int,
+	project: EditorProjectDep,
 	project_update: ProjectUpdate,
 ):
 	return update_project(
 		session=session,
-		user=user,
-		project_id=project_id,
+		project=project,
 		project_update=project_update,
 	)
 
-# delete project user must be admin, or project admin
 @router.delete("/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_project_route(
 	session: SessionDep,
-	user: UserDep,
-	project_id: int,
+	project: AdminProjectDep,
 ):
-	delete_project(session=session, user=user, project_id=project_id)
+	delete_project(session=session, project=project)

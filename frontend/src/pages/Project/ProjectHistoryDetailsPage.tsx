@@ -1,25 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { TestSuiteManager } from '@/components/TestSuiteManager';
-import { ScreenshotViewer } from '@/components/ScreenshotViewer';
-import { TestSuiteManagerLayout } from '../TestSuiteManager/TestSuiteManagerLayout';
-import { runHistoryService } from '@/services/runs/runHistoryService';
+import { runService, ProjectRun, TestSuiteRun } from '@/services/runService';
 import { ErrorMessage } from '@/components/GeneralComponents';
-import { TestCase, ActionStep } from '@/types/test-case';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
-import { TestRunRead } from '@/types/run';
-import { Clock, Calendar, CheckCircle2, XCircle, AlertCircle, ChevronLeft } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, ChevronLeft, Layers, ArrowRight, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const ProjectHistoryDetailsPage: React.FC = () => {
     const { projectId, runId } = useParams<{ projectId: string; runId: string }>();
     const navigate = useNavigate();
-    const [run, setRun] = useState<TestRunRead | null>(null);
-    const [testCases, setTestCases] = useState<TestCase[]>([]);
-    const [selectedStep, setSelectedStep] = useState<ActionStep | null>(null);
-    const [currentScreenshot, setCurrentScreenshot] = useState('');
-    const [currentUrl, setCurrentUrl] = useState('');
-    const [zoomLevel, setZoomLevel] = useState(100);
+    const [run, setRun] = useState<(ProjectRun & { testsuite_runs: TestSuiteRun[] }) | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -29,17 +19,11 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
             setIsLoading(true);
             setError(null);
             try {
-                const { run: runData, testCases: fullTestCases } = await runHistoryService.getRunFullDetails(projectId, runId);
+                const id = parseInt(runId);
+                const runData = await runService.getProjectRunDetails(id);
                 setRun(runData);
-                setTestCases(fullTestCases);
-                
-                if (fullTestCases.length > 0 && fullTestCases[0].steps && fullTestCases[0].steps.length > 0) {
-                    const firstStep = fullTestCases[0].steps[0] as ActionStep;
-                    setSelectedStep(firstStep);
-                    setCurrentScreenshot(firstStep.screenshot || '');
-                    setCurrentUrl(fullTestCases[0].url || '');
-                }
             } catch (err: any) {
+                console.error('History details error:', err);
                 setError(err.response?.data?.detail || 'Failed to load historical details.');
             } finally {
                 setIsLoading(false);
@@ -57,10 +41,10 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
         }
     };
 
-    const getDuration = () => {
-        if (!run?.started_at || !run?.finished_at) return null;
-        const start = new Date(run.started_at).getTime();
-        const end = new Date(run.finished_at).getTime();
+    const getDuration = (startAt?: string | null, endAt?: string | null) => {
+        if (!startAt || !endAt) return 'N/A';
+        const start = new Date(startAt).getTime();
+        const end = new Date(endAt).getTime();
         const diff = Math.abs(end - start) / 1000;
         const minutes = Math.floor(diff / 60);
         const seconds = Math.floor(diff % 60);
@@ -68,78 +52,119 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
     };
 
     if (isLoading) return <TestSuiteManagerLoading />;
+    if (error) return <div className="p-8"><ErrorMessage message={error} /></div>;
+    if (!run) return <div className="p-8 text-center text-gray-500 font-bold">Run not found</div>;
 
     return (
-        <TestSuiteManagerLayout
-            error={error && <ErrorMessage message={error} />}
-            sidebar={
-                <TestSuiteManager
-                    testCases={testCases}
-                    isReadOnly={true}
-                    header={
-                        <div className="flex flex-col gap-4">
-                            <div className="flex items-center gap-3">
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    onClick={() => navigate(`/project/${projectId}/history`)}
-                                    className="h-8 w-8 rounded-lg hover:bg-gray-100"
-                                >
-                                    <ChevronLeft className="w-5 h-5 text-gray-500" />
-                                </Button>
-                                <h2 className="text-xl font-sans font-bold text-foreground">
-                                    Run Result
-                                </h2>
-                                {run && (
-                                    <div className="ml-auto">
-                                        {getStatusIcon(run.status)}
-                                    </div>
-                                )}
-                            </div>
+        <div className="min-h-screen bg-gray-50 text-left font-sans">
+            <main className="max-w-7xl mx-auto px-4 md:px-8 py-12">
+                <div className="space-y-8">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-6">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => navigate(`/project/${projectId}/history`)}
+                                className="h-12 w-12 rounded-[1.25rem] bg-white shadow-sm border border-gray-100 hover:bg-gray-50 transition-all hover:scale-105 active:scale-95"
+                            >
+                                <ChevronLeft className="w-6 h-6 text-gray-600" />
+                            </Button>
+                            <div>
+                                <h1 className="text-3xl font-black text-gray-900 tracking-tight">Project Run Details</h1>
+                                <div className="flex items-center gap-3 mt-1">
 
-                            {run && (
-                                <div className="grid grid-cols-2 gap-3 pb-2">
-                                    <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
-                                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                                        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-tight">
-                                            {new Date(run.started_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2 border border-gray-100">
-                                        <Clock className="w-3.5 h-3.5 text-gray-400" />
-                                        <span className="text-[10px] font-bold text-gray-600 uppercase tracking-tight">
-                                            {getDuration()}
-                                        </span>
-                                    </div>
+                                    <span className="text-xs font-bold text-gray-400 capitalize tracking-widest">
+                                        {new Date(run.started_at || run.created_at).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
+                                    </span>
                                 </div>
-                            )}
+                            </div>
                         </div>
-                    }
-                    onAddTestCase={() => {}}
-                    onRunAllTests={() => {}}
-                    onRunSingleTest={() => {}}
-                    onEditTestCase={() => {}}
-                    onInstructionChange={() => {}}
-                    onStepTextChange={() => {}}
-                    onStepClick={(step, tc) => {
-                        setSelectedStep(step);
-                        setCurrentScreenshot(step.screenshot || '');
-                        setCurrentUrl(tc.url || '');
-                    }}
-                />
-            }
-            content={
-                <ScreenshotViewer
-                    screenshot={currentScreenshot}
-                    url={currentUrl}
-                    selectedStep={selectedStep}
-                    zoomLevel={zoomLevel}
-                    onZoomIn={() => setZoomLevel((z: number) => Math.min(z + 25, 200))}
-                    onZoomOut={() => setZoomLevel((z: number) => Math.max(z - 25, 50))}
-                    onResetZoom={() => setZoomLevel(100)}
-                />
-            }
-            modals={null}
-        />
+                    </div>
+
+                    {/* Suites Table - Projects Page Style */}
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between px-2">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                    <Layers className="w-5 h-5 text-primary" />
+                                </div>
+                                <h2 className="text-xl font-black text-gray-900 tracking-tight capitalize">Test Suites</h2>
+                            </div>
+                            <div className="text-[10px] font-black text-gray-400 capitalize tracking-widest">
+                                {run.testsuite_runs.length} Suites Executed
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden transition-all duration-500">
+                            <table className="w-full">
+                                <thead className="bg-gray-50/50 border-b border-gray-100">
+                                    <tr>
+                                        <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 capitalize tracking-widest">
+                                            Suite Name
+                                        </th>
+                                        <th className="px-8 py-5 text-center text-[10px] font-black text-gray-400 capitalize tracking-widest">
+                                            Status
+                                        </th>
+                                        <th className="px-8 py-5 text-center text-[10px] font-black text-gray-400 capitalize tracking-widest">
+                                            Duration
+                                        </th>
+                                        <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 capitalize tracking-widest">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {run.testsuite_runs.map((suiteRun) => (
+                                        <tr
+                                            key={suiteRun.id}
+                                            onClick={() => navigate(`/project/${projectId}/history/${runId}/suite/${suiteRun.id}`)}
+                                            className="hover:bg-gray-50/50 cursor-pointer transition-all group"
+                                        >
+                                            <td className="px-8 py-6">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-12 h-12 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-300">
+                                                        <Layers className="w-6 h-6 text-gray-400 group-hover:text-primary transition-colors" />
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-black text-gray-900 group-hover:text-primary transition-all">
+                                                            {suiteRun.name || `Suite Run #${suiteRun.id}`}
+                                                        </span>
+                                                        <span className="text-[10px] font-bold text-gray-400 capitalize tracking-widest mt-1">
+                                                            ID: {suiteRun.id}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-6 text-center">
+                                                <div className="flex items-center justify-center gap-2 px-3 py-1 bg-white rounded-full border border-gray-100 shadow-sm mx-auto w-fit">
+                                                    {getStatusIcon(suiteRun.status)}
+                                                    <span className="text-[10px] font-black text-gray-500 capitalize tracking-widest">
+                                                        {suiteRun.status}
+                                                    </span>
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-6 text-center text-[11px] font-black text-gray-400 capitalize tracking-widest">
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <Clock className="w-4 h-4 text-gray-300" />
+                                                    {getDuration(suiteRun.started_at, suiteRun.finished_at)}
+                                                </div>
+                                            </td>
+                                            <td className="px-8 py-6 text-right">
+                                                <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
+                                                    <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 group-hover:text-primary group-hover:bg-primary/10 transition-all">
+                                                        <ArrowRight className="w-5 h-5" />
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
     );
 };

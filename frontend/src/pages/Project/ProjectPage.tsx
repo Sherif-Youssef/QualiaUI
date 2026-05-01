@@ -1,41 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { SearchBar } from '@/components/SearchBar';
 import { Pagination } from '@/components/Pagination';
-import { AddTestSuiteModal } from '@/components/Modal/AddTestSuiteModal';
-import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
 import { TestSuite } from '@/types/test-suit';
 import { testSuiteService } from '@/services/testSuit/testSuiteService';
 import { projectService } from '@/services/project/projectService';
+import { runService, ProjectRun } from '@/services/runService';
 
 import { useProjectPermissions } from '@/hooks/useProjectPermissions';
 import { ProjectLayout } from './ProjectLayout';
 import { ProjectHeader } from './ProjectHeader';
-import { TestSuiteList } from './TestSuiteList';
 import { ErrorMessage } from '@/components/GeneralComponents';
-import { TestSuitEmptyState } from './TestSuitEmptyState';
+
+// Refactored Sub-components
+import { ProjectTabs, ProjectView } from './ProjectTabs';
+import { ProjectTestSuiteView } from './ProjectTestSuiteView';
+import { ProjectTeamView } from './ProjectTeamView';
+import { ProjectHistoryView } from './ProjectHistoryView';
+import { ProjectModals } from './ProjectModals';
 
 export const ProjectPage: React.FC = () => {
     const navigate = useNavigate();
     const { projectId } = useParams<{ projectId: string }>();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingSuite, setEditingSuite] = useState<TestSuite | null>(null);
+    const [activeView, setActiveView] = useState<ProjectView>('suites');
+    
+    // Data State
     const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
-    const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
-
+    const [projectMembers, setProjectMembers] = useState<any[]>([]);
+    const [history, setHistory] = useState<ProjectRun[]>([]);
+    const [totalItems, setTotalItems] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    // Modal State
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
+    const [editingSuite, setEditingSuite] = useState<TestSuite | null>(null);
+    const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
     const [modalLoading, setModalLoading] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
-    const [totalSuites, setTotalSuites] = useState(0);
-    const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
 
     const { canManageSuites, canManageProject } = useProjectPermissions(projectId);
     const itemsPerPage = 6;
 
-
+    // Search Debounce
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(searchQuery);
@@ -44,192 +55,196 @@ export const ProjectPage: React.FC = () => {
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
-    const fetchData = React.useCallback(async () => {
+    const fetchData = useCallback(async () => {
         if (!projectId) return;
 
         setIsLoading(true);
         setError(null);
         try {
             const offset = (currentPage - 1) * itemsPerPage;
-            const [suitesResult] = await Promise.all([
-                testSuiteService.getTestSuites(projectId, offset, itemsPerPage, debouncedSearch),
-                projectService.getProjectById(projectId)
-            ]);
-
-            if (suitesResult.testSuites.length === 0 && currentPage > 1 && suitesResult.total > 0) {
-                setCurrentPage(prev => prev - 1);
-                return;
+            
+            if (activeView === 'suites') {
+                const res = await testSuiteService.getTestSuites(projectId, offset, itemsPerPage, debouncedSearch);
+                setTestSuites(res.testSuites);
+                setTotalItems(res.total);
+            } else if (activeView === 'team') {
+                const project = await projectService.getProjectById(projectId);
+                const filtered = (project.members || []).filter(m => 
+                    `${m.user.firstName} ${m.user.lastName}`.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+                    m.user.email.toLowerCase().includes(debouncedSearch.toLowerCase())
+                );
+                setProjectMembers(filtered);
+                setTotalItems(filtered.length);
+            } else {
+                const res = await runService.getProjectRuns(projectId, offset, itemsPerPage);
+                setHistory(res.runs);
+                setTotalItems(res.total);
             }
-
-            setTestSuites(suitesResult.testSuites);
-            setTotalSuites(suitesResult.total);
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to load test suites.');
+            setError(err.response?.data?.detail || `Failed to load ${activeView}.`);
         } finally {
             setIsLoading(false);
         }
-    }, [projectId, currentPage, debouncedSearch]);
+    }, [projectId, currentPage, debouncedSearch, activeView]);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
 
-    const totalPages = Math.ceil(totalSuites / itemsPerPage);
+    // Handlers
+    const handleAddTestSuite = async (data: any) => {
+        if (!projectId) return;
+        setModalLoading(true);
+        try {
+            await testSuiteService.createTestSuite(projectId, data);
+            setIsModalOpen(false);
+            fetchData();
+        } catch (err: any) {
+            setModalError(err.response?.data?.detail || 'Failed to create suite.');
+        } finally {
+            setModalLoading(false);
+        }
+    };
 
-
-    const handleDeleteClick = (id: string, name: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setModalError(null);
-        setDeleteConfirmation({ id, name });
+    const handleEditTestSuite = async (id: string, data: any) => {
+        if (!projectId) return;
+        setModalLoading(true);
+        try {
+            await testSuiteService.updateTestSuite(projectId, id, data);
+            setIsModalOpen(false);
+            setEditingSuite(null);
+            fetchData();
+        } catch (err: any) {
+            setModalError(err.response?.data?.detail || 'Failed to update suite.');
+        } finally {
+            setModalLoading(false);
+        }
     };
 
     const confirmDelete = async () => {
-        if (!deleteConfirmation) return;
-
+        if (!deleteConfirmation || !projectId) return;
         setModalLoading(true);
-        setModalError(null);
         try {
-            await testSuiteService.deleteTestSuite(projectId!, deleteConfirmation.id);
-            await fetchData();
+            await testSuiteService.deleteTestSuite(projectId, deleteConfirmation.id);
             setDeleteConfirmation(null);
+            fetchData();
         } catch (err: any) {
-            setModalError(err.response?.data?.detail || 'Failed to delete test suite.');
+            setModalError(err.response?.data?.detail || 'Failed to delete suite.');
         } finally {
             setModalLoading(false);
         }
     };
 
-    const handleEditClick = (suite: TestSuite, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setEditingSuite(suite);
-        setModalError(null);
-        setIsModalOpen(true);
-    };
-
-    const handleEditTestSuite = async (id: string, data: { name: string; description: string }) => {
-        setModalLoading(true);
-        setModalError(null);
-        try {
-            await testSuiteService.updateTestSuite(projectId!, id, data);
-            await fetchData();
-            setIsModalOpen(false);
-            setEditingSuite(null);
-        } catch (err: any) {
-            setModalError(err.response?.data?.detail || 'Failed to update test suite.');
-        } finally {
-            setModalLoading(false);
-        }
-    };
-
-    const handleAddTestSuite = async (data: { name: string; description: string }) => {
+    const handleMemberAdd = async (userId: any, role: string) => {
         if (!projectId) return;
-
         setModalLoading(true);
-        setModalError(null);
         try {
-            await testSuiteService.createTestSuite(projectId, data);
-            setCurrentPage(1);
-            await fetchData();
-            setIsModalOpen(false);
-            setEditingSuite(null);
+            await projectService.addMember(projectId, userId, role);
+            setIsAddMemberModalOpen(false);
+            setSearchQuery('');
+            fetchData();
         } catch (err: any) {
-            setModalError(err.response?.data?.detail || 'Failed to create test suite.');
+            setModalError(err.response?.data?.detail || 'Failed to add member.');
         } finally {
             setModalLoading(false);
         }
     };
 
-    const isTrulyEmpty = totalSuites === 0 && debouncedSearch === '' && !isLoading;
-    const isSearchEmpty = testSuites.length === 0 && debouncedSearch !== '' && !isLoading;
+    const handleMemberRemove = async (email: string) => {
+        if (!projectId) return;
+        try {
+            await projectService.removeMember(projectId, email);
+            fetchData();
+        } catch (err: any) {
+            setError(err.response?.data?.detail || 'Failed to remove member.');
+        }
+    };
+
     return (
         <ProjectLayout
-            header={<ProjectHeader 
-                projectId={projectId!}
-                onAddSuite={() => {
-                    setModalError(null);
-                    setIsModalOpen(true);
-                }} 
-                canManageSuites={canManageSuites} 
-                canManageProject={canManageProject}
-            />}
-            searchBar={(
-                <SearchBar
-                    value={searchQuery}
-                    onChange={setSearchQuery}
-                    placeholder="Search Test Suite..."
+            header={
+                <ProjectHeader 
+                    onAddSuite={() => setIsModalOpen(true)}
+                    canManageSuites={canManageSuites}
                 />
-            )}
+            }
+            searchBar={
+                <div className="space-y-4">
+                    <ProjectTabs activeView={activeView} onViewChange={(v) => { setActiveView(v); setCurrentPage(1); }} />
+                    {activeView !== 'history' && (
+                        <SearchBar
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            placeholder={activeView === 'suites' ? "Search Test Suite..." : "Search Team Members..."}
+                        />
+                    )}
+                </div>
+            }
             content={
                 <>
                     {error && <div className="mb-6"><ErrorMessage message={error} onClose={() => setError(null)} /></div>}
+                    
+                    {activeView === 'suites' && (
+                        <ProjectTestSuiteView
+                            suites={testSuites}
+                            isLoading={isLoading}
+                            isTrulyEmpty={totalItems === 0 && debouncedSearch === '' && !isLoading}
+                            isSearchEmpty={testSuites.length === 0 && debouncedSearch !== '' && !isLoading}
+                            canManageSuites={canManageSuites}
+                            onAddSuite={() => setIsModalOpen(true)}
+                            onNavigate={(id) => navigate(`/project/${projectId}/suite/${id}`)}
+                            onEdit={(suite, e) => { e.stopPropagation(); setEditingSuite(suite); setIsModalOpen(true); }}
+                            onDelete={(id, name, e) => { e.stopPropagation(); setDeleteConfirmation({ id, name }); }}
+                        />
+                    )}
 
-                    {isLoading && testSuites.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
-                            <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
-                            <p className="text-gray-500 font-medium">Loading project data...</p>
-                        </div>
-                    ) : isTrulyEmpty ? (
-                        <TestSuitEmptyState canManageSuites={canManageSuites} onCreate={() => {
-                            setModalError(null);
-                            setIsModalOpen(true);
-                        }} />
-                    ) : (
-                        <>
-                            <TestSuiteList
-                                suites={testSuites}
-                                onNavigate={(suiteId) => navigate(`/project/${projectId}/suite/${suiteId}`)}
-                                onEdit={handleEditClick}
-                                onDelete={handleDeleteClick}
-                                canManageSuites={canManageSuites}
-                            />
-                            {isSearchEmpty && (
-                                <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
-                                    <p className="text-gray-500 font-medium">No test suites match your search.</p>
-                                </div>
-                            )}
-                        </>
+                    {activeView === 'team' && (
+                        <ProjectTeamView
+                            members={projectMembers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)}
+                            isLoading={isLoading}
+                            canManageProject={canManageProject}
+                            isSearchEmpty={projectMembers.length === 0 && debouncedSearch !== '' && !isLoading}
+                            searchQuery={debouncedSearch}
+                            onInvite={() => setIsAddMemberModalOpen(true)}
+                            onRemoveMember={handleMemberRemove}
+                        />
+                    )}
+
+                    {activeView === 'history' && (
+                        <ProjectHistoryView
+                            history={history}
+                            isLoading={isLoading}
+                            onView={(id) => navigate(`/project/${projectId}/history/${id}`)}
+                        />
                     )}
                 </>
             }
-            pagination={totalSuites > 0 && (
+            pagination={totalItems > 0 && (
                 <Pagination
                     currentPage={currentPage}
-                    totalPages={totalPages}
+                    totalPages={Math.ceil(totalItems / itemsPerPage)}
                     itemsPerPage={itemsPerPage}
-                    totalItems={totalSuites}
+                    totalItems={totalItems}
                     onPageChange={setCurrentPage}
                 />
             )}
             modals={
-                <>
-                    <AddTestSuiteModal
-                        isOpen={isModalOpen}
-                        onClose={() => {
-                            setIsModalOpen(false);
-                            setEditingSuite(null);
-                            setModalError(null);
-                        }}
-                        onAdd={handleAddTestSuite}
-                        editingSuite={editingSuite}
-                        onEdit={handleEditTestSuite}
-                        error={modalError}
-                        onClearError={() => setModalError(null)}
-                        isLoading={modalLoading}
-                    />
-
-                    <DeleteConfirmationModal
-                        isOpen={deleteConfirmation !== null}
-                        onClose={() => {
-                            setDeleteConfirmation(null);
-                            setModalError(null);
-                        }}
-                        onConfirm={confirmDelete}
-                        itemName={deleteConfirmation?.name}
-                        error={modalError}
-                        onClearError={() => setModalError(null)}
-                        isLoading={modalLoading}
-                    />
-                </>
+                <ProjectModals
+                    isSuiteModalOpen={isModalOpen}
+                    onCloseSuiteModal={() => { setIsModalOpen(false); setEditingSuite(null); }}
+                    editingSuite={editingSuite}
+                    onAddSuite={handleAddTestSuite}
+                    onEditSuite={handleEditTestSuite}
+                    deleteConfirmation={deleteConfirmation}
+                    onCloseDeleteModal={() => setDeleteConfirmation(null)}
+                    onConfirmDelete={confirmDelete}
+                    isAddMemberModalOpen={isAddMemberModalOpen}
+                    onCloseMemberModal={() => setIsAddMemberModalOpen(false)}
+                    onAddMember={handleMemberAdd}
+                    isLoading={modalLoading}
+                    error={modalError}
+                    onClearError={() => setModalError(null)}
+                />
             }
         />
     );

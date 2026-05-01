@@ -1,17 +1,20 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, Query
 
 from src.auth.dependencies import UserDep
 from src.base.schemas import Page, PaginationParams
 from src.database import SessionDep
+from src.testsuites.dependencies import ViewerTestSuiteDep, EditorTestSuiteDep, AdminTestSuiteDep
+from src.projects.dependencies import ViewerProjectDep, EditorProjectDep
 
 from .schemas import TestSuiteCreate, TestSuiteRead, TestSuiteUpdate
 from .service import (
 	create_testsuite,
 	delete_testsuite,
-	get_testsuite,
 	list_testsuites,
 	update_testsuite,
+	list_testsuite_runs,
 )
+from src.runs.schemas import TestSuiteRunRead
 
 
 router = APIRouter(prefix="/projects/{project_id}/testsuites", tags=["testsuites"])
@@ -20,44 +23,46 @@ router = APIRouter(prefix="/projects/{project_id}/testsuites", tags=["testsuites
 @router.get("", response_model=Page[TestSuiteRead])
 async def list_testsuites_route(
 	session: SessionDep,
-	user: UserDep,
-	project_id: int,
+	project: ViewerProjectDep,
 	pagination_params: PaginationParams = Depends(),
+	name: str | None = Query(None),
 ):
 	return list_testsuites(
 		session=session,
-		user=user,
-		project_id=project_id,
+		project_id=project.id, # type: ignore[arg-type]
 		pagination_params=pagination_params,
+		name=name,
 	)
 
 
 @router.get("/{testsuite_id}", response_model=TestSuiteRead)
 async def get_testsuite_route(
-	session: SessionDep,
-	user: UserDep,
-	project_id: int,
-	testsuite_id: int,
+	testsuite: ViewerTestSuiteDep,
 ):
-	return get_testsuite(
+	return testsuite
+
+@router.get("/{testsuite_id}/runs", response_model=Page[TestSuiteRunRead])
+async def list_testsuite_runs_route(
+	session: SessionDep,
+	testsuite: ViewerTestSuiteDep,
+	pagination_params: PaginationParams = Depends(),
+):
+	return list_testsuite_runs(
 		session=session,
-		user=user,
-		project_id=project_id,
-		testsuite_id=testsuite_id,
+		testsuite_id=testsuite.id, # type: ignore[arg-type]
+		pagination_params=pagination_params,
 	)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=TestSuiteRead)
 async def create_testsuite_route(
 	session: SessionDep,
-	user: UserDep,
-	project_id: int,
+	project: EditorProjectDep,
 	testsuite_create: TestSuiteCreate,
 ):
 	return create_testsuite(
 		session=session,
-		user=user,
-		project_id=project_id,
+		project_id=project.id, # type: ignore[arg-type]
 		testsuite_create=testsuite_create,
 	)
 
@@ -65,16 +70,12 @@ async def create_testsuite_route(
 @router.put("/{testsuite_id}", response_model=TestSuiteRead)
 async def update_testsuite_route(
 	session: SessionDep,
-	user: UserDep,
-	project_id: int,
-	testsuite_id: int,
+	testsuite: EditorTestSuiteDep,
 	testsuite_update: TestSuiteUpdate,
 ):
 	return update_testsuite(
 		session=session,
-		user=user,
-		project_id=project_id,
-		testsuite_id=testsuite_id,
+		testsuite=testsuite,
 		testsuite_update=testsuite_update,
 	)
 
@@ -82,13 +83,9 @@ async def update_testsuite_route(
 @router.delete("/{testsuite_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_testsuite_route(
 	session: SessionDep,
-	user: UserDep,
-	project_id: int,
-	testsuite_id: int,
+	testsuite: AdminTestSuiteDep,
 ):
 	delete_testsuite(
 		session=session,
-		user=user,
-		project_id=project_id,
-		testsuite_id=testsuite_id,
+		testsuite=testsuite,
 	)

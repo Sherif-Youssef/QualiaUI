@@ -1,10 +1,8 @@
 from typing import TYPE_CHECKING, Tuple
 
-
 from sqlmodel import Session, and_, col, select
 from sqlalchemy import func
 from sqlalchemy.orm import selectinload, subqueryload
-
 
 from src.base.schemas import PaginationParams
 from .models import Project, Role, UserProjectLink
@@ -60,6 +58,7 @@ def get_all_with_link(
     session: Session,
     user_id: int,
     pagination_params: PaginationParams,
+    name: str | None = None,
 ) -> list[Tuple[Project, UserProjectLink | None]]:
     """Get a paginated list of projects with this user's link per project.
 
@@ -77,6 +76,13 @@ def get_all_with_link(
                     UserProjectLink.user_id == user_id,
                 ),
             )
+    )
+
+    if name:
+        statement = statement.where(func.lower(col(Project.name)).ilike(f"%{name.lower()}%"))
+
+    statement = (
+        statement
             .order_by(order_statement)
             .limit(pagination_params.limit)
             .offset(pagination_params.offset)
@@ -85,8 +91,11 @@ def get_all_with_link(
     return list(session.exec(statement).all())
 
 
-def count(session: Session) -> int:
-    return session.exec(select(func.count(Project.id))).one()  # type: ignore[arg-type]
+def count(session: Session, name: str | None = None) -> int:
+    statement = select(func.count(Project.id))
+    if name:
+        statement = statement.where(func.lower(col(Project.name)).ilike(f"%{name.lower()}%"))
+    return session.exec(statement).one()  # type: ignore[arg-type]
 
 
 def delete(session: Session, project: Project) -> None:

@@ -1,16 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { ChevronDown, ChevronRight, RotateCw, Camera, Circle, CheckCircle2, XCircle, Loader2, Pencil, ChevronsUpDown } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronDown, RotateCw, Camera, Circle, CheckCircle2, XCircle, Loader2, Pencil, ChevronsUpDown, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { TestCase, ActionStep } from '@/types/test-case';
 import { EditStepModal } from './Modal/EditStepModal';
-import gsap from 'gsap';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface TestCaseCardProps {
   testCase: TestCase;
   onRunTest: (testId: string) => void;
   onEditTest: (testCase: TestCase) => void;
   onStepClick: (step: ActionStep, testCase: TestCase) => void;
+  onStepDetailsClick?: (step: ActionStep) => void;
   onInstructionChange: (testId: string, newInstruction: string) => void;
   onStepTextChange: (testId: string, stepId: string, newText: string) => void;
   isReadOnly?: boolean;
@@ -21,44 +22,15 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
   onRunTest,
   onEditTest,
   onStepClick,
+  onStepDetailsClick,
   onInstructionChange,
   onStepTextChange,
   isReadOnly
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [editingStep, setEditingStep] = useState<ActionStep | null>(null);
-  const [collapsedSteps, setCollapsedSteps] = useState<Set<string>>(new Set());
-  const stepsRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (stepsRef.current) {
-      if (isExpanded) {
-        gsap.to(stepsRef.current, {
-          height: 'auto',
-          opacity: 1,
-          duration: 0.3,
-          ease: 'power2.out',
-        });
-      } else {
-        gsap.to(stepsRef.current, {
-          height: 0,
-          opacity: 0,
-          duration: 0.25,
-          ease: 'power2.in',
-        });
-      }
-    }
-  }, [isExpanded]);
 
   const handleEditStep = (step: ActionStep) => {
-    if (collapsedSteps.has(step.id)) {
-      setCollapsedSteps(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(step.id);
-        return newSet;
-      });
-    }
-
     setEditingStep(step);
   };
 
@@ -73,24 +45,6 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
     setEditingStep(null);
   };
 
-  const toggleStepCollapse = (stepId: string) => {
-    setCollapsedSteps(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(stepId)) {
-        newSet.delete(stepId);
-      } else {
-        newSet.add(stepId);
-      }
-      return newSet;
-    });
-  };
-
-  const getPreviewText = (text: string) => {
-    const words = text.split(' ');
-    if (words.length <= 5) return text;
-    return words.slice(0, 5).join(' ') + '…';
-  };
-
   const getStatusIcon = () => {
     switch (testCase.status) {
       case 'idle':
@@ -101,11 +55,13 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
         return <CheckCircle2 className="w-5 h-5 text-success" strokeWidth={2} />;
       case 'failure':
         return <XCircle className="w-5 h-5 text-failure" strokeWidth={2} />;
+      default:
+        return <Circle className="w-5 h-5 text-idle" strokeWidth={2} />;
     }
   };
 
   return (
-    <Card className="bg-card border border-border rounded-lg p-3 shadow-sm">
+    <Card className="bg-card border border-border rounded-lg p-3 shadow-sm overflow-hidden">
       <div className="flex items-center gap-3">
         <div className="flex-shrink-0" aria-label={`Test status: ${testCase.status}`}>
           {getStatusIcon()}
@@ -167,98 +123,121 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
           className="bg-transparent text-foreground hover:bg-muted hover:text-foreground h-8 w-8 flex-shrink-0"
           aria-label={isExpanded ? 'Collapse steps' : 'Expand steps'}
         >
-          {isExpanded ? (
+          <motion.div
+            animate={{ rotate: isExpanded ? 0 : -90 }}
+            transition={{ duration: 0.2 }}
+          >
             <ChevronDown className="w-5 h-5" strokeWidth={1.5} />
-          ) : (
-            <ChevronRight className="w-5 h-5" strokeWidth={1.5} />
-          )}
+          </motion.div>
         </Button>
       </div>
 
-      <div
-        ref={stepsRef}
-        className="overflow-hidden"
-        style={{ height: 0, opacity: 0 }}
-      >
-        <div className="mt-3 pt-3 border-t border-border space-y-2">
-          {testCase.steps?.map((step: any) => (
-            <div
-              key={step.id}
-              className="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors duration-200 ease-in-out cursor-pointer group"
-              onClick={() => onStepClick(step, testCase)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onStepClick(step, testCase);
-                }
-              }}
-            >
-              <span className="text-body-md font-body font-medium text-muted-foreground flex-shrink-0">
-                {step.number}.
-              </span>
-
-              <div className="flex-shrink-0">
-                <div className={`w-8 h-8 rounded flex items-center justify-center ${step.screenshot ? 'bg-primary/10' : 'bg-muted'
-                  }`}>
-                  <Camera className={`w-4 h-4 ${step.screenshot ? 'text-primary' : 'text-muted-foreground'
-                    }`} strokeWidth={1.5} />
-                </div>
-              </div>
-
-              <div className="flex-1 min-w-0 flex flex-col">
-                <span className="text-body-md font-body text-foreground truncate">
-                  {collapsedSteps.has(step.id) ? getPreviewText(step.text) : step.text}
-                </span>
-                {step.description && !collapsedSteps.has(step.id) && (
-                  <span className="text-[10px] font-medium text-failure mt-1 bg-failure/5 px-2 py-1 rounded border border-failure/10">
-                    {step.description}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleStepCollapse(step.id);
-                  }}
-                  variant="ghost"
-                  size="icon"
-                  className="bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground h-8 w-8"
-                  aria-label={collapsedSteps.has(step.id) ? 'Expand step text' : 'Collapse step text'}
-                >
-                  <ChevronsUpDown className="w-4 h-4" strokeWidth={1.5} />
-                </Button>
-
-                {!isReadOnly && (
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditStep(step);
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="mt-3 pt-3 border-t border-border space-y-2">
+              {testCase.steps?.map((stepOrCase: any) => {
+                // Ensure we have an ActionStep for the UI
+                const step = stepOrCase as ActionStep;
+                return (
+                  <motion.div
+                    key={step.id}
+                    initial={{ x: -10, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    className="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors duration-200 ease-in-out cursor-pointer group"
+                    onClick={() => onStepClick(step, testCase)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e: React.KeyboardEvent) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onStepClick(step, testCase);
+                      }
                     }}
-                    variant="ghost"
-                    size="icon"
-                    className="bg-transparent text-foreground hover:bg-muted hover:text-foreground h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                    aria-label="Edit step"
                   >
-                    <Pencil className="w-3 h-3" strokeWidth={1.5} />
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+                    <span className="text-body-md font-body font-medium text-muted-foreground flex-shrink-0">
+                      {step.number || '•'}.
+                    </span>
 
-        {editingStep && (
-          <EditStepModal
-            step={editingStep}
-            onSave={handleSaveStep}
-            onCancel={handleCancelEdit}
-          />
+                    <div className="flex-shrink-0">
+                      <div className={`w-8 h-8 rounded flex items-center justify-center ${step.screenshot ? 'bg-primary/10' : 'bg-muted'
+                        }`}>
+                        <Camera className={`w-4 h-4 ${step.screenshot ? 'text-primary' : 'text-muted-foreground'
+                          }`} strokeWidth={1.5} />
+                      </div>
+                    </div>
+
+                    <div className="flex-1 min-w-0 flex flex-col">
+                      <span className="text-body-md font-body text-foreground truncate">
+                        {step.text || (step as any).description || 'Action Step'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {step.description && (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onStepDetailsClick?.(step);
+                          }}
+                          variant="ghost"
+                          size="icon"
+                          className="bg-transparent text-primary/60 hover:bg-primary/5 hover:text-primary h-8 w-8"
+                          aria-label="View description"
+                        >
+                          <Info className="w-4 h-4" strokeWidth={1.5} />
+                        </Button>
+                      )}
+
+                      <Button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onStepDetailsClick?.(step);
+                        }}
+                        variant="ghost"
+                        size="icon"
+                        className="bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground h-8 w-8"
+                        aria-label="View step details"
+                      >
+                        <ChevronsUpDown className="w-4 h-4" strokeWidth={1.5} />
+                      </Button>
+
+                      {!isReadOnly && (
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditStep(step);
+                          }}
+                          variant="ghost"
+                          size="icon"
+                          className="bg-transparent text-foreground hover:bg-muted hover:text-foreground h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="Edit step"
+                        >
+                          <Pencil className="w-3 h-3" strokeWidth={1.5} />
+                        </Button>
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
+
+      {editingStep && (
+        <EditStepModal
+          step={editingStep}
+          onSave={handleSaveStep}
+          onCancel={handleCancelEdit}
+        />
+      )}
     </Card>
   );
 };
