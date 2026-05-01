@@ -11,6 +11,8 @@ import { AdminUsersPage } from './Admin/AdminUsersPage';
 import { ProjectMembersPage } from './Project/ProjectMembersPage';
 import { ProjectHistoryPage } from './Project/ProjectHistoryPage';
 import { ProjectHistoryDetailsPage } from './Project/ProjectHistoryDetailsPage';
+import { ProjectSuiteHistoryDetailsPage } from './Project/ProjectSuiteHistoryDetailsPage';
+import { ProjectCaseHistoryDetailsPage } from './Project/ProjectCaseHistoryDetailsPage';
 
 export {
     LoginPage,
@@ -25,5 +27,7 @@ export {
     AdminUsersPage,
     ProjectMembersPage,
     ProjectHistoryPage,
-    ProjectHistoryDetailsPage
+    ProjectHistoryDetailsPage,
+    ProjectSuiteHistoryDetailsPage,
+    ProjectCaseHistoryDetailsPage
 }
