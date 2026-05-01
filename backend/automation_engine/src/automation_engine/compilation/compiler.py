@@ -14,13 +14,13 @@ from pydantic import BaseModel, ConfigDict
 
 from ..actions import (
     BaseAction,
-    Waiting, Click, Fill, Hover, SelectOption,
+    Wait, Click, Fill, Hover, SelectOption,
     Press, Navigate, DragDrop,
     UploadFile, ExecuteJS,
 )
 from .executable_actions import (
     ExecAction,
-    WaitingExec, ClickExec, FillExec, HoverExec,
+    WaitExec, ClickExec, FillExec, HoverExec,
     SelectOptionExec, PressExec, NavigateExec,
     DragDropExec, UploadFileExec, ExecuteJSExec
 )

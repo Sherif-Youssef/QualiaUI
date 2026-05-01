@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from automation_engine.actions import BaseAction, TerminationSignal
     from automation_engine.compilation import ExecAction
     from automation_engine.execution.browser import PlaywrightBrowser
-    from automation_engine.planning import PageSnapshot, PlanningAgent, ModelState
+    from automation_engine.planning import PageSnapshot, PlanningAgent, ModelState, MiscAgent
     from automation_engine.serialization import PageRenderer, HistoryRenderer
     from automation_engine.compilation.variables import VariableStore
     from automation_engine.history import TestRun, TestStep, TestTermination
@@ -44,6 +44,7 @@ class IterationContext:
     instruction: str = ""
     browser: PlaywrightBrowser | None = None
     planning_agent: PlanningAgent | None = None
+    misc_agent: MiscAgent | None = None
     page_renderer: PageRenderer | None = None
     history_renderer: HistoryRenderer | None = None
     variable_store: VariableStore | None = None

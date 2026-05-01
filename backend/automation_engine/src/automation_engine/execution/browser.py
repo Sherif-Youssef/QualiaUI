@@ -17,7 +17,7 @@ from playwright.async_api import (
 
 from automation_engine.compilation.executable_actions import (
     ExecAction,
-    WaitingExec, ClickExec, FillExec, HoverExec,
+    WaitExec, ClickExec, FillExec, HoverExec,
     SelectOptionExec, PressExec, NavigateExec,
     DragDropExec, UploadFileExec, ExecuteJSExec
 )
@@ -64,67 +64,54 @@ class PlaywrightBrowser:
 
         self._playwright: Playwright | None = None
         self._browser: Browser | None = None
-        self._context: BrowserContext | None = None
-        self._page: Page | None = None
+        self.context: BrowserContext | None = None
+        self.page: Page | None = None
 
     def _on_new_page(self, new_page: Page) -> None:
-        if self._page is not None:
+        if self.page is not None:
             url = new_page.url
             new_page.close()
-            self._page.goto(url)
+            self.page.goto(url)
 
-    async def start(
-        self,
-        url: str | None = None,
-        init_scripts: list[str | Path] | None = None,
-    ) -> None:
+    async def start(self, url: str, init_scripts: list[str | Path] | None = None) -> None:
         if self._playwright is not None:
             raise RuntimeError("Browser already started.")
 
         self._playwright = await async_playwright().start()
         self._browser = await self._playwright.chromium.launch(headless=self._headless)
-        self._context = await self._browser.new_context(
+        self.context = await self._browser.new_context(
             viewport={"width": self._viewport_width, "height": self._viewport_height},
         )
 
         if self._default_timeout is not None:
-            self._context.set_default_timeout(self._default_timeout)
+            self.context.set_default_timeout(self._default_timeout)
 
         for script in init_scripts or []:
             if isinstance(script, Path):
-                await self._context.add_init_script(path=script)
+                await self.context.add_init_script(path=script)
             else:
-                await self._context.add_init_script(script)
+                await self.context.add_init_script(script)
         
-        
-        self._context.on("page", self._on_new_page)
+        self.context.on("page", self._on_new_page)
 
-        self._page = await self._context.new_page()
-
-        if url is not None:
-            await self._page.goto(url)
+        self.page = await self.context.new_page()
+        await self.page.goto(url)        
 
     async def close(self) -> None:
-        if self._context:
-            self._context.remove_listener("page", self._on_new_page)
-        if self._page:
-            await self._page.close()
-            self._page = None
-        if self._context:
-            await self._context.close()
-            self._context = None
+        if self.context:
+            self.context.remove_listener("page", self._on_new_page)
+        if self.page:
+            await self.page.close()
+            self.page = None
+        if self.context:
+            await self.context.close()
+            self.context = None
         if self._browser:
             await self._browser.close()
             self._browser = None
         if self._playwright:
             await self._playwright.stop()
             self._playwright = None
-
-    @property
-    def page(self) -> Page:
-        if self._page is None:
-            raise RuntimeError("Browser not started.")
-        return self._page
 
     @property
     def url(self) -> str:
@@ -137,9 +124,6 @@ class PlaywrightBrowser:
     @property
     def viewport_height(self) -> int:
         return self._viewport_height
-
-    async def scroll_dim(self) -> tuple[int, int]:
-        return await self.page.evaluate("() => [window.scrollX, window.scrollY]")
 
     async def title(self) -> str:
         return await self.page.title()
@@ -155,33 +139,6 @@ class PlaywrightBrowser:
     async def reload(self, *, timeout: float | None = None) -> None:
         kwargs = {"timeout": timeout} if timeout else {}
         await self.page.reload(**kwargs)
-
-    async def wait_for_load_state(
-        self,
-        state: Literal["domcontentloaded", "load", "networkidle"] = "domcontentloaded",
-    ) -> None:
-        await self.page.wait_for_load_state(state)
-
-    async def wait_for_selector(
-        self,
-        selector: str,
-        *,
-        state: Literal["attached", "detached", "hidden", "visible"] = "visible",
-        timeout: float | None = None,
-    ) -> None:
-        kwargs: dict = {"state": state}
-        if timeout is not None:
-            kwargs["timeout"] = timeout
-        await self.page.wait_for_selector(selector, **kwargs)
-
-    async def wait_for_function(
-        self,
-        expression: str,
-        *,
-        timeout: float | None = None,
-    ) -> Any:
-        kwargs = {"timeout": timeout} if timeout else {}
-        return await self.page.wait_for_function(expression, **kwargs)
 
     async def screenshot(self) -> bytes:
         return await self.page.screenshot(type="png")
@@ -217,7 +174,7 @@ class PlaywrightBrowser:
 
     # Interactions
 
-    @register_action(WaitingExec)
+    @register_action(WaitExec)
     async def wait_for_timeout(self, *, timeout: float = 1000) -> None:
         await self.page.wait_for_timeout(timeout)
 

@@ -8,6 +8,7 @@ from automation_engine.pipeline.context import (
     CompiledAction,
 )
 from automation_engine.history import TestStep, TestStatus
+from automation_engine.actions import InteractionAction
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,8 @@ class CompileActionsStep:
         compiled: list[CompiledAction] = []
 
         for action in ctx.llm_output:
+            if not isinstance(action, InteractionAction):
+                continue
             try:
                 raw_exec = compiler.compile(action, resolve_vars=False)
             except Exception as e:
