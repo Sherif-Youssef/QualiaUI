@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import logging
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Any
 
-from automation_engine.compilation import ExecAction
+from automation_engine.compilation import ExecAction, ValidateExec
 from automation_engine.compilation.variables import Variable, VariableStore
 from automation_engine.execution.browser import PlaywrightBrowser
-from automation_engine.planning import PlanningAgent
+from automation_engine.planning import PlanningAgent, MiscAgent, ExtractSchemaSpec
 from automation_engine.serialization import (
     PageRenderer,
     HistoryRenderer,
@@ -90,24 +90,23 @@ class TestingSession:
         self._browser: PlaywrightBrowser | None = None
         self._planning_agent: PlanningAgent | None = None
 
+        self._exec_pipeline = IterationPipeline(
+            steps=[
+                ResolveVariablesStep(),
+                ExecuteActionsStep(),
+            ],
+            name="Execution Pipeline",
+        )
+
         # Full LLM loop iteration
-        self._llm_pipeline = IterationPipeline(
+        self._loop_pipeline = IterationPipeline(
             steps=[
                 ObserveStep(),
                 BuildModelStateStep(),
                 CallAgentStep(),
                 CompileActionsStep(),
                 StuckDetectionStep(),
-                ResolveVariablesStep(),
-                ExecuteActionsStep(),
-            ]
-        )
-
-        # Direct exec: resolve + execute only
-        self._exec_pipeline = IterationPipeline(
-            steps=[
-                ResolveVariablesStep(),
-                ExecuteActionsStep(),
+                self._exec_pipeline,
             ]
         )
 
@@ -120,16 +119,19 @@ class TestingSession:
             viewport_width=cfg.browser.viewport_width,
             viewport_height=cfg.browser.viewport_height,
         )
-        await self._browser.start(
-            url=self._url,
-            init_scripts=[get_js_serializer_path()],
-        )
+        await self._browser.start(self._url, init_scripts=[get_js_serializer_path()])
+
         self._test_run = TestRun(base_url=self._url)
         self._planning_agent = PlanningAgent(
             mode=cfg.llm.planning_mode,
             default_model=self._engine._model,
             use_tool_calling=cfg.llm.use_tool_calling,
         )
+        self._misc_agents = MiscAgent(
+            default_model=self._engine._model,
+            use_tool_calling=cfg.llm.use_tool_calling,
+        )
+
         logger.info(f"Session started: url={self._url}")
         return self
 
@@ -191,6 +193,16 @@ class TestingSession:
         if self._test_run.status in (TestStatus.ERROR, TestStatus.FAILED):
             raise ValueError("Previous step(s) have failed, can't continue")
 
+    def _assert_group(self, instruction: str = "") -> None:
+        if (
+            not self._test_run.current_group
+            or self._test_run.current_group.is_finalized
+        ):
+            self._test_run.add_group(
+                TestStepGroup(instruction=instruction, llm_loop=False)
+            )
+            logger.debug(f"Starting a new group: {instruction}")
+
     # LLM Loop
 
     async def run_loop(
@@ -221,7 +233,10 @@ class TestingSession:
                 break
 
             ctx = self._build_context(instruction)
-            ctx = await self._llm_pipeline.run_once(ctx)
+            ctx = await self._loop_pipeline.run_once(ctx)
+
+            if ctx.error_message:
+                raise RuntimeError(ctx.error_message)
 
             for result in ctx.results:
                 if result.is_terminal:
@@ -278,6 +293,17 @@ class TestingSession:
         self._test_run.current_group.add_step(step)
         return step
 
+    # One-time APIs
+
+    async def validate(self, assertion: str, context: str = "") -> TestStep:
+        validate_exec = ValidateExec(assertion=assertion, context=context)
+        return await self.run_exec(validate_exec)
+
+    async def extract(self, description: str, schema: ExtractSchemaSpec, many: bool = False) -> Any:
+        return await self._misc_agents.extract(
+            self._browser.page, description=description, schema=schema, many=many,
+        )
+
     # Helpers
 
     def _build_context(self, instruction: str) -> IterationContext:
@@ -285,6 +311,7 @@ class TestingSession:
             instruction=instruction,
             browser=self._browser,
             planning_agent=self._planning_agent,
+            misc_agent=self._misc_agents,
             page_renderer=self._engine._page_renderer,
             history_renderer=self._engine._history_renderer,
             variable_store=self._variable_store,

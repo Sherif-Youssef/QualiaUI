@@ -14,7 +14,12 @@ class BaseAction(BaseModel):
 
 class InteractionAction(BaseAction):
     """Does something on the page."""
-    pass
+    ...
+
+
+class MiscAction(BaseAction):
+    """Misc. actions like validating a condition or extracting data from page."""
+    ...
 
 
 class TerminationSignal(BaseModel):

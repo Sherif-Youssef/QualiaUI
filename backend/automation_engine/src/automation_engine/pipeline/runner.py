@@ -13,9 +13,13 @@ class IterationPipeline:
     """
     Runs an ordered sequence of steps against an IterationContext.
     """
+    name = "general_pipeline"
 
-    def __init__(self, steps: Sequence[PipelineStep]) -> None:
+    def __init__(self, steps: Sequence[PipelineStep], propagate_status: bool = True, name: str = None) -> None:
         self._steps = steps
+        self._propagate_status = propagate_status
+        if name:
+            self.name = name
 
     async def run_once(self, ctx: IterationContext) -> IterationContext:
         """Execute every step in order; stop early on non-CONTINUE status."""
@@ -24,14 +28,20 @@ class IterationPipeline:
             try:
                 ctx = await step.run(ctx)
             except Exception as e:
-                logger.exception(f"Unhandled error in step '{step.name}'")
+                logger.exception(f"Unhandled error in step '{step.name}'", exc_info=True)
                 ctx.status = IterationStatus.ERROR
                 ctx.error = e
                 ctx.error_message = f"Step '{step.name}' failed: {e}"
                 break
 
             if ctx.status != IterationStatus.CONTINUE:
-                logger.debug(f"Pipeline interrupted at '{step.name}': {ctx.status.name}")
+                logger.debug(f"Pipeline {self.name} interrupted at '{step.name}': {ctx.status.name}")
                 break
 
+        return ctx
+
+    async def run(self, ctx: IterationContext) -> IterationContext:
+        ctx = await self.run_once(ctx)
+        if not self._propagate_status:
+            ctx.status = IterationStatus.CONTINUE
         return ctx

@@ -4,7 +4,7 @@ import asyncio
 from automation_engine import (
     FillExec,
     ClickExec,
-    WaitingExec,
+    WaitExec,
 )
 from src.runs.active.run_manager import TestRunManager, TestCaseSpec
 
@@ -21,7 +21,7 @@ _CHECKOUT_ACTIONS = [
     FillExec(target_selector="input#user-name", value="standard_user", clear_first=True),
     FillExec(target_selector="input#password", value="secret_sauce", clear_first=True),
     ClickExec(target_selector="input#login-button", button="left", click_count=1, modifiers=None),
-    WaitingExec(timeout=1000),
+    WaitExec(timeout=1000),
     ClickExec(target_selector="button#add-to-cart-sauce-labs-bike-light", button="left", click_count=1, modifiers=None),
     ClickExec(target_selector="div#shopping_cart_container > a:nth-of-type(1)", button="left", click_count=1, modifiers=None),
     ClickExec(target_selector="button#checkout", button="left", click_count=1, modifiers=None),
@@ -36,9 +36,9 @@ _SLOW_ACTIONS = [
     FillExec(target_selector="input#user-name", value="standard_user", clear_first=True),
     FillExec(target_selector="input#password", value="secret_sauce", clear_first=True),
     ClickExec(target_selector="input#login-button", button="left", click_count=1, modifiers=None),
-    WaitingExec(timeout=10000),
-    WaitingExec(timeout=10000),
-    WaitingExec(timeout=10000),
+    WaitExec(timeout=10000),
+    WaitExec(timeout=10000),
+    WaitExec(timeout=10000),
 ]
 
 LOGIN_STEP_COUNT = len(_LOGIN_ACTIONS)
@@ -357,7 +357,7 @@ async def test_concurrency_limit(engine):
     specs = [
         TestCaseSpec(
             url=SAUCE_URL,
-            executable_steps=list(_LOGIN_ACTIONS) + [WaitingExec(timeout=1000)],
+            executable_steps=list(_LOGIN_ACTIONS) + [WaitExec(timeout=1000)],
         )
         for _ in range(num_cases)
     ]

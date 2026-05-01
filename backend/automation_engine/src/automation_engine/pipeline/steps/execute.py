@@ -6,6 +6,7 @@ from automation_engine.pipeline.context import (
     IterationStatus,
 )
 from automation_engine.history import TestStep, TestStatus, StateSnapshot
+from automation_engine.compilation import ValidateExec, ExecAction
 
 logger = logging.getLogger(__name__)
 
@@ -22,9 +23,14 @@ class ExecuteActionsStep:
             step.executable = compiled.raw_executable
 
             step.snapshot_before = await self._capture(ctx)
+            action = compiled.resolved_executable
 
             try:
-                await ctx.browser.execute(compiled.resolved_executable)
+                if isinstance(action, ValidateExec):
+                    await self._validate(ctx, action)
+                else:
+                    await self._interact(ctx, action)
+
                 logger.debug(
                     f"Step passed: type={type(compiled.resolved_executable).__name__}"
                 )
@@ -57,3 +63,13 @@ class ExecuteActionsStep:
     async def _capture(ctx: IterationContext) -> StateSnapshot:
         screenshot = await ctx.browser.screenshot()
         return StateSnapshot(screenshot=screenshot)
+
+    @staticmethod
+    async def _validate(ctx: IterationContext, action: ValidateExec):
+        output = await ctx.misc_agent.validate(ctx.browser.page, assertion=action.assertion, context=action.context)
+        if not output.result:
+            raise AssertionError(output.reasoning)
+
+    @staticmethod
+    async def _interact(ctx: IterationContext, action: ExecAction):
+        await ctx.browser.execute(action)

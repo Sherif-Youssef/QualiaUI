@@ -10,9 +10,9 @@ from automation_engine.compilation.markers import ElementRef, SourcedFrom, TextR
 from automation_engine.actions.interactions import *
 
 
-@maps(Waiting)
-class WaitingExec(ExecAction):
-    action_type: Literal[Interaction.WAITING] = Interaction.WAITING
+@maps(Wait)
+class WaitExec(ExecAction):
+    action_type: Literal[Interaction.WAIT] = Interaction.WAIT
     timeout: float = Field(default=1000, description="Milliseconds to wait.")
 
 

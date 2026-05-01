@@ -7,7 +7,7 @@ class Termination(StrEnum):
 
 
 class Interaction(StrEnum):
-    WAITING = "wait"
+    WAIT = "wait"
     CLICK = "click"
     FILL = "fill"
     HOVER = "hover"
@@ -17,3 +17,7 @@ class Interaction(StrEnum):
     DRAG_DROP = "drag_drop"
     UPLOAD = "upload_file"
     EXECUTE_JS = "execute_js_code"
+
+
+class Misc(StrEnum):
+    VALIDATE = "validate"

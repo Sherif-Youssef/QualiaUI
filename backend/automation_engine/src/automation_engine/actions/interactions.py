@@ -7,9 +7,9 @@ from .base import InteractionAction
 from .types import Interaction
 
 
-class Waiting(InteractionAction):
+class Wait(InteractionAction):
     """Pause execution for a fixed duration."""
-    action_type: Literal[Interaction.WAITING] = Field(default=Interaction.WAITING, exclude=True)
+    action_type: Literal[Interaction.WAIT] = Field(default=Interaction.WAIT, exclude=True)
 
 
 class Click(InteractionAction):
