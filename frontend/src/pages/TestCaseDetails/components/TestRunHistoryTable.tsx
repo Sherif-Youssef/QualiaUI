@@ -1,6 +1,7 @@
 import React from 'react';
 import { History, Calendar, Clock, ChevronRight, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { TestCaseRun } from '@/types/run';
+import { parseUTCDate } from '@/utils/formatters';
 
 interface TestRunHistoryTableProps {
     history: TestCaseRun[];
@@ -12,7 +13,8 @@ export const TestRunHistoryTable: React.FC<TestRunHistoryTableProps> = ({ histor
     const getStatusIcon = (status?: string) => {
         switch (status?.toLowerCase()) {
             case 'passed':
-            case 'success': return <CheckCircle2 className="w-5 h-5 text-success" />;
+            case 'success':
+            case 'executed': return <CheckCircle2 className="w-5 h-5 text-success" />;
             case 'failed':
             case 'failure': return <XCircle className="w-5 h-5 text-failure" />;
             default: return <AlertCircle className="w-5 h-5 text-warning" />;
@@ -87,16 +89,16 @@ export const TestRunHistoryTable: React.FC<TestRunHistoryTableProps> = ({ histor
                                             <Calendar className="w-3.5 h-3.5 text-gray-400" />
                                             {(() => {
                                                 const dateStr = run.started_at || run.created_at;
-                                                const date = !dateStr.includes('Z') && !dateStr.includes('+') ? new Date(dateStr + 'Z') : new Date(dateStr);
-                                                return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                                                const date = parseUTCDate(dateStr);
+                                                return date?.toLocaleDateString([], { month: 'short', day: 'numeric' }) || '-';
                                             })()}
                                         </div>
                                         <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
                                             <Clock className="w-3.5 h-3.5" />
                                             {(() => {
                                                 if (!run.started_at) return 'Pending';
-                                                const date = !run.started_at.includes('Z') && !run.started_at.includes('+') ? new Date(run.started_at + 'Z') : new Date(run.started_at);
-                                                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                                const date = parseUTCDate(run.started_at);
+                                                return date?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) || '-';
                                             })()}
                                         </div>
                                     </div>
@@ -104,8 +106,8 @@ export const TestRunHistoryTable: React.FC<TestRunHistoryTableProps> = ({ histor
                                 <td className="px-8 py-6 text-center">
                                     <span className="text-xs font-black text-gray-500 tabular-nums">
                                         {(() => {
-                                            const start = run.started_at ? new Date(run.started_at) : null;
-                                            const finish = run.finished_at ? new Date(run.finished_at) : null;
+                                            const start = parseUTCDate(run.started_at);
+                                            const finish = parseUTCDate(run.finished_at);
                                             if (start && finish) {
                                                 const durationSeconds = Math.floor((finish.getTime() - start.getTime()) / 1000);
                                                 return durationSeconds > 60

@@ -1,4 +1,4 @@
-export type RunStatus = 'QUEUED' | 'RUNNING' | 'PASSED' | 'FAILED' | 'ERROR' | 'ABORTED';
+export type RunStatus = 'QUEUED' | 'RUNNING' | 'PASSED' | 'FAILED' | 'ERROR' | 'ABORTED' | 'EXECUTED';
 export type RunMode = 'NATURAL' | 'EXECUTABLE';
 export type Scope = 'PROJECT' | 'TESTSUITE' | 'TESTCASE';
 

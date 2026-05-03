@@ -1,4 +1,4 @@
-export type TestStatus = 'idle' | 'running' | 'passed' | 'failed' | 'success' | 'failure';
+export type TestStatus = 'idle' | 'running' | 'passed' | 'failed' | 'success' | 'failure' | 'executed';
 
 export interface TestCaseDTO {
     id: number | string;
