@@ -4,7 +4,8 @@ import {
     History,
     ChevronLeft,
 } from 'lucide-react';
-import { runService, ProjectRun } from '@/services/runService';
+import { runService } from '@/services/runService';
+import { ProjectRun } from '@/types/run';
 import { Button } from '@/components/ui/button';
 import { ProjectLayout } from './ProjectLayout';
 import { ErrorMessage } from '@/components/GeneralComponents';

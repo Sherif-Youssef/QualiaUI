@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import StrEnum
 from typing import TYPE_CHECKING, Optional
 
@@ -38,7 +38,7 @@ class ProjectRun(SQLModel, table=True):
     scope: Scope = Field(default=Scope.PROJECT, nullable=False)
 
     # fields
-    created_at: datetime = Field(default_factory=datetime.now, nullable=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
     started_at: datetime | None = Field(default=None, nullable=True)
     finished_at: datetime | None = Field(default=None, nullable=True)
     job_uid: str = Field(unique=True, index=True, nullable=False)
@@ -63,7 +63,7 @@ class TestSuiteRun(SQLModel, table=True):
     scope: Scope = Field(default=Scope.TESTSUITE, nullable=False)
     
     # fields
-    created_at: datetime = Field(default_factory=datetime.now, nullable=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
     started_at: datetime | None = Field(default=None, nullable=True)
     finished_at: datetime | None = Field(default=None, nullable=True)
     job_uid: str = Field(unique=True, index=True, nullable=False)
@@ -93,7 +93,7 @@ class TestCaseRun(SQLModel, table=True):
     scope: Scope = Field(default=Scope.TESTCASE, nullable=False)
 
     # fields
-    created_at: datetime = Field(default_factory=datetime.now, nullable=False)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
     started_at: datetime | None = Field(default=None, nullable=True)
     finished_at: datetime | None = Field(default=None, nullable=True)
     job_uid: str = Field(unique=True, index=True, nullable=False)

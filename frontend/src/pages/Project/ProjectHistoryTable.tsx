@@ -7,7 +7,7 @@ import {
     AlertCircle,
     ChevronRight 
 } from 'lucide-react';
-import { ProjectRun } from '@/services/runService';
+import { ProjectRun } from '@/types/run';
 
 interface ProjectHistoryTableProps {
     runs: ProjectRun[];
@@ -60,7 +60,6 @@ export const ProjectHistoryTable: React.FC<ProjectHistoryTableProps> = ({ runs, 
                                 <td className="px-8 py-6">
                                     <div className="flex flex-col gap-0.5">
                                         <span className="text-base font-bold text-gray-800 group-hover:text-primary transition-colors">Run #{run.id}</span>
-                                        <span className="text-xs font-medium text-gray-400 truncate max-w-[250px] font-mono">{run.job_uid}</span>
                                     </div>
                                 </td>
                                 <td className="px-8 py-6 whitespace-nowrap">

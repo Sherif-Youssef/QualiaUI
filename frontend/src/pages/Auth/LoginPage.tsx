@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { socialAuthService } from '@/services/auth/socialAuth';
 import { authService } from '@/services/auth/auth';
 import { twoFactorAuthService } from '@/services/auth/2Fauth';
 import { ErrorMessage } from '@/components/GeneralComponents';
@@ -8,7 +7,6 @@ import { ErrorMessage } from '@/components/GeneralComponents';
 import { AuthHeader } from './AuthHeader';
 import { AuthForm } from './AuthForm';
 import { MfaVerification } from './MfaVerification';
-import { SocialAuth } from './SocialAuth';
 import { AuthLayout } from './AuthLayout';
 
 export const LoginPage: React.FC = () => {
@@ -71,9 +69,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const handleSocialLogin = (provider: 'google' | 'github') => {
-    socialAuthService.login(provider);
-  };
 
   return (
     <AuthLayout>
@@ -118,8 +113,6 @@ export const LoginPage: React.FC = () => {
               }
             ]}
           />
-
-          <SocialAuth onSocialLogin={handleSocialLogin} />
         </>
       ) : (
         <MfaVerification

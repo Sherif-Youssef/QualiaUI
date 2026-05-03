@@ -1,36 +1,37 @@
-import React from 'react';
-import { Camera, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Camera } from 'lucide-react';
 
 interface ScreenshotViewerProps {
     screenshot: string | null;
     number: number;
-    zoomLevel: number;
-    setZoomLevel: (level: number) => void;
+    description?: string;
 }
 
 export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
     screenshot,
     number,
-    zoomLevel,
-    setZoomLevel
+    description,
 }) => {
     return (
-        <section className="flex-1 bg-[#1a1c1e] flex flex-col items-stretch overflow-hidden">
-            <div className="flex-1 overflow-auto bg-[#1a1c1e] relative custom-scrollbar">
-                <div className="min-w-full min-h-full flex items-center justify-center p-20 md:p-40">
+        <section className="flex-1 bg-slate-50 flex flex-col items-stretch overflow-hidden">
+            <div className="flex-1 overflow-auto bg-slate-50 relative custom-scrollbar">
+                <div className="min-w-full min-h-full flex items-center justify-center p-4 md:p-8">
                     {screenshot ? (
-                        <div className="relative group perspective-1000 origin-center transition-transform duration-300 ease-out" style={{ transform: `scale(${zoomLevel / 100})` }}>
+                        <div className="relative group perspective-1000 origin-center transition-transform duration-300 ease-out">
                             <div className="absolute -inset-4 bg-primary/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
                             <img
                                 src={screenshot}
                                 alt={`Step ${number}`}
-                                className="max-w-[85vw] max-h-[70vh] rounded-2xl shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)] border border-white/10 relative z-10"
+                                className="max-w-[95%] max-h-[85vh] rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-gray-200 relative z-10 bg-white"
                             />
-                            <div className="absolute bottom-6 left-6 z-20 bg-black/60 backdrop-blur-xl border border-white/20 px-4 py-2 rounded-xl">
-                                <p className="text-white text-xs font-black uppercase tracking-widest">
+                            <div className="absolute bottom-6 left-6 z-20 bg-white/80 backdrop-blur-xl border border-gray-200 px-4 py-2 rounded-xl shadow-lg">
+                                <p className="text-gray-900 text-xs font-black uppercase tracking-widest">
                                     Step <span className="text-primary">{number}</span> Frame
                                 </p>
+                                {description && (
+                                    <p className="text-gray-600 text-xs mt-1 max-w-sm break-words font-medium">
+                                        {description}
+                                    </p>
+                                )}
                             </div>
                         </div>
                     ) : (
@@ -44,41 +45,6 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
                             </div>
                         </div>
                     )}
-                </div>
-            </div>
-
-            <div className="p-4 md:p-6 bg-black/40 backdrop-blur-2xl border-t border-white/10 flex items-center justify-center">
-                <div className="flex items-center gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/10">
-                    <Button
-                        onClick={() => setZoomLevel(Math.max(50, zoomLevel - 25))}
-                        variant="ghost"
-                        size="icon"
-                        disabled={zoomLevel <= 50 || !screenshot}
-                        className="w-10 h-10 text-white/60 hover:text-white hover:bg-white/10 rounded-xl"
-                    >
-                        <ZoomOut className="w-5 h-5" />
-                    </Button>
-                    <Button
-                        onClick={() => setZoomLevel(100)}
-                        variant="ghost"
-                        size="icon"
-                        disabled={!screenshot}
-                        className="w-10 h-10 text-white/60 hover:text-white hover:bg-white/10 rounded-xl"
-                    >
-                        <RotateCcw className="w-5 h-5" />
-                    </Button>
-                    <Button
-                        onClick={() => setZoomLevel(Math.min(200, zoomLevel + 25))}
-                        variant="ghost"
-                        size="icon"
-                        disabled={zoomLevel >= 200 || !screenshot}
-                        className="w-10 h-10 text-white/60 hover:text-white hover:bg-white/10 rounded-xl"
-                    >
-                        <ZoomIn className="w-5 h-5" />
-                    </Button>
-                    <div className="px-4 border-l border-white/10 ml-1">
-                        <span className="text-xs font-black text-white/80 w-12 text-center inline-block">{zoomLevel}%</span>
-                    </div>
                 </div>
             </div>
         </section>

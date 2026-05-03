@@ -4,13 +4,13 @@ import { TestCaseDTO, TestCase, ActionStep } from "@/types/test-case";
 import { UserDTO, UserProfile, PasswordDTO, UpdatePasswordForm } from "@/types/user";
 import { NotificationDTO, NotificationViewModel } from "@/types/notification";
 import { DashboardDTO, DashboardData } from "@/types/dashboard";
-import { ActiveTestStepRun, TestCaseRunRead, TestStepRunRead } from "@/types/run";
+import { TestCaseRun, TestStepRun } from "@/types/run";
 
-export const mapTestStepRunToActionStep = (sr: TestStepRunRead, index: number): ActionStep => {
+export const mapTestStepRunToActionStep = (sr: TestStepRun, index: number): ActionStep => {
     const actionText = sr.llm_action || 'Action Step';
-    
+
     const screenshot = sr.screenshot_after || sr.screenshot_before;
-    
+
     return {
         id: sr.id.toString(),
         number: index + 1,
@@ -21,7 +21,7 @@ export const mapTestStepRunToActionStep = (sr: TestStepRunRead, index: number): 
     };
 };
 
-export const mapTestCaseRunToViewModel = (cr: TestCaseRunRead, steps: TestStepRunRead[] = []): TestCase => {
+export const mapTestCaseRunToViewModel = (cr: TestCaseRun, steps: TestStepRun[] = []): TestCase => {
     const statusMapping: Record<string, TestCase['status']> = {
         'PASSED': 'success',
         'FAILED': 'failure',
@@ -33,7 +33,7 @@ export const mapTestCaseRunToViewModel = (cr: TestCaseRunRead, steps: TestStepRu
         id: cr.id.toString(),
         suiteId: '',
         name: cr.name || `Test Case ${cr.id}`,
-        prompt: cr.instruction || cr.description || '',
+        prompt: cr.instruction || '',
         status: statusMapping[cr.status] || 'idle',
         url: cr.base_url,
         mode: 'plain',
@@ -41,13 +41,23 @@ export const mapTestCaseRunToViewModel = (cr: TestCaseRunRead, steps: TestStepRu
     };
 };
 
-export const mapActiveStepToActionStep = (stepRun: ActiveTestStepRun, currentStepCount: number): ActionStep => {
-    const screenshot = stepRun.screenshot_after || stepRun.screenshot_before;
+export const mapActiveStepToActionStep = (stepRun: any, currentStepCount: number): ActionStep => {
+    const screenshot = stepRun.screenshot_after || stepRun.screenshot_before || (stepRun.snapshot_after ? stepRun.snapshot_after.screenshot : '') || (stepRun.snapshot_before ? stepRun.snapshot_before.screenshot : '');
+    
+    let formattedScreenshot = '';
+    if (screenshot) {
+        if (screenshot.startsWith('http') || screenshot.startsWith('data:')) {
+            formattedScreenshot = screenshot;
+        } else {
+            formattedScreenshot = `data:image/png;base64,${screenshot}`;
+        }
+    }
+
     return {
         id: crypto.randomUUID(),
         number: currentStepCount + 1,
-        text: stepRun.llm_action || 'Executing Action...',
-        screenshot: screenshot ? `data:image/png;base64,${screenshot}` : '',
+        text: stepRun.llm_action || stepRun.action_description || 'Executing Action...',
+        screenshot: formattedScreenshot,
         type: 'do',
     };
 };

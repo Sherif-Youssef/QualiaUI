@@ -11,7 +11,8 @@ import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteLayout } from './TestSuiteLayout';
 import { TestSuiteHeader } from './TestSuiteHeader';
 import { TestCaseTable } from './TestCaseTable';
-import { runService, TestSuiteRun } from '@/services/runService';
+import { runService } from '@/services/runService';
+import { TestSuiteRun } from '@/types/run';
 import { RunHistoryTable } from '@/components/RunHistory/RunHistoryTable';
 import { Clock, LayoutGrid } from 'lucide-react';
 
@@ -127,8 +128,10 @@ export const TestSuitePage: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            await runService.startTestSuiteRun(parseInt(suiteId), 'EXECUTABLE');
-            navigate(`/project/${projectId}/suite/${suiteId}/manager`);
+            const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL');
+            navigate(`/project/${projectId}/suite/${suiteId}/manager`, {
+                state: { runId: run.run_id, scope: 'TESTSUITE' }
+            });
         } catch (err: any) {
             setError(err.response?.data?.detail || 'Failed to start test run.');
             setIsLoading(false);
@@ -173,6 +176,7 @@ export const TestSuitePage: React.FC = () => {
                         setIsModalOpen(true);
                     }}
                     canManageCases={canManageCases}
+                    onBack={() => navigate(`/project/${projectId}`)}
                 />
             }
             searchBar={(

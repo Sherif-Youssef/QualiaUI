@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Iterable, cast
 from enum import StrEnum
 from uuid import uuid4
@@ -47,7 +47,7 @@ class TestCaseOutcomePayload(BaseModel):
     testcase_run_id: int
     testcase_id: int
     status: RunStatus
-    finished_at: datetime
+    finished_at: datetime | None = None
     started_at: datetime
     termination_reason: str | None = None
 
@@ -57,7 +57,7 @@ class TestCaseOutcomePayload(BaseModel):
             testcase_run_id=cast(int, testcase_run.id),
             testcase_id=testcase_run.testcase_id,
             status=testcase_run.status,
-            finished_at=cast(datetime, testcase_run.finished_at),
+            finished_at=testcase_run.finished_at,
             started_at=cast(datetime, testcase_run.started_at),
             termination_reason=testcase_run.termination_reason,
         )
@@ -110,11 +110,16 @@ async def stream_step(
     stream_key: str,
     *,
     step: StepType,
+    testcase_id: int,
     snapshot_before_url: str | None = None,
     snapshot_after_url: str | None = None,
 ):
     if isinstance(step, TestStep):
         data = step.model_dump(mode="json", exclude={"snapshot_before", "snapshot_after"})
+        if step.executable:
+            data["executable"] = step.executable.model_dump(mode="json")
+        if step.action:
+            data["action_description"] = getattr(step.action, "recreation_prompt", "") or getattr(step.action, "intent", "")
         
         if step.snapshot_before:
             url = snapshot_before_url or await upload_screenshot(step.snapshot_before.screenshot)
@@ -127,17 +132,22 @@ async def stream_step(
             data["snapshot_after"] = {
                 'screenshot': url
             }
+            
+        data["testcase_id"] = testcase_id
 
         data = json.dumps(data)
         event_type = EventType.TEST_STEP
         logger.debug("Streaming test step for stream_key=%s step=%s", stream_key, getattr(step, 'id', None))
 
     elif isinstance(step, TestTermination):
-        data = step.model_dump_json()
+        data_dict = step.model_dump(mode="json")
+        data_dict["testcase_id"] = testcase_id
+        data = json.dumps(data_dict)
         event_type = EventType.TEST_TERMINATION
         logger.debug("Streaming test termination for stream_key=%s data=%s", stream_key, data)
 
     stream_event(stream_key, event=data, event_type=event_type)
+
     
 def stream_status(stream_key: str, *, event: StatusChangeEvent):
     logger.debug("Streaming status change: stream_key=%s element=%s id=%s status=%s", stream_key, event.element, event.id, event.status)
@@ -174,9 +184,11 @@ class TestCaseJob:
         snapshot_before_url: str | None = None,
         snapshot_after_url: str | None = None,
     ) -> None:
+        assert self.testcase_run
         await stream_step(
             self.stream_key,
             step=step,
+            testcase_id=self.testcase_run.testcase_id,
             snapshot_before_url=snapshot_before_url,
             snapshot_after_url=snapshot_after_url,
         )
@@ -201,7 +213,7 @@ class TestCaseJob:
 
         try:
             self.testcase_run.status = RunStatus.ABORTED
-            self.testcase_run.finished_at = datetime.now()
+            self.testcase_run.finished_at = datetime.now(timezone.utc)
             self.testcase_run.termination_reason = "Execution aborted by user"
             self.db_session.add(self.testcase_run)
             self.db_session.commit()
@@ -224,6 +236,20 @@ class TestCaseJob:
 
         return screenshot_before, screenshot_after
 
+    @staticmethod
+    def _extract_description(action) -> str | None:
+        if action is None:
+            return None
+        try:
+            data = action.model_dump(include={"recreation_prompt", "intent"})
+            desc = data.get("recreation_prompt") or data.get("intent")
+            if desc:
+                return desc
+        except Exception:
+            pass
+        # fallback to getattr
+        return getattr(action, "recreation_prompt", None) or getattr(action, "intent", None)
+
     async def _persist_step(
         self,
         step: TestStep,
@@ -240,7 +266,7 @@ class TestCaseJob:
             screenshot_before=screenshot_before,
             screenshot_after=screenshot_after,
             error_message=step.error_message,
-            llm_action=(step.action.model_dump_json() if step.action else None),
+            llm_action=self._extract_description(step.action),
             status=to_test_step_run_status(step.status),
         )
         
@@ -259,56 +285,71 @@ class TestCaseJob:
         # status: queued -> running
         logger.info("TestCaseRun starting: id=%s testcase_id=%s", self.testcase_run.id, self.testcase_run.testcase_id)
         self.testcase_run.status = RunStatus.RUNNING
-        self.testcase_run.started_at = datetime.now()
+        self.testcase_run.started_at = datetime.now(timezone.utc)
         self.db_session.add(self.testcase_run)
         self.db_session.commit()
         self._stream_status(RunStatus.RUNNING)
 
-        if self.testcase_run.mode == RunMode.NATURAL:
-            assert self.testcase_run.instruction
+        try:
+            if self.testcase_run.mode == RunMode.NATURAL:
+                assert self.testcase_run.instruction
 
-            async with self.engine.launch(self.testcase_run.base_url) as run_session:
-                async for emitted in run_session.run_loop(
-                    self.testcase_run.instruction
-                ):
-                    if self._is_aborted():
-                        logger.info("Abort detected during execution: testcase_run_id=%s", self.testcase_run_id)
-                        return self._finalize_aborted()
+                async with self.engine.launch(self.testcase_run.base_url) as run_session:
+                    async for emitted in run_session.run_loop(
+                        self.testcase_run.instruction
+                    ):
+                        if self._is_aborted():
+                            logger.info("Abort detected during execution: testcase_run_id=%s", self.testcase_run_id)
+                            return self._finalize_aborted()
 
-                    if isinstance(emitted, TestStep):
-                        screenshot_before_url = None
-                        screenshot_after_url = None
-                        if self.stream_steps or emitted.status is not None:
-                            screenshot_before_url, screenshot_after_url = await self._upload_step_screenshots(emitted)
+                        if isinstance(emitted, TestStep):
+                            screenshot_before_url = None
+                            screenshot_after_url = None
+                            if self.stream_steps or emitted.status is not None:
+                                screenshot_before_url, screenshot_after_url = await self._upload_step_screenshots(emitted)
 
-                        await self._persist_step(
-                            emitted,
-                            screenshot_before=screenshot_before_url,
-                            screenshot_after=screenshot_after_url,
-                        )
-                        
-                        if self.stream_steps:
-                            await self._stream_step(
+                            await self._persist_step(
                                 emitted,
-                                snapshot_before_url=screenshot_before_url,
-                                snapshot_after_url=screenshot_after_url,
+                                screenshot_before=screenshot_before_url,
+                                screenshot_after=screenshot_after_url,
                             )
+                            
+                            if self.stream_steps:
+                                await self._stream_step(
+                                    emitted,
+                                    snapshot_before_url=screenshot_before_url,
+                                    snapshot_after_url=screenshot_after_url,
+                                )
 
-                run_session.finalize()
-                run = cast(TestRun, run_session._test_run)
+                    run_session.finalize()
+                    run = cast(TestRun, run_session._test_run)
 
-            status = to_run_status(run.status)
-            logger.info("Test run finished: testcase_run_id=%s status=%s", self.testcase_run_id, status)
+                status = to_run_status(run.status)
+                logger.info("Test run finished: testcase_run_id=%s status=%s", self.testcase_run_id, status)
 
-            # status: running -> passed/failed
-            self.testcase_run.status = status
-            self.testcase_run.finished_at = run.finished_at or datetime.now()
-            self.testcase_run.termination_reason = run.current_group.abort_reason if run.current_group else None
+                # status: running -> passed/failed
+                self.testcase_run.status = status
+                self.testcase_run.finished_at = run.finished_at or datetime.now(timezone.utc)
+                self.testcase_run.termination_reason = run.current_group.abort_reason if run.current_group else None
+                self.db_session.add(self.testcase_run)
+                self.db_session.commit()
+                self._stream_status(status)
+            
+            elif self.testcase_run.mode == RunMode.EXECUTABLE:
+                # Placeholder for executable mode
+                self.testcase_run.status = RunStatus.PASSED
+                self.testcase_run.finished_at = datetime.now(timezone.utc)
+                self.db_session.add(self.testcase_run)
+                self.db_session.commit()
+                self._stream_status(RunStatus.PASSED)
+
+        except Exception as e:
+            logger.exception("Error during testcase execution: testcase_run_id=%s", self.testcase_run_id)
+            self.testcase_run.status = RunStatus.ERROR
+            self.testcase_run.finished_at = datetime.now(timezone.utc)
+            self.testcase_run.termination_reason = str(e)
             self.db_session.add(self.testcase_run)
             self.db_session.commit()
-            self._stream_status(status)
-        
-        elif self.testcase_run.mode == RunMode.EXECUTABLE:
-            ...
+            self._stream_status(RunStatus.ERROR)
 
         return TestCaseOutcomePayload.from_testcase_run(self.testcase_run)

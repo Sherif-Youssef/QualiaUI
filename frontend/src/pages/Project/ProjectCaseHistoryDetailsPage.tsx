@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { runService, TestCaseRun, TestStepRun } from '@/services/runService';
+import { runService } from '@/services/runService';
+import { TestCaseRun, TestStepRun } from '@/types/run';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
 import { Globe } from 'lucide-react';
 import { TestCaseDetailsLayout } from '../TestCaseDetails/TestCaseDetailsLayout';
 import { ScreenshotViewer } from '../TestCaseDetails/ScreenshotViewer';
 import { TestRunStepsSidebar } from './components/TestRunStepsSidebar';
+import { formatAction } from '@/utils/formatters';
 
 export const ProjectCaseHistoryDetailsPage: React.FC = () => {
     const { runId, suiteRunId, caseRunId } = useParams<{
@@ -18,7 +20,6 @@ export const ProjectCaseHistoryDetailsPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedStepId, setSelectedStepId] = useState<number | null>(null);
-    const [zoomLevel, setZoomLevel] = useState(100);
 
     useEffect(() => {
         const fetchCaseDetails = async () => {
@@ -106,8 +107,7 @@ export const ProjectCaseHistoryDetailsPage: React.FC = () => {
             <ScreenshotViewer
                 screenshot={selectedStep ? (selectedStep.screenshot_after || selectedStep.screenshot_before) : null}
                 number={caseRun.teststep_runs.indexOf(selectedStep!) + 1}
-                zoomLevel={zoomLevel}
-                setZoomLevel={setZoomLevel}
+                description={selectedStep ? formatAction(selectedStep.llm_action) : undefined}
             />
         </div>
     );

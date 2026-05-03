@@ -1,14 +1,16 @@
 import React from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ProjectHeaderProps {
     onAddSuite: () => void;
+    onRunProject: () => void;
     canManageSuites: boolean;
 }
 
 export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     onAddSuite,
+    onRunProject,
     canManageSuites
 }) => {
     return (
@@ -18,6 +20,14 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             </h2>
 
             <div className="flex items-center gap-3">
+                <Button
+                    onClick={onRunProject}
+                    variant="outline"
+                    className="bg-white hover:bg-white border-gray-200 hover:border-primary/30 text-gray-900 hover:text-primary transition-all duration-300 rounded-xl h-11 px-6 font-bold flex items-center gap-2 shadow-sm group"
+                >
+                    <Play className="w-4 h-4 fill-gray-900 group-hover:fill-primary transition-colors" />
+                    Run Project
+                </Button>
                 {canManageSuites && (
                     <Button
                         onClick={onAddSuite}

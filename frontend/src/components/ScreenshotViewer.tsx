@@ -77,17 +77,15 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
       <div className="flex-1 overflow-hidden flex bg-[#f8f9fb] relative">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
 
-        <div className="flex-1 overflow-auto bg-transparent relative custom-scrollbar">
-          <div className="min-w-full min-h-full flex items-center justify-center p-20 md:p-40">
-            <div className="relative z-10 transition-transform duration-300 ease-out origin-center" style={{ transform: `scale(${zoomLevel / 100})` }}>
-              <img
-                ref={imageRef}
-                src={screenshot || 'https://placehold.co/1280x720/e2e8f0/64748b?text=Waiting+for+Automation+Run...'}
-                alt="Browser Screenshot"
-                className="max-w-full h-auto rounded-[2rem] shadow-2xl border border-white/50 backdrop-blur-sm bg-white"
-                loading="lazy"
-              />
-            </div>
+        <div className="flex-1 overflow-hidden bg-transparent relative flex items-center justify-center p-6">
+          <div className="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-300 ease-out origin-center" style={{ transform: `scale(${zoomLevel / 100})` }}>
+            <img
+              ref={imageRef}
+              src={screenshot || 'https://placehold.co/1280x720/e2e8f0/64748b?text=Waiting+for+Automation+Run...'}
+              alt="Browser Screenshot"
+              className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-2xl border border-white/50 backdrop-blur-sm bg-white"
+              loading="lazy"
+            />
           </div>
         </div>
 

@@ -5,7 +5,8 @@ import { Pagination } from '@/components/Pagination';
 import { TestSuite } from '@/types/test-suit';
 import { testSuiteService } from '@/services/testSuit/testSuiteService';
 import { projectService } from '@/services/project/projectService';
-import { runService, ProjectRun } from '@/services/runService';
+import { runService } from '@/services/runService';
+import { ProjectRun } from '@/types/run';
 
 import { useProjectPermissions } from '@/hooks/useProjectPermissions';
 import { ProjectLayout } from './ProjectLayout';
@@ -160,11 +161,24 @@ export const ProjectPage: React.FC = () => {
         }
     };
 
+    const handleRunProject = async () => {
+        if (!projectId) return;
+        try {
+            const run = await runService.startProjectRun(parseInt(projectId), 'NATURAL');
+            navigate(`/project/${projectId}/manager`, { 
+                state: { runId: run.run_id, scope: 'PROJECT' } 
+            });
+        } catch (err: any) {
+            setError(err.response?.data?.detail || 'Failed to start project run.');
+        }
+    };
+
     return (
         <ProjectLayout
             header={
                 <ProjectHeader 
                     onAddSuite={() => setIsModalOpen(true)}
+                    onRunProject={handleRunProject}
                     canManageSuites={canManageSuites}
                 />
             }

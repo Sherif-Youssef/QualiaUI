@@ -67,6 +67,8 @@ function App() {
           <Route path="/project/:projectId/suite/:suiteId" element={<TestSuitePage />} />
           <Route path="/project/:projectId/suite/:suiteId/case/:caseId" element={<TestCaseDetailsPage />} />
           <Route path="/project/:projectId/suite/:suiteId/manager" element={<TestSuiteManagerPage />} />
+          <Route path="/project/:projectId/manager" element={<TestSuiteManagerPage />} />
+          <Route path="/project/:projectId/suite/:suiteId/case/:caseId/manager" element={<TestSuiteManagerPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/profile/:userId?" element={<ProfilePage />} />
         </Route>

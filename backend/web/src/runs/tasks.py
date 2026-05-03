@@ -124,8 +124,8 @@ def finalize_testsuite_task(
             raise ValueError(f"TestSuiteRun {testsuite_run_id} not found")
         
         status = aggregate_parent_status(item.status for item in parsed_outcomes)
-        finished_at = max((item.finished_at for item in parsed_outcomes), default=datetime.now())
-        started_at = min((item.started_at for item in parsed_outcomes), default=datetime.now())
+        finished_at = max((item.finished_at for item in parsed_outcomes if item.finished_at), default=datetime.now())
+        started_at = min((item.started_at for item in parsed_outcomes if item.started_at), default=datetime.now())
 
         testsuite_run.status = status
         testsuite_run.finished_at = finished_at
@@ -174,8 +174,8 @@ def finalize_project_task(
             raise ValueError(f"ProjectRun {project_run_id} not found")
 
         status = aggregate_parent_status(item.status for item in parsed_outcomes)
-        finished_at = max((item.finished_at for item in parsed_outcomes), default=datetime.now())
-        started_at = min((item.started_at for item in parsed_outcomes), default=datetime.now())
+        finished_at = max((item.finished_at for item in parsed_outcomes if item.finished_at), default=datetime.now())
+        started_at = min((item.started_at for item in parsed_outcomes if item.started_at), default=datetime.now())
 
         project_run.status = status
         project_run.finished_at = finished_at

@@ -1,7 +1,6 @@
 import React from 'react';
-import { Camera, CheckCircle2, XCircle, AlertCircle, ArrowLeft } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { TestStepRun } from '@/services/runService';
+import { Camera, CheckCircle2, XCircle, AlertCircle, Info } from 'lucide-react';
+import { TestStepRun } from '@/types/run';
 import { formatAction } from '@/utils/formatters';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -21,13 +20,8 @@ export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
     selectedStepId,
     onSelectStep
 }) => {
-    const navigate = useNavigate();
-    const { projectId, runId, suiteRunId, caseRunId } = useParams<{
-        projectId: string;
-        runId: string;
-        suiteRunId: string;
-        caseRunId: string;
-    }>();
+
+    const [expandedDescId, setExpandedDescId] = React.useState<number | null>(null);
 
     const getStatusIcon = (status: string) => {
         switch (status) {
@@ -39,26 +33,22 @@ export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
 
     const [isHoveringTooltip, setIsHoveringTooltip] = React.useState(false);
 
+    const getFullDescription = (llmAction: string | null): string | null => {
+        if (!llmAction) return null;
+        try {
+            const parsed = JSON.parse(llmAction);
+            if (typeof parsed === 'object' && parsed !== null) {
+                return parsed?.recreation_prompt || parsed?.intent || parsed?.action_description || llmAction;
+            }
+            return llmAction;
+        } catch {
+            return llmAction;
+        }
+    };
+
     return (
         <aside className="w-[400px] md:w-[450px] bg-white border-r border-gray-100 flex flex-col shadow-xl z-10">
             <div className="p-6 border-b border-gray-100 bg-gray-50/50">
-                <button
-                    onClick={() => {
-                        if (runId === 'standalone' && suiteRunId === 'standalone' && caseRunId) {
-                            window.history.back();
-                        } else if (runId === 'standalone') {
-                            navigate(`/project/${projectId}/history/standalone/suite/${suiteRunId}`);
-                        } else {
-                            navigate(`/project/${projectId}/history/${runId}/suite/${suiteRunId}`);
-                        }
-                    }}
-                    className="flex items-center gap-2 text-gray-400 hover:text-primary transition-all group/back mb-6"
-                >
-                    <div className="w-8 h-8 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover/back:border-primary group-hover/back:text-primary transition-colors">
-                        <ArrowLeft className="w-4 h-4" />
-                    </div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em] leading-none">Back to Suite</span>
-                </button>
 
                 <div className="flex-1 min-w-0">
                     <div
@@ -90,43 +80,83 @@ export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                {steps.map((step, index) => (
-                    <div
-                        key={step.id}
-                        onClick={() => onSelectStep(step.id)}
-                        className={`p-4 rounded-xl border transition-all cursor-pointer group relative overflow-hidden ${selectedStepId === step.id
-                            ? 'bg-primary/[0.03] border-primary shadow-sm'
-                            : 'bg-white border-gray-100 hover:border-gray-300'
-                            }`}
-                    >
-                        <div className="flex items-start gap-4">
-                            <span className={`flex-shrink-0 w-8 h-8 rounded-lg text-xs font-black flex items-center justify-center transition-colors ${selectedStepId === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
-                                }`}>
-                                {index + 1}
-                            </span>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex gap-3 mb-2">
-                                    <div className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${step.screenshot_after || step.screenshot_before ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
-                                        }`}>
-                                        <Camera className={`w-5 h-5 ${step.screenshot_after || step.screenshot_before ? 'scale-110' : 'opacity-40'}`} />
-                                    </div>
-                                    <div className="space-y-1 overflow-hidden">
-                                        <p className="text-sm text-gray-700 font-medium leading-relaxed line-clamp-1 group-hover:line-clamp-none transition-all">
-                                            {formatAction(step.llm_action)}
-                                        </p>
-                                        <div className="flex items-center gap-2">
-                                            {getStatusIcon(step.status)}
-                                            <span className="text-[10px] font-black text-gray-400 capitalize tracking-widest">{step.status}</span>
+                {steps.map((step, index) => {
+                    const fullDesc = getFullDescription(step.llm_action);
+                    const isDescExpanded = expandedDescId === step.id;
+
+                    return (
+                        <div
+                            key={step.id}
+                            onClick={() => onSelectStep(step.id)}
+                            className={`p-4 rounded-xl border transition-all cursor-pointer group relative overflow-hidden ${selectedStepId === step.id
+                                ? 'bg-primary/[0.03] border-primary shadow-sm'
+                                : 'bg-white border-gray-100 hover:border-gray-300'
+                                }`}
+                        >
+                            <div className="flex items-start gap-4">
+                                <span className={`flex-shrink-0 w-8 h-8 rounded-lg text-xs font-black flex items-center justify-center transition-colors ${selectedStepId === step.id ? 'bg-primary text-white' : 'bg-muted text-muted-foreground'
+                                    }`}>
+                                    {index + 1}
+                                </span>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex gap-3 mb-2">
+                                        <div className={`shrink-0 w-10 h-10 rounded-lg flex items-center justify-center transition-colors ${step.screenshot_after || step.screenshot_before ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                                            }`}>
+                                            <Camera className={`w-5 h-5 ${step.screenshot_after || step.screenshot_before ? 'scale-110' : 'opacity-40'}`} />
+                                        </div>
+                                        <div className="flex-1">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <p className="text-sm text-gray-700 font-medium leading-relaxed pt-0.5 transition-all">
+                                                    Step {index + 1}
+                                                </p>
+                                                {fullDesc && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setExpandedDescId(isDescExpanded ? null : step.id);
+                                                        }}
+                                                        className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all ${isDescExpanded
+                                                            ? 'bg-primary text-white'
+                                                            : 'bg-gray-100 text-gray-400 hover:bg-primary/10 hover:text-primary'
+                                                            }`}
+                                                        title="Show full description"
+                                                    >
+                                                        <Info className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-1 mb-2">
+                                                {getStatusIcon(step.status)}
+                                                <span className="text-[10px] font-black text-gray-400 capitalize tracking-widest">{step.status}</span>
+                                            </div>
                                         </div>
                                     </div>
+                                    <AnimatePresence>
+                                        {isDescExpanded && fullDesc && (
+                                            <motion.div
+                                                initial={{ height: 0, opacity: 0 }}
+                                                animate={{ height: 'auto', opacity: 1 }}
+                                                exit={{ height: 0, opacity: 0 }}
+                                                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                                                className="overflow-hidden"
+                                            >
+                                                <div className="mt-1 ml-13 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Description</p>
+                                                    <p className="text-xs text-gray-600 font-medium leading-relaxed break-words">
+                                                        {fullDesc}
+                                                    </p>
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             </div>
+                            {selectedStepId === step.id && (
+                                <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
+                            )}
                         </div>
-                        {selectedStepId === step.id && (
-                            <div className="absolute top-0 left-0 w-1 h-full bg-primary" />
-                        )}
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </aside>
     );

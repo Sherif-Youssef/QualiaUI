@@ -121,34 +121,34 @@ export const TestSuiteManager: React.FC<TestSuiteManagerProps> = ({
 }) => {
   return (
     <aside className="w-full lg:w-[400px] xl:w-[450px] bg-white border-r border-border flex flex-col h-full overflow-hidden shadow-sm z-10">
-      <div className={`px-6 flex flex-col justify-center border-b border-border bg-white ${isReadOnly ? 'py-6' : 'h-[100px]'}`}>
-        {header ? header : (
-          <>
+      <div className="px-6 py-6 flex flex-col justify-center border-b border-border bg-white">
+        <div className="flex items-center justify-between">
+          {header ? header : (
             <h2 className="text-xl font-sans font-bold text-foreground">
               {isReadOnly ? 'Run Details' : 'Suite Manager'}
             </h2>
+          )}
+        </div>
 
-            {!isReadOnly && (
-              <div className="flex gap-3">
-                <Button
-                  onClick={onAddTestCase}
-                  className="bg-primary text-primary-foreground hover:bg-primary/90 font-body font-normal"
-                >
-                  <Plus className="w-5 h-5 mr-2" strokeWidth={1.5} />
-                  Add Test Case
-                </Button>
+        {!isReadOnly && (
+          <div className="flex gap-3 mt-4">
+            <Button
+              onClick={onAddTestCase}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-body font-normal"
+            >
+              <Plus className="w-5 h-5 mr-2" strokeWidth={1.5} />
+              Add Test Case
+            </Button>
 
-                <Button
-                  onClick={onRunAllTests}
-                  variant="ghost"
-                  className="bg-transparent text-gray-700 border border-gray-200 hover:bg-gray-100 hover:!text-gray-900 font-body font-normal"
-                >
-                  <Play className="w-5 h-5 mr-2" strokeWidth={1.5} />
-                  Run All
-                </Button>
-              </div>
-            )}
-          </>
+            <Button
+              onClick={onRunAllTests}
+              variant="ghost"
+              className="bg-transparent text-gray-700 border border-gray-200 hover:bg-gray-100 hover:!text-gray-900 font-body font-normal"
+            >
+              <Play className="w-5 h-5 mr-2" strokeWidth={1.5} />
+              Run All
+            </Button>
+          </div>
         )}
       </div>
 

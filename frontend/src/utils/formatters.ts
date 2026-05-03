@@ -3,33 +3,34 @@
  */
 export const formatAction = (action: string | null | undefined): string => {
     if (!action) return 'Action performed';
-    
-    // Check if it's JSON
+
     if (action.startsWith('{') && action.endsWith('}')) {
         try {
             const parsed = JSON.parse(action);
-            
-            // Handle common action types from the backend
+
+            if (parsed.action_description) return parsed.action_description;
+            if (parsed.recreation_prompt) return parsed.recreation_prompt;
+            if (parsed.intent) return parsed.intent;
+            if (parsed.description) return parsed.description;
+
             if (parsed.action_type === 'click' || parsed.button) {
-                return `Click on element ${parsed.target_id || ''}`;
+                return `Clicking element...`;
             }
             if (parsed.action_type === 'type' || parsed.text) {
-                return `Type "${parsed.text}" into element ${parsed.target_id || ''}`;
+                return `Typing "${parsed.text}"...`;
             }
             if (parsed.action_type === 'wait' || parsed.timeout) {
-                return `Wait for ${parsed.timeout || 1000}ms`;
+                return `Waiting...`;
             }
             if (parsed.action_type === 'navigate') {
-                return `Navigate to ${parsed.url}`;
+                return `Navigating to ${parsed.url}`;
             }
-            
-            // Fallback for unknown JSON structure
-            return parsed.description || action;
+
+            return action;
         } catch (e) {
-            // Not valid JSON, return as is
             return action;
         }
     }
-    
+
     return action;
 };
