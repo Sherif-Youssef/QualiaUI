@@ -14,7 +14,8 @@ export const TestRunStepSplitView: React.FC<TestRunStepSplitViewProps> = ({ step
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'PASSED': return <CheckCircle2 className="w-4 h-4 text-success" />;
+            case 'PASSED':
+            case 'EXECUTED': return <CheckCircle2 className="w-4 h-4 text-success" />;
             case 'FAILED': return <XCircle className="w-4 h-4 text-failure" />;
             default: return <AlertCircle className="w-4 h-4 text-warning" />;
         }

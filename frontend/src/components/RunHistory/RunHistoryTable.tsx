@@ -1,6 +1,7 @@
 import React from 'react';
 import { Play, CheckCircle, XCircle, AlertCircle, StopCircle, Clock, Calendar } from 'lucide-react';
 import { ProjectRun, TestSuiteRun, TestCaseRun } from '@/types/run';
+import { parseUTCDate } from '@/utils/formatters';
 
 interface RunHistoryTableProps {
     runs: (ProjectRun | TestSuiteRun | TestCaseRun)[];
@@ -29,8 +30,8 @@ export const RunHistoryTable: React.FC<RunHistoryTableProps> = ({ runs, isLoadin
     }
 
     const formatDate = (dateStr: string | null) => {
-        if (!dateStr) return '-';
-        const date = new Date(dateStr);
+        const date = parseUTCDate(dateStr);
+        if (!date) return '-';
         return new Intl.DateTimeFormat('en-US', {
             month: 'short',
             day: 'numeric',
@@ -43,6 +44,7 @@ export const RunHistoryTable: React.FC<RunHistoryTableProps> = ({ runs, isLoadin
     const getStatusStyles = (status: string) => {
         switch (status) {
             case 'PASSED':
+            case 'EXECUTED':
                 return {
                     bg: 'bg-green-50',
                     text: 'text-green-700',
@@ -95,8 +97,8 @@ export const RunHistoryTable: React.FC<RunHistoryTableProps> = ({ runs, isLoadin
                     <tbody className="divide-y divide-gray-50">
                         {runs.map((run) => {
                             const statusStyle = getStatusStyles(run.status);
-                            const start = run.started_at ? new Date(run.started_at) : null;
-                            const finish = run.finished_at ? new Date(run.finished_at) : null;
+                            const start = parseUTCDate(run.started_at);
+                            const finish = parseUTCDate(run.finished_at);
                             
                             let duration = '-';
                             if (start && finish) {

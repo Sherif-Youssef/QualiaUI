@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { TestStep, TestCase } from '@/types/test-case';
 import { formatAction } from '@/utils/formatters';
+import { ExpandableStepText } from '@/components/ExpandableStepText';
 
 interface StepsSidebarProps {
     testCase: TestCase | null;
@@ -155,11 +156,9 @@ export const StepsSidebar: React.FC<StepsSidebarProps> = ({
                                             }`}>
                                             <Camera className={`w-5 h-5 ${step.screenshot ? 'scale-110' : 'opacity-40'}`} />
                                         </div>
-                                        <div className="flex-1">
+                                        <div className="flex-1 min-w-0">
                                             <div className="flex items-start justify-between gap-2">
-                                                <p className="text-sm text-gray-700 font-medium leading-relaxed pt-0.5 transition-all">
-                                                    {formatAction(step.text)}
-                                                </p>
+                                                <ExpandableStepText text={formatAction(step.text)} />
                                             </div>
                                             <div className="flex items-center gap-2 mt-1 mb-2">
                                                 {getStatusIcon(step.status)}

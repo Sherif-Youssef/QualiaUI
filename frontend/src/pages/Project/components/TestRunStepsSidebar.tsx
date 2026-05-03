@@ -1,8 +1,8 @@
 import React from 'react';
-import { Camera, CheckCircle2, XCircle, AlertCircle, Info } from 'lucide-react';
+import { Camera, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { TestStepRun } from '@/types/run';
-import { formatAction } from '@/utils/formatters';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ExpandableStepText } from '@/components/ExpandableStepText';
 
 interface TestRunStepsSidebarProps {
     caseName: string;
@@ -21,11 +21,11 @@ export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
     onSelectStep
 }) => {
 
-    const [expandedDescId, setExpandedDescId] = React.useState<number | null>(null);
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'PASSED': return <CheckCircle2 className="w-4 h-4 text-success" />;
+            case 'PASSED':
+            case 'EXECUTED': return <CheckCircle2 className="w-4 h-4 text-success" />;
             case 'FAILED': return <XCircle className="w-4 h-4 text-failure" />;
             default: return <AlertCircle className="w-4 h-4 text-warning" />;
         }
@@ -82,7 +82,6 @@ export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                 {steps.map((step, index) => {
                     const fullDesc = getFullDescription(step.llm_action);
-                    const isDescExpanded = expandedDescId === step.id;
 
                     return (
                         <div
@@ -104,51 +103,27 @@ export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
                                             }`}>
                                             <Camera className={`w-5 h-5 ${step.screenshot_after || step.screenshot_before ? 'scale-110' : 'opacity-40'}`} />
                                         </div>
-                                        <div className="flex-1">
-                                            <div className="flex items-start justify-between gap-2">
-                                                <p className="text-sm text-gray-700 font-medium leading-relaxed pt-0.5 transition-all">
-                                                    Step {index + 1}
-                                                </p>
-                                                {fullDesc && (
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setExpandedDescId(isDescExpanded ? null : step.id);
-                                                        }}
-                                                        className={`shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all ${isDescExpanded
-                                                            ? 'bg-primary text-white'
-                                                            : 'bg-gray-100 text-gray-400 hover:bg-primary/10 hover:text-primary'
-                                                            }`}
-                                                        title="Show full description"
-                                                    >
-                                                        <Info className="w-3.5 h-3.5" />
-                                                    </button>
-                                                )}
-                                            </div>
+                                        <div className="flex-1 min-w-0">
+                                            <ExpandableStepText text={fullDesc || `Step ${index + 1}`} />
                                             <div className="flex items-center gap-2 mt-1 mb-2">
                                                 {getStatusIcon(step.status)}
                                                 <span className="text-[10px] font-black text-gray-400 capitalize tracking-widest">{step.status}</span>
                                             </div>
                                         </div>
                                     </div>
-                                    <AnimatePresence>
-                                        {isDescExpanded && fullDesc && (
-                                            <motion.div
-                                                initial={{ height: 0, opacity: 0 }}
-                                                animate={{ height: 'auto', opacity: 1 }}
-                                                exit={{ height: 0, opacity: 0 }}
-                                                transition={{ duration: 0.2, ease: 'easeInOut' }}
-                                                className="overflow-hidden"
-                                            >
-                                                <div className="mt-1 ml-13 p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Description</p>
-                                                    <p className="text-xs text-gray-600 font-medium leading-relaxed break-words">
-                                                        {fullDesc}
-                                                    </p>
-                                                </div>
-                                            </motion.div>
-                                        )}
-                                    </AnimatePresence>
+
+                                    
+                                    {step.status === 'FAILED' && step.error_message && (
+                                        <div className="mt-3 p-3 bg-failure/5 border border-failure/20 rounded-lg shadow-sm">
+                                            <div className="flex items-center gap-2 mb-1.5">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-failure animate-pulse" />
+                                                <p className="text-[10px] font-black text-failure uppercase tracking-widest">Failure Reason</p>
+                                            </div>
+                                            <p className="text-xs text-failure/90 font-medium leading-relaxed break-words pl-3.5 border-l-2 border-failure/20">
+                                                {step.error_message}
+                                            </p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                             {selectedStepId === step.id && (

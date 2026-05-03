@@ -34,3 +34,12 @@ export const formatAction = (action: string | null | undefined): string => {
 
     return action;
 };
+
+/**
+ * Parses a naive datetime string from the backend (which is in UTC) into a proper Date object in the user's local timezone.
+ */
+export const parseUTCDate = (dateStr: string | null | undefined): Date | null => {
+    if (!dateStr) return null;
+    // If the string doesn't already have a timezone indicator, append 'Z' to treat it as UTC
+    return !dateStr.includes('Z') && !dateStr.includes('+') ? new Date(dateStr + 'Z') : new Date(dateStr);
+};

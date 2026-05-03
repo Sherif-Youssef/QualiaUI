@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { runService } from '@/services/runService';
 import { ProjectRun, TestSuiteRun } from '@/types/run';
+import { parseUTCDate } from '@/utils/formatters';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
 import { CheckCircle2, XCircle, AlertCircle, ChevronLeft, Layers, ArrowRight, Clock } from 'lucide-react';
@@ -36,7 +37,8 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'PASSED': return <CheckCircle2 className="w-5 h-5 text-success" />;
+            case 'PASSED':
+            case 'EXECUTED': return <CheckCircle2 className="w-5 h-5 text-success" />;
             case 'FAILED': return <XCircle className="w-5 h-5 text-failure" />;
             default: return <AlertCircle className="w-5 h-5 text-warning" />;
         }
@@ -44,8 +46,8 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
 
     const getDuration = (startAt?: string | null, endAt?: string | null) => {
         if (!startAt || !endAt) return 'N/A';
-        const start = new Date(startAt).getTime();
-        const end = new Date(endAt).getTime();
+        const start = parseUTCDate(startAt)?.getTime() || 0;
+        const end = parseUTCDate(endAt)?.getTime() || 0;
         const diff = Math.abs(end - start) / 1000;
         const minutes = Math.floor(diff / 60);
         const seconds = Math.floor(diff % 60);
@@ -76,7 +78,7 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
                                 <div className="flex items-center gap-3 mt-1">
 
                                     <span className="text-xs font-bold text-gray-400 capitalize tracking-widest">
-                                        {new Date(run.started_at || run.created_at).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
+                                        {parseUTCDate(run.started_at || run.created_at)?.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
                                     </span>
                                 </div>
                             </div>

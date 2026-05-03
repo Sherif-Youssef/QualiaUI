@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { runService } from '@/services/runService';
 import { TestSuiteRun, TestCaseRun } from '@/types/run';
+import { parseUTCDate } from '@/utils/formatters';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
 import { CheckCircle2, XCircle, AlertCircle, ChevronLeft, ArrowRight, Clock, FileText } from 'lucide-react';
@@ -36,20 +37,20 @@ export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'PASSED': return <CheckCircle2 className="w-5 h-5 text-success" />;
+            case 'PASSED':
+            case 'EXECUTED': return <CheckCircle2 className="w-5 h-5 text-success" />;
             case 'FAILED': return <XCircle className="w-5 h-5 text-failure" />;
             default: return <AlertCircle className="w-5 h-5 text-warning" />;
         }
     };
 
-    const getDuration = (startAt?: string | null, endAt?: string | null) => {
-        if (!startAt || !endAt) return 'N/A';
-        const start = new Date(startAt).getTime();
-        const end = new Date(endAt).getTime();
-        const diff = Math.abs(end - start) / 1000;
-        const minutes = Math.floor(diff / 60);
-        const seconds = Math.floor(diff % 60);
-        return `${minutes}m ${seconds}s`;
+    const calculateDuration = (startAt: string | null, endAt: string | null) => {
+        if (!startAt || !endAt) return 'Unknown';
+        const start = parseUTCDate(startAt)?.getTime() || 0;
+        const end = parseUTCDate(endAt)?.getTime() || 0;
+        const diffInSeconds = Math.floor((end - start) / 1000);
+        if (diffInSeconds < 60) return `${diffInSeconds}s`;
+        return `${Math.floor(diffInSeconds / 60)}m ${diffInSeconds % 60}s`;
     };
 
     if (isLoading) return <TestSuiteManagerLoading />;
@@ -86,7 +87,7 @@ export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
                                 <div className="flex items-center gap-3 mt-1">
 
                                     <span className="text-xs font-bold text-gray-400 capitalize tracking-widest">
-                                        {new Date(suiteRun.created_at).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
+                                        {parseUTCDate(suiteRun.created_at)?.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}
                                     </span>
                                 </div>
                             </div>
@@ -155,7 +156,7 @@ export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
                                             <td className="px-8 py-6 text-center text-[11px] font-black text-gray-400 capitalize tracking-widest">
                                                 <div className="flex items-center justify-center gap-2">
                                                     <Clock className="w-4 h-4 text-gray-300" />
-                                                    {getDuration(caseRun.started_at, caseRun.finished_at)}
+                                                    {calculateDuration(caseRun.started_at, caseRun.finished_at)}
                                                 </div>
                                             </td>
                                             <td className="px-8 py-6 text-right">

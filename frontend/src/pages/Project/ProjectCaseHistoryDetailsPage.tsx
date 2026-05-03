@@ -104,6 +104,18 @@ export const ProjectCaseHistoryDetailsPage: React.FC = () => {
                 )}
             </div>
 
+            {(caseRun.status === 'FAILED' || caseRun.status === 'ERROR') && caseRun.termination_reason && (
+                <div className="bg-failure/5 border-b border-failure/20 p-4 shrink-0">
+                    <div className="flex items-center gap-2 mb-2">
+                        <div className="w-2 h-2 rounded-full bg-failure animate-pulse" />
+                        <h3 className="text-xs font-black text-failure uppercase tracking-widest">Test Case Failure Reason</h3>
+                    </div>
+                    <p className="text-sm text-failure/90 font-medium leading-relaxed max-w-4xl pl-4 border-l-2 border-failure/20">
+                        {caseRun.termination_reason}
+                    </p>
+                </div>
+            )}
+
             <ScreenshotViewer
                 screenshot={selectedStep ? (selectedStep.screenshot_after || selectedStep.screenshot_before) : null}
                 number={caseRun.teststep_runs.indexOf(selectedStep!) + 1}
