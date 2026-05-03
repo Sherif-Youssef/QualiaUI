@@ -1,5 +1,5 @@
 import React from 'react';
-import { ProjectRun } from '@/services/runService';
+import { ProjectRun } from '@/types/run';
 import { ProjectHistoryTable } from './ProjectHistoryTable';
 
 interface ProjectHistoryViewProps {

@@ -16,6 +16,7 @@ export interface TestCaseDTO {
 export interface TestCase {
     id: string;
     suiteId: string;
+    suiteName?: string;
     name: string;
     description?: string;
     url: string;

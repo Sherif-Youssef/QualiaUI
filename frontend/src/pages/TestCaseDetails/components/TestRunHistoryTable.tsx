@@ -1,6 +1,6 @@
 import React from 'react';
 import { History, Calendar, Clock, ChevronRight, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
-import { TestCaseRun } from '@/services/runService';
+import { TestCaseRun } from '@/types/run';
 
 interface TestRunHistoryTableProps {
     history: TestCaseRun[];
@@ -43,10 +43,13 @@ export const TestRunHistoryTable: React.FC<TestRunHistoryTableProps> = ({ histor
                             <th className="px-8 py-5 text-center text-[10px] font-black text-gray-400 capitalize tracking-widest">
                                 Status
                             </th>
-                            <th className="px-8 py-5 text-center text-[10px] font-black text-gray-400 capitalize tracking-widest">
-                                Timeline
+                            <th className="px-8 py-5 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                Execution Timeline
                             </th>
-                            <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 capitalize tracking-widest">
+                            <th className="px-8 py-5 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
+                                Duration
+                            </th>
+                            <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">
                                 Actions
                             </th>
                         </tr>
@@ -67,9 +70,6 @@ export const TestRunHistoryTable: React.FC<TestRunHistoryTableProps> = ({ histor
                                             <span className="text-sm font-black text-gray-900 group-hover:text-primary transition-all">
                                                 Run #{run.id}
                                             </span>
-                                            <span className="text-[10px] font-bold text-gray-400 capitalize tracking-widest mt-1 font-mono">
-                                                {run.job_uid ? `${run.job_uid.slice(0, 8)}...` : 'N/A'}
-                                            </span>
                                         </div>
                                     </div>
                                 </td>
@@ -85,13 +85,38 @@ export const TestRunHistoryTable: React.FC<TestRunHistoryTableProps> = ({ histor
                                     <div className="flex flex-col items-center gap-1">
                                         <div className="flex items-center gap-2 text-[11px] font-black text-gray-700">
                                             <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                                            {new Date(run.started_at || run.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                            {(() => {
+                                                const dateStr = run.started_at || run.created_at;
+                                                const date = !dateStr.includes('Z') && !dateStr.includes('+') ? new Date(dateStr + 'Z') : new Date(dateStr);
+                                                return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                                            })()}
                                         </div>
                                         <div className="flex items-center gap-2 text-[10px] font-bold text-gray-400">
                                             <Clock className="w-3.5 h-3.5" />
-                                            {run.started_at ? new Date(run.started_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Pending'}
+                                            {(() => {
+                                                if (!run.started_at) return 'Pending';
+                                                const date = !run.started_at.includes('Z') && !run.started_at.includes('+') ? new Date(run.started_at + 'Z') : new Date(run.started_at);
+                                                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                            })()}
                                         </div>
                                     </div>
+                                </td>
+                                <td className="px-8 py-6 text-center">
+                                    <span className="text-xs font-black text-gray-500 tabular-nums">
+                                        {(() => {
+                                            const start = run.started_at ? new Date(run.started_at) : null;
+                                            const finish = run.finished_at ? new Date(run.finished_at) : null;
+                                            if (start && finish) {
+                                                const durationSeconds = Math.floor((finish.getTime() - start.getTime()) / 1000);
+                                                return durationSeconds > 60
+                                                    ? `${Math.floor(durationSeconds / 60)}m ${durationSeconds % 60}s`
+                                                    : `${durationSeconds}s`;
+                                            } else if (start && run.status === 'RUNNING') {
+                                                return 'In progress...';
+                                            }
+                                            return '-';
+                                        })()}
+                                    </span>
                                 </td>
                                 <td className="px-8 py-6 text-right">
                                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">

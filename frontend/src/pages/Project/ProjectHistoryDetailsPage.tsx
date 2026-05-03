@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { runService, ProjectRun, TestSuiteRun } from '@/services/runService';
+import { runService } from '@/services/runService';
+import { ProjectRun, TestSuiteRun } from '@/types/run';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
 import { CheckCircle2, XCircle, AlertCircle, ChevronLeft, Layers, ArrowRight, Clock } from 'lucide-react';
@@ -129,9 +130,6 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
                                                     <div className="flex flex-col">
                                                         <span className="text-sm font-black text-gray-900 group-hover:text-primary transition-all">
                                                             {suiteRun.name || `Suite Run #${suiteRun.id}`}
-                                                        </span>
-                                                        <span className="text-[10px] font-bold text-gray-400 capitalize tracking-widest mt-1">
-                                                            ID: {suiteRun.id}
                                                         </span>
                                                     </div>
                                                 </div>

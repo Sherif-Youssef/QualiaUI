@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Camera, CheckCircle2, XCircle, AlertCircle, Info } from 'lucide-react';
-import { TestStepRun } from '@/services/runService';
+import { TestStepRun } from '@/types/run';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface TestRunStepSplitViewProps {

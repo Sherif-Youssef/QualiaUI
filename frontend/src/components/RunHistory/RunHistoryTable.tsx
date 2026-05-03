@@ -1,6 +1,6 @@
 import React from 'react';
 import { Play, CheckCircle, XCircle, AlertCircle, StopCircle, Clock, Calendar } from 'lucide-react';
-import { ProjectRun, TestSuiteRun, TestCaseRun } from '@/services/runService';
+import { ProjectRun, TestSuiteRun, TestCaseRun } from '@/types/run';
 
 interface RunHistoryTableProps {
     runs: (ProjectRun | TestSuiteRun | TestCaseRun)[];
@@ -125,7 +125,6 @@ export const RunHistoryTable: React.FC<RunHistoryTableProps> = ({ runs, isLoadin
                                     <td className="px-8 py-6">
                                         <div className="flex flex-col">
                                             <span className="text-sm font-black text-gray-900 group-hover:text-primary transition-colors">Run #{idStr}</span>
-                                            <span className="text-[10px] font-medium text-gray-400 truncate max-w-[150px] font-mono mt-0.5">{run.job_uid}</span>
                                         </div>
                                     </td>
                                     <td className="px-8 py-6">

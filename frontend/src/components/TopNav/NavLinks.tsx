@@ -4,7 +4,7 @@ import { NavLink } from 'react-router-dom';
 interface NavLinkItem {
   name: string;
   path: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
 }
 
 interface NavLinksProps {
@@ -28,7 +28,7 @@ export const NavLinks: React.FC<NavLinksProps> = ({ links, className, onItemClic
               : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}
           `}
         >
-          {link.icon}
+          {link.icon && link.icon}
           {link.name}
         </NavLink>
       ))}

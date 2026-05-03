@@ -1,7 +1,7 @@
 from collections.abc import Awaitable, Callable
 from typing import Annotated
 
-from fastapi import Depends, HTTPException, Header, status
+from fastapi import Depends, HTTPException, Header, status, Query
 
 from src.database import SessionDep
 from .service import decode_token
@@ -13,21 +13,29 @@ from .exceptions import TokenError
 
 async def require_auth_token(
     authorization: Annotated[str | None, Header()] = None,
+    token_query: Annotated[str | None, Query(alias="token")] = None,
 ) -> str:
-    if not authorization:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing authorization header.")
+    final_token: str | None = None
 
-    try:
-        scheme, header_token = authorization.split(maxsplit=1)
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authorization header format.")
+    if authorization:
+        try:
+            scheme, header_token = authorization.split(maxsplit=1)
+            if scheme.lower() == "bearer":
+                final_token = header_token.strip()
+        except (ValueError, AttributeError):
+            pass
+    
+    if not final_token:
+        final_token = token_query
 
-    token = header_token.strip()
+    if not final_token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, 
+            detail="Missing authorization."
+        )
 
-    if not token or scheme.lower() != "bearer":
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid authorization header format.")
+    return final_token
 
-    return token
 
 # require_active_user -> require_auth_token
 async def require_active_user(
@@ -47,6 +55,7 @@ async def require_active_user(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Inactive user")
     return user
 
+
 # require_non_temporary_password -> require_active_user -> require_auth_token
 async def require_non_temporary_password(
     user: Annotated[User, Depends(require_active_user)],
@@ -57,6 +66,7 @@ async def require_non_temporary_password(
             detail="Password change required",
         )
     return user
+
 
 # require_role -> require_non_temporary_password -> require_active_user -> require_auth_token
 def require_role(required_role: Role) -> Callable[..., Awaitable[User]]:
@@ -71,11 +81,13 @@ def require_role(required_role: Role) -> Callable[..., Awaitable[User]]:
         return user
     return role_checker
 
+
 # require_admin -> require_role -> require_non_temporary_password -> require_active_user -> require_auth_token
 def require_admin(
     user: Annotated[User, Depends(require_role(Role.ADMIN))],
 ) -> User:
     return user    
+
 
 UserDep = Annotated[User, Depends(require_non_temporary_password)]
 AdminUserDep = Annotated[User, Depends(require_admin)]

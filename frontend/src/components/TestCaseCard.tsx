@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, RotateCw, Camera, Circle, CheckCircle2, XCircle, Loader2, Pencil, ChevronsUpDown, Info } from 'lucide-react';
+import { ChevronDown, Camera, Circle, CheckCircle2, XCircle, Loader2, Pencil, ChevronsUpDown, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { TestCase, ActionStep } from '@/types/test-case';
@@ -19,7 +19,6 @@ interface TestCaseCardProps {
 
 export const TestCaseCard: React.FC<TestCaseCardProps> = ({
   testCase,
-  onRunTest,
   onEditTest,
   onStepClick,
   onStepDetailsClick,
@@ -27,7 +26,7 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
   onStepTextChange,
   isReadOnly
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const [editingStep, setEditingStep] = useState<ActionStep | null>(null);
 
   const handleEditStep = (step: ActionStep) => {
@@ -94,16 +93,6 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
 
         {!isReadOnly && (
           <div className="flex items-center gap-1 flex-shrink-0">
-            <Button
-              onClick={() => onRunTest(testCase.id)}
-              variant="ghost"
-              size="icon"
-              className="bg-transparent text-secondary hover:bg-secondary/10 hover:text-secondary h-8 w-8"
-              aria-label="Re-run test"
-            >
-              <RotateCw className="w-4 h-4" strokeWidth={1.5} />
-            </Button>
-
             <Button
               onClick={() => onEditTest(testCase)}
               variant="ghost"
