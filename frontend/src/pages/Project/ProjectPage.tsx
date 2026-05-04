@@ -93,8 +93,6 @@ export const ProjectPage: React.FC = () => {
                             members={projectMembers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)}
                             isLoading={isLoading}
                             canManageProject={canManageProject}
-                            isSearchEmpty={projectMembers.length === 0 && debouncedSearch !== '' && !isLoading}
-                            searchQuery={debouncedSearch}
                             onInvite={() => setIsAddMemberModalOpen(true)}
                             onRemoveMember={handleMemberRemove}
                         />
