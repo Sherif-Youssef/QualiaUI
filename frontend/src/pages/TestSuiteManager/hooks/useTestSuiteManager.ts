@@ -22,6 +22,8 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
     const [zoomLevel, setZoomLevel] = useState(100);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [isRunning, setIsRunning] = useState<boolean>(!!location.state?.runId);
+    const [activeRunId, setActiveRunId] = useState<number | null>(location.state?.runId || null);
     const [error, setError] = useState<string | null>(null);
     const [modalLoading, setModalLoading] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
@@ -29,11 +31,8 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
     const [selectedStep, setSelectedStep] = useState<ActionStep | null>(null);
 
     const eventSourceRef = useRef<EventSource | null>(null);
-
-    // Group test cases by suite for project-level runs
     const suites = useMemo((): SuiteWithCases[] | undefined => {
-        if (suiteId || caseId) return undefined; // Single suite or case view
-
+        if (suiteId || caseId) return undefined;
         const grouped: Record<string, TestCase[]> = {};
         testCases.forEach(tc => {
             const sId = tc.suiteId || 'standalone';
@@ -78,6 +77,9 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
                     }));
                 } else if (event.element === scope && ['PASSED', 'FAILED', 'ABORTED', 'ERROR'].includes(event.status)) {
                     eventSource.close();
+                    setIsRunning(false);
+                    setIsAborting(false);
+                    setActiveRunId(null);
                 }
                 return;
             }
@@ -178,20 +180,41 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
         }
     }, [projectId, suiteId, editingTestCase]);
 
-    const handleRunAllTests = useCallback(async () => {
+    const handleRunAllTests = useCallback(async (model: string = 'gemini-1.5-pro') => {
         if (!projectId) return;
+        setIsRunning(true);
         try {
             if (suiteId) {
-                const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL');
+                const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL', model);
+                setActiveRunId(run.run_id);
                 subscribeToRun(run.run_id, 'TESTSUITE');
             } else if (projectId) {
-                const run = await runService.startProjectRun(parseInt(projectId), 'NATURAL');
+                const run = await runService.startProjectRun(parseInt(projectId), 'NATURAL', model);
+                setActiveRunId(run.run_id);
                 subscribeToRun(run.run_id, 'PROJECT');
             }
         } catch (err: any) {
+            setIsRunning(false);
             setError(err.response?.data?.detail || 'Failed to start the run.');
         }
     }, [projectId, suiteId, subscribeToRun]);
+
+    const [isAborting, setIsAborting] = useState(false);
+
+    const handleAbortRun = useCallback(async () => {
+        if (!activeRunId) return;
+        setIsAborting(true);
+        try {
+            if (suiteId) {
+                await runService.abortTestSuiteRun(activeRunId);
+            } else if (projectId) {
+                await runService.abortProjectRun(activeRunId);
+            }
+        } catch (err: any) {
+            console.error("Failed to abort run:", err);
+            setIsAborting(false);
+        }
+    }, [projectId, suiteId, activeRunId]);
 
     const handleInstructionChange = useCallback(async (testId: string, newInstruction: string) => {
         if (!projectId) return;
@@ -246,8 +269,11 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
         modalError, setModalError,
         editingTestCase, setEditingTestCase,
         selectedStep,
+        isRunning,
+        isAborting,
         handleSaveTestCase,
         handleRunAllTests,
+        handleAbortRun,
         handleInstructionChange,
         handleStepTextChange,
         handleStepClick,

@@ -1,19 +1,28 @@
 import React from 'react';
 import { Plus, Play, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { ModelSelector } from '@/components/ModelSelector';
 
 interface TestSuiteHeaderProps {
     isRunningAll: boolean;
     onRunAll: () => void;
     onAddTestCase: () => void;
     onBack: () => void;
+    onAbort?: () => void;
+    isAborting?: boolean;
+    selectedModel?: string;
+    onModelChange?: (model: string) => void;
 }
 
 export const TestSuiteHeader: React.FC<TestSuiteHeaderProps> = ({
     isRunningAll,
     onRunAll,
     onAddTestCase,
-    onBack
+    onBack,
+    onAbort,
+    isAborting,
+    selectedModel,
+    onModelChange
 }) => {
 
     return (
@@ -31,10 +40,17 @@ export const TestSuiteHeader: React.FC<TestSuiteHeaderProps> = ({
                 <h2 className="text-2xl font-sans font-bold text-gray-800">Test Cases</h2>
             </div>
             <div className="flex flex-wrap items-center gap-3">
+                {selectedModel && onModelChange && (
+                    <ModelSelector 
+                        value={selectedModel} 
+                        onChange={onModelChange} 
+                        disabled={isRunningAll} 
+                    />
+                )}
 
                 <Button
                     onClick={onRunAll}
-                    disabled={isRunningAll}
+                    disabled={isRunningAll || isAborting}
                     className="h-10 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 rounded-lg px-4"
                 >
                     {isRunningAll ? (
@@ -44,6 +60,17 @@ export const TestSuiteHeader: React.FC<TestSuiteHeaderProps> = ({
                     )}
                     Run All
                 </Button>
+
+                {(isRunningAll || isAborting) && onAbort && (
+                    <Button
+                        onClick={onAbort}
+                        disabled={isAborting}
+                        variant="destructive"
+                        className="h-10 shadow-lg rounded-lg px-4"
+                    >
+                        {isAborting ? 'Aborting...' : 'Abort'}
+                    </Button>
+                )}
 
                 <Button
                     onClick={onAddTestCase}

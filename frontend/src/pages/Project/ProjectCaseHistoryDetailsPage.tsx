@@ -4,7 +4,7 @@ import { runService } from '@/services/runService';
 import { TestCaseRun, TestStepRun } from '@/types/run';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
-import { Globe } from 'lucide-react';
+import { Globe, CheckCircle2, XCircle, StopCircle, AlertTriangle, Clock } from 'lucide-react';
 import { TestCaseDetailsLayout } from '../TestCaseDetails/TestCaseDetailsLayout';
 import { ScreenshotViewer } from '../TestCaseDetails/ScreenshotViewer';
 import { TestRunStepsSidebar } from './components/TestRunStepsSidebar';
@@ -53,15 +53,16 @@ export const ProjectCaseHistoryDetailsPage: React.FC = () => {
     const renderSidebar = () => (
         <TestRunStepsSidebar
             caseName={caseRun.name || 'Test Case'}
-            instruction={caseRun.instruction}
             steps={caseRun.teststep_runs || []}
             selectedStepId={selectedStepId}
             onSelectStep={setSelectedStepId}
+            terminationReason={caseRun.termination_reason}
+            status={caseRun.status}
         />
     );
 
     const renderContent = () => (
-        <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 flex flex-col overflow-hidden min-h-0">
             <div className="h-16 bg-white border-b border-gray-100 flex items-center px-8 gap-4 shrink-0">
                 {runId !== 'standalone' && (
                     <>
@@ -82,6 +83,36 @@ export const ProjectCaseHistoryDetailsPage: React.FC = () => {
                 <h2 className="text-lg font-black text-gray-900 tracking-tight truncate flex-1">
                     {caseRun.name || 'Test Case Run'}
                 </h2>
+                {caseRun.status && (() => {
+                    const s = caseRun.status.toUpperCase();
+                    const isSuccess = s === 'PASSED' || s === 'SUCCESS' || s === 'EXECUTED';
+                    const isFailure = s === 'FAILED' || s === 'FAILURE';
+                    const isAborted = s === 'ABORTED';
+                    const isError = s === 'ERROR';
+                    const isRunning = s === 'RUNNING';
+                    const isQueued = s === 'QUEUED' || s === 'PENDING';
+
+                    const colors = isSuccess ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                   isFailure ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                   isAborted ? 'bg-slate-100 text-slate-600 border-slate-200' :
+                                   isError ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                   isRunning ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                   'bg-gray-50 text-gray-500 border-gray-100';
+
+                    return (
+                        <div className={`shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm ${colors}`}>
+                            {isSuccess && <CheckCircle2 className="w-4 h-4" />}
+                            {isFailure && <XCircle className="w-4 h-4" />}
+                            {isAborted && <StopCircle className="w-4 h-4" />}
+                            {isError && <AlertTriangle className="w-4 h-4" />}
+                            {isRunning && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
+                            {isQueued && <Clock className="w-3.5 h-3.5" />}
+                            <span className="text-[10px] font-black uppercase tracking-wider">
+                                {caseRun.status}
+                            </span>
+                        </div>
+                    );
+                })()}
             </div>
 
             {/* Top Bar with URL */}
@@ -104,17 +135,7 @@ export const ProjectCaseHistoryDetailsPage: React.FC = () => {
                 )}
             </div>
 
-            {(caseRun.status === 'FAILED' || caseRun.status === 'ERROR') && caseRun.termination_reason && (
-                <div className="bg-failure/5 border-b border-failure/20 p-4 shrink-0">
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="w-2 h-2 rounded-full bg-failure animate-pulse" />
-                        <h3 className="text-xs font-black text-failure uppercase tracking-widest">Test Case Failure Reason</h3>
-                    </div>
-                    <p className="text-sm text-failure/90 font-medium leading-relaxed max-w-4xl pl-4 border-l-2 border-failure/20">
-                        {caseRun.termination_reason}
-                    </p>
-                </div>
-            )}
+
 
             <ScreenshotViewer
                 screenshot={selectedStep ? (selectedStep.screenshot_after || selectedStep.screenshot_before) : null}

@@ -5,7 +5,7 @@ import { TestSuiteRun, TestCaseRun } from '@/types/run';
 import { parseUTCDate } from '@/utils/formatters';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
-import { CheckCircle2, XCircle, AlertCircle, ChevronLeft, ArrowRight, Clock, FileText } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, ChevronLeft, ArrowRight, Clock, FileText, StopCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
@@ -78,11 +78,43 @@ export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
                                 <ChevronLeft className="w-6 h-6 text-gray-600" />
                             </Button>
                             <div>
-                                <h1 className="text-3xl font-black text-gray-900 tracking-tight capitalize truncate max-w-2xl">
-                                    {runId !== 'standalone' && (
-                                        <span className="text-primary/40 mr-2">Run #{runId} /</span>
-                                    )}
-                                    {suiteRun.name || 'Test Suite Run'}
+                                <h1 className="text-3xl font-black text-gray-900 tracking-tight capitalize truncate max-w-2xl flex items-center gap-3">
+                                    <div className="truncate">
+                                        {runId !== 'standalone' && (
+                                            <span className="text-primary/40 mr-2">Run #{runId} /</span>
+                                        )}
+                                        {suiteRun.name || 'Test Suite Run'}
+                                    </div>
+                                    {suiteRun.status && (() => {
+                                        const s = suiteRun.status.toUpperCase();
+                                        const isSuccess = s === 'PASSED' || s === 'SUCCESS' || s === 'EXECUTED';
+                                        const isFailure = s === 'FAILED' || s === 'FAILURE';
+                                        const isAborted = s === 'ABORTED';
+                                        const isError = s === 'ERROR';
+                                        const isRunning = s === 'RUNNING';
+                                        const isQueued = s === 'QUEUED' || s === 'PENDING';
+
+                                        const colors = isSuccess ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                       isFailure ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                                       isAborted ? 'bg-slate-100 text-slate-600 border-slate-200' :
+                                                       isError ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                       isRunning ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                       'bg-gray-50 text-gray-500 border-gray-100';
+
+                                        return (
+                                            <div className={`shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm ${colors} text-[10px] normal-case tracking-wider`}>
+                                                {isSuccess && <CheckCircle2 className="w-4 h-4" />}
+                                                {isFailure && <XCircle className="w-4 h-4" />}
+                                                {isAborted && <StopCircle className="w-4 h-4" />}
+                                                {isError && <AlertTriangle className="w-4 h-4" />}
+                                                {isRunning && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
+                                                {isQueued && <Clock className="w-3.5 h-3.5" />}
+                                                <span className="font-black uppercase">
+                                                    {suiteRun.status}
+                                                </span>
+                                            </div>
+                                        );
+                                    })()}
                                 </h1>
                                 <div className="flex items-center gap-3 mt-1">
 

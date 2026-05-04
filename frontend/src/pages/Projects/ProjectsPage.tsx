@@ -28,7 +28,6 @@ export const ProjectsPage: React.FC = () => {
         totalProjects,
         itemsPerPage,
         totalPages,
-        debouncedSearch,
         isTrulyEmpty,
         isSearchEmpty,
         handleDeleteClick,
@@ -81,7 +80,7 @@ export const ProjectsPage: React.FC = () => {
                                 isAdmin={isAdminState}
                                 userRole={userRoleState}
                             />
-                             {isSearchEmpty && (
+                            {isSearchEmpty && (
                                 <div className="text-center py-12 text-gray-500 font-medium bg-white rounded-[2rem] border border-dashed border-gray-200">
                                     No projects match your search.
                                 </div>

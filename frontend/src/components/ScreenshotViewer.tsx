@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { ZoomIn, ZoomOut, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { ZoomIn, ZoomOut } from 'lucide-react';
 import { Button } from './ui/button';
 import { ActionStep } from '@/types/test-case';
 import gsap from 'gsap';
@@ -62,15 +62,6 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
             </span>
           </div>
 
-          {selectedStep && (
-            <div className={`px-4 py-3 rounded-2xl border flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-300 ${selectedStep.status === 'success'
-              ? 'bg-success/5 text-success border-success/10'
-              : 'bg-failure/5 text-failure border-failure/10'
-              }`}>
-              {selectedStep.status === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-              <span className="text-xs font-black uppercase tracking-widest">{selectedStep.status || 'Executed'}</span>
-            </div>
-          )}
         </div>
       </div>
 

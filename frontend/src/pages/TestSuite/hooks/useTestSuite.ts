@@ -30,6 +30,8 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
 
     const [totalItems, setTotalItems] = useState(0);
     const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+    const [isRunningSuite, setIsRunningSuite] = useState(false);
+    const [activeRunId, setActiveRunId] = useState<number | null>(null);
 
     const itemsPerPage = 6;
 
@@ -116,19 +118,33 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
         setIsModalOpen(true);
     };
 
-    const handleRunAll = async () => {
+    const handleRunAll = async (model: string = 'gemini-1.5-pro') => {
         if (!projectId || !suiteId) return;
 
-        setIsLoading(true);
+        setIsRunningSuite(true);
         setError(null);
         try {
-            const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL');
+            const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL', model);
+            setActiveRunId(run.run_id);
             navigate(`/project/${projectId}/suite/${suiteId}/manager`, {
                 state: { runId: run.run_id, scope: 'TESTSUITE' }
             });
         } catch (err: any) {
             setError(err.response?.data?.detail || 'Failed to start test run.');
-            setIsLoading(false);
+            setIsRunningSuite(false);
+        }
+    };
+
+    const [isAborting, setIsAborting] = useState(false);
+
+    const handleAbortSuite = async () => {
+        if (!activeRunId) return;
+        setIsAborting(true);
+        try {
+            await runService.abortTestSuiteRun(activeRunId);
+        } catch (err: any) {
+            setError(err.response?.data?.detail || 'Failed to abort test run.');
+            setIsAborting(false);
         }
     };
 
@@ -183,6 +199,9 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
         confirmDelete,
         handleEditClick,
         handleRunAll,
+        handleAbortSuite,
+        isRunningSuite,
+        isAborting,
         handleSaveTestCase
     };
 };
