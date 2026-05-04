@@ -9,8 +9,11 @@ import { TestSuiteManagerLayout } from './TestSuiteManagerLayout';
 import { TestSuiteManagerLoading } from './TestSuiteManagerLoading';
 import { useTestSuiteManager } from './hooks/useTestSuiteManager';
 
+import { ModelSelector } from '@/components/ModelSelector';
+
 export const TestSuiteManagerPage: React.FC = () => {
     const { projectId, suiteId, caseId } = useParams<{ projectId: string; suiteId?: string; caseId?: string }>();
+    const [selectedModel, setSelectedModel] = React.useState('gemini-1.5-pro');
 
     const {
         testCases,
@@ -25,8 +28,11 @@ export const TestSuiteManagerPage: React.FC = () => {
         modalError, setModalError,
         editingTestCase, setEditingTestCase,
         selectedStep,
+        isRunning,
+        isAborting,
         handleSaveTestCase,
         handleRunAllTests,
+        handleAbortRun,
         handleInstructionChange,
         handleStepTextChange,
         handleStepClick,
@@ -44,17 +50,26 @@ export const TestSuiteManagerPage: React.FC = () => {
                     suites={suites}
                     header={
                         <div className="flex flex-col gap-4">
-                            <button
-                                onClick={handleBack}
-                                className="flex w-fit items-center gap-2 text-gray-400 hover:text-primary transition-all group/back"
-                            >
-                                <div className="w-6 h-6 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover/back:border-primary group-hover/back:text-primary transition-colors">
-                                    <ArrowLeft className="w-3 h-3" />
-                                </div>
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] leading-none">
-                                    {caseId ? 'Back to Test Case' : suiteId ? 'Back to Suite' : 'Back to Project'}
-                                </span>
-                            </button>
+                            <div className="flex items-center gap-2 w-full">
+                                <button
+                                    onClick={handleBack}
+                                    className="flex shrink-0 items-center gap-2 text-gray-400 hover:text-primary transition-all group/back"
+                                >
+                                    <div className="w-6 h-6 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover/back:border-primary group-hover/back:text-primary transition-colors">
+                                        <ArrowLeft className="w-3 h-3" />
+                                    </div>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.2em] leading-none">
+                                        {caseId ? 'Back to Test Case' : suiteId ? 'Back to Suite' : 'Back to Project'}
+                                    </span>
+                                </button>
+                                <div className="flex-1" />
+                                <ModelSelector
+                                    value={selectedModel}
+                                    onChange={setSelectedModel}
+                                    disabled={isRunning}
+                                    className="w-[140px] h-8 text-[10px] shrink-0"
+                                />
+                            </div>
                             <h2 className="text-xl font-sans font-bold text-foreground">
                                 {suiteId ? 'Suite Manager' : caseId ? 'Test Run Manager' : 'Project Manager'}
                             </h2>
@@ -64,7 +79,10 @@ export const TestSuiteManagerPage: React.FC = () => {
                         setModalError(null);
                         setIsModalOpen(true);
                     }}
-                    onRunAllTests={handleRunAllTests}
+                    onRunAllTests={() => handleRunAllTests(selectedModel)}
+                    onAbortRun={handleAbortRun}
+                    isRunning={isRunning}
+                    isAborting={isAborting}
                     onRunSingleTest={() => { }}
                     onEditTestCase={(tc) => {
                         setEditingTestCase(tc);

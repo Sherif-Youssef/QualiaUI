@@ -18,13 +18,13 @@ export function TestCaseDetailsLayout({
         <div className="h-screen bg-gray-50 flex flex-col overflow-hidden text-left">
             <TopNav />
             {children ? (
-                <div className="flex-1 flex flex-col overflow-hidden">
+                <div className="flex-1 flex flex-col overflow-hidden min-h-0">
                     {children}
                 </div>
             ) : (
-                <div className="flex-1 flex overflow-hidden">
+                <div className="flex-1 flex overflow-hidden min-h-0">
                     {sidebar}
-                    <div className="flex-1 flex flex-col overflow-hidden">
+                    <div className="flex-1 flex flex-col overflow-hidden min-h-0">
                         {content}
                     </div>
                 </div>

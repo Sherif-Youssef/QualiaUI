@@ -42,16 +42,19 @@ export const ProjectPage: React.FC = () => {
         confirmDelete,
         handleMemberAdd,
         handleMemberRemove,
-        handleRunProject
+        handleRunProject,
+        handleAbortProject,
+        isRunningProject,
     } = useProjectWorkspace({ projectId });
-
     return (
         <ProjectLayout
             header={
                 <ProjectHeader
                     onBack={() => navigate('/projects')}
                     onAddSuite={() => setIsModalOpen(true)}
-                    onRunProject={handleRunProject}
+                    onRunProject={() => handleRunProject()}
+                    onAbort={handleAbortProject}
+                    isRunning={isRunningProject}
                     canManageSuites={canManageSuites}
                 />
             }

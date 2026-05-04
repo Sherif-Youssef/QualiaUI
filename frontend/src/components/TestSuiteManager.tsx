@@ -16,6 +16,9 @@ interface TestSuiteManagerProps {
   suites?: SuiteWithCases[];
   onAddTestCase: () => void;
   onRunAllTests: () => void;
+  onAbortRun?: () => void;
+  isRunning?: boolean;
+  isAborting?: boolean;
   onRunSingleTest: (testId: string) => void;
   onEditTestCase: (testCase: TestCase) => void;
   onStepClick: (step: ActionStep, testCase: TestCase) => void;
@@ -110,6 +113,9 @@ export const TestSuiteManager: React.FC<TestSuiteManagerProps> = ({
   suites,
   onAddTestCase,
   onRunAllTests,
+  onAbortRun,
+  isRunning,
+  isAborting,
   onRunSingleTest,
   onEditTestCase,
   onStepClick,
@@ -142,12 +148,23 @@ export const TestSuiteManager: React.FC<TestSuiteManagerProps> = ({
 
             <Button
               onClick={onRunAllTests}
+              disabled={isRunning || isAborting}
               variant="ghost"
               className="bg-transparent text-gray-700 border border-gray-200 hover:bg-gray-100 hover:!text-gray-900 font-body font-normal"
             >
               <Play className="w-5 h-5 mr-2" strokeWidth={1.5} />
-              Run All
+              {isRunning ? 'Running...' : 'Run All'}
             </Button>
+            {(isRunning || isAborting) && onAbortRun && (
+              <Button
+                onClick={onAbortRun}
+                disabled={isAborting}
+                variant="destructive"
+                className="font-body font-normal shadow-md"
+              >
+                {isAborting ? 'Aborting...' : 'Abort'}
+              </Button>
+            )}
           </div>
         )}
       </div>

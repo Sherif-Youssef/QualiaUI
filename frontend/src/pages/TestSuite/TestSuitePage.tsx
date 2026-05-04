@@ -41,16 +41,23 @@ export const TestSuitePage: React.FC = () => {
         confirmDelete,
         handleEditClick,
         handleRunAll,
+        handleAbortSuite,
+        isRunningSuite,
+        isAborting,
         handleSaveTestCase
     } = useTestSuite({ projectId, suiteId });
+
+    const [selectedModel] = React.useState('gemini-1.5-pro');
 
     return (
         <TestSuiteLayout
             error={pageError && <ErrorMessage message={pageError} onClose={() => setError(null)} />}
             header={
                 <TestSuiteHeader
-                    isRunningAll={isLoading && activeView === 'history'}
-                    onRunAll={handleRunAll}
+                    isRunningAll={isRunningSuite}
+                    isAborting={isAborting}
+                    onRunAll={() => handleRunAll(selectedModel)}
+                    onAbort={handleAbortSuite}
                     onAddTestCase={() => {
                         setEditingTestCase(null);
                         setModalError(null);

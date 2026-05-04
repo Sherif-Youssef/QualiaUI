@@ -18,11 +18,11 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
     const [error, setError] = useState<string | null>(null);
     const [selectedStepId, setSelectedStepId] = useState<string>('');
     const [isRunning, setIsRunning] = useState(false);
+    const [activeRunId, setActiveRunId] = useState<number | null>(null);
     const [activeSteps, setActiveSteps] = useState<any[]>([]);
     const [currentScreenshot, setCurrentScreenshot] = useState<string | null>(null);
-    const [, setFinalStatus] = useState<'passed' | 'failed' | null>(null);
-    
-    // Pagination for history
+    const [terminationReason, setTerminationReason] = useState<string | null>(null);
+    const [finalStatus, setFinalStatus] = useState<'passed' | 'failed' | 'error' | null>(null);
     const [page, setPage] = useState(1);
     const limit = 6;
     const [totalRuns, setTotalRuns] = useState(0);
@@ -83,10 +83,11 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
         await fetchTestCase();
     };
 
-    const runTestCase = async () => {
+    const runTestCase = async (model: string = 'gemini-1.5-pro') => {
         if (!projectId || !suiteId || !caseId) return;
         setIsRunning(true);
         setFinalStatus(null);
+        setTerminationReason(null);
         setActiveSteps([]);
         setCurrentScreenshot(null);
 
@@ -95,7 +96,8 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
                 eventSourceRef.current.close();
                 eventSourceRef.current = null;
             }
-            const run = await runService.startTestCaseRun(parseInt(caseId), 'NATURAL');
+            const run = await runService.startTestCaseRun(parseInt(caseId), 'NATURAL', model);
+            setActiveRunId(run.run_id);
             const eventSource = runService.subscribeToRunProgress('TESTCASE', run.run_id, (data: any) => {
                 const msgType: string = data.type || '';
                 const eventPayload = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
@@ -103,11 +105,20 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
                 if (msgType === 'STATUS_CHANGE' && eventPayload) {
                     if (eventPayload.element === 'TESTCASE' && eventPayload.id === parseInt(caseId)) {
                         if (eventPayload.status === 'PASSED') setFinalStatus('passed');
-                        else if (['FAILED', 'ERROR', 'ABORTED'].includes(eventPayload.status)) setFinalStatus('failed');
+                        else if (eventPayload.status === 'ERROR') setFinalStatus('error');
+                        else if (['FAILED', 'ABORTED'].includes(eventPayload.status)) {
+                            setFinalStatus('failed');
+                        }
+                        
+                        if (['FAILED', 'ERROR', 'ABORTED'].includes(eventPayload.status) && eventPayload.termination_reason) {
+                            setTerminationReason(eventPayload.termination_reason);
+                        }
 
                         if (['PASSED', 'FAILED', 'ERROR', 'ABORTED'].includes(eventPayload.status)) {
-                            setIsRunning(false);
                             eventSource.close();
+                            setIsRunning(false);
+                            setIsAborting(false);
+                            setActiveRunId(null);
                             refreshTestCaseSilent();
                         }
                     }
@@ -117,7 +128,7 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
                     const stepData = eventPayload;
                     const stepId = stepData.id || crypto.randomUUID();
                     const screenshotUrl = stepData.snapshot_after?.screenshot || stepData.snapshot_before?.screenshot || '';
-                    
+
                     const mappedStep = {
                         id: stepId,
                         number: 0,
@@ -147,6 +158,20 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
         } catch (err: any) {
             setError(err.response?.data?.detail || 'Failed to start test run.');
             setIsRunning(false);
+            setActiveRunId(null);
+        }
+    };
+
+    const [isAborting, setIsAborting] = useState(false);
+
+    const abortTestCase = async () => {
+        if (!activeRunId) return;
+        setIsAborting(true);
+        try {
+            await runService.abortTestCaseRun(activeRunId);
+        } catch (err: any) {
+            console.error("Failed to abort test case:", err);
+            setIsAborting(false);
         }
     };
 
@@ -167,6 +192,10 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
         limit,
         totalRuns,
         runTestCase,
-        updateTestCase
+        abortTestCase,
+        updateTestCase,
+        terminationReason,
+        finalStatus,
+        isAborting
     };
 };

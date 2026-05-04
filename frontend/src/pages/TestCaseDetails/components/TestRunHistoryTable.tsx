@@ -1,5 +1,4 @@
-import React from 'react';
-import { History, Calendar, Clock, ChevronRight, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
+import { History, Calendar, Clock, ChevronRight, CheckCircle2, XCircle, AlertCircle, StopCircle, AlertTriangle } from 'lucide-react';
 import { TestCaseRun } from '@/types/run';
 import { parseUTCDate } from '@/utils/formatters';
 
@@ -10,14 +9,42 @@ interface TestRunHistoryTableProps {
 }
 
 export const TestRunHistoryTable: React.FC<TestRunHistoryTableProps> = ({ history, onRunClick }) => {
-    const getStatusIcon = (status?: string) => {
-        switch (status?.toLowerCase()) {
-            case 'passed':
-            case 'success':
-            case 'executed': return <CheckCircle2 className="w-5 h-5 text-success" />;
-            case 'failed':
-            case 'failure': return <XCircle className="w-5 h-5 text-failure" />;
-            default: return <AlertCircle className="w-5 h-5 text-warning" />;
+    const getStatusStyles = (status?: string) => {
+        const s = status?.toUpperCase();
+        switch (s) {
+            case 'PASSED':
+            case 'SUCCESS':
+            case 'EXECUTED':
+                return {
+                    icon: <CheckCircle2 className="w-4 h-4" />,
+                    bg: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+                    dot: 'bg-emerald-500'
+                };
+            case 'FAILED':
+            case 'FAILURE':
+                return {
+                    icon: <XCircle className="w-4 h-4" />,
+                    bg: 'bg-rose-50 text-rose-600 border-rose-100',
+                    dot: 'bg-rose-500'
+                };
+            case 'ABORTED':
+                return {
+                    icon: <StopCircle className="w-4 h-4" />,
+                    bg: 'bg-slate-100 text-slate-600 border-slate-200',
+                    dot: 'bg-slate-500'
+                };
+            case 'ERROR':
+                return {
+                    icon: <AlertTriangle className="w-4 h-4" />,
+                    bg: 'bg-amber-50 text-amber-600 border-amber-100',
+                    dot: 'bg-amber-500'
+                };
+            default:
+                return {
+                    icon: <AlertCircle className="w-4 h-4" />,
+                    bg: 'bg-blue-50 text-blue-600 border-blue-100',
+                    dot: 'bg-blue-500'
+                };
         }
     };
 
@@ -76,12 +103,17 @@ export const TestRunHistoryTable: React.FC<TestRunHistoryTableProps> = ({ histor
                                     </div>
                                 </td>
                                 <td className="px-8 py-6 text-center">
-                                    <div className="flex items-center justify-center gap-2 px-3 py-1 bg-white rounded-full border border-gray-100 shadow-sm mx-auto w-fit">
-                                        {getStatusIcon(run.status)}
-                                        <span className="text-[10px] font-black text-gray-500 capitalize tracking-widest">
-                                            {run.status}
-                                        </span>
-                                    </div>
+                                    {(() => {
+                                        const styles = getStatusStyles(run.status);
+                                        return (
+                                            <div className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-full border shadow-sm mx-auto w-fit transition-all ${styles.bg}`}>
+                                                {styles.icon}
+                                                <span className="text-[10px] font-black uppercase tracking-wider">
+                                                    {run.status}
+                                                </span>
+                                            </div>
+                                        );
+                                    })()}
                                 </td>
                                 <td className="px-8 py-6 text-center">
                                     <div className="flex flex-col items-center gap-1">

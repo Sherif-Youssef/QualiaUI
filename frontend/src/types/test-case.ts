@@ -26,6 +26,7 @@ export interface TestCase {
     steps?: (TestCaseStep | ActionStep)[];
     executionSteps?: TestStep[];
     status: TestStatus;
+    terminationReason?: string;
     runVersion?: string;
     createdAt?: string;
 }
