@@ -38,6 +38,7 @@ const TestSuiteCard: React.FC<{
   onInstructionChange: (testId: string, newInstruction: string) => void;
   onStepTextChange: (testId: string, stepId: string, newText: string) => void;
   isReadOnly?: boolean;
+  isRunning?: boolean;
 }> = ({
   suite,
   onRunSingleTest,
@@ -46,7 +47,8 @@ const TestSuiteCard: React.FC<{
   onStepDetailsClick,
   onInstructionChange,
   onStepTextChange,
-  isReadOnly
+  isReadOnly,
+  isRunning
 }) => {
     const [isExpanded, setIsExpanded] = useState(true);
 
@@ -98,6 +100,7 @@ const TestSuiteCard: React.FC<{
                     onInstructionChange={onInstructionChange}
                     onStepTextChange={onStepTextChange}
                     isReadOnly={isReadOnly}
+                    isRunning={isRunning}
                   />
                 ))}
               </div>
@@ -113,7 +116,6 @@ export const TestSuiteManager: React.FC<TestSuiteManagerProps> = ({
   suites,
   onAddTestCase,
   onRunAllTests,
-  onAbortRun,
   isRunning,
   isAborting,
   onRunSingleTest,
@@ -127,46 +129,26 @@ export const TestSuiteManager: React.FC<TestSuiteManagerProps> = ({
 }) => {
   return (
     <aside className="w-full lg:w-[400px] xl:w-[450px] bg-white border-r border-border flex flex-col h-full overflow-hidden shadow-sm z-10">
-      <div className="px-6 py-6 flex flex-col justify-center border-b border-border bg-white">
-        <div className="flex items-center justify-between">
+      <div className="px-6 py-6 flex flex-col gap-4 border-b border-border bg-white">
+        <div className="flex flex-col gap-4">
           {header ? header : (
-            <h2 className="text-xl font-sans font-bold text-foreground">
-              {isReadOnly ? 'Run Details' : 'Suite Manager'}
-            </h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-xl font-sans font-bold text-foreground truncate">
+                {isReadOnly ? 'Run Details' : 'Suite Manager'}
+              </h2>
+            </div>
+          )}
+
+          {(!isReadOnly || isRunning || isAborting) && (
+            <div className="flex items-center flex-wrap gap-2">
+              {!isReadOnly && (
+                <>
+
+                </>
+              )}
+            </div>
           )}
         </div>
-
-        {!isReadOnly && (
-          <div className="flex gap-3 mt-4">
-            <Button
-              onClick={onAddTestCase}
-              className="bg-primary text-primary-foreground hover:bg-primary/90 font-body font-normal"
-            >
-              <Plus className="w-5 h-5 mr-2" strokeWidth={1.5} />
-              Add Test Case
-            </Button>
-
-            <Button
-              onClick={onRunAllTests}
-              disabled={isRunning || isAborting}
-              variant="ghost"
-              className="bg-transparent text-gray-700 border border-gray-200 hover:bg-gray-100 hover:!text-gray-900 font-body font-normal"
-            >
-              <Play className="w-5 h-5 mr-2" strokeWidth={1.5} />
-              {isRunning ? 'Running...' : 'Run All'}
-            </Button>
-            {(isRunning || isAborting) && onAbortRun && (
-              <Button
-                onClick={onAbortRun}
-                disabled={isAborting}
-                variant="destructive"
-                className="font-body font-normal shadow-md"
-              >
-                {isAborting ? 'Aborting...' : 'Abort'}
-              </Button>
-            )}
-          </div>
-        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -197,6 +179,7 @@ export const TestSuiteManager: React.FC<TestSuiteManagerProps> = ({
                 onInstructionChange={onInstructionChange}
                 onStepTextChange={onStepTextChange}
                 isReadOnly={isReadOnly}
+                isRunning={isRunning}
               />
             ))}
           </div>

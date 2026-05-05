@@ -1,52 +1,40 @@
-import { Camera } from 'lucide-react';
+import { Camera, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ScreenshotViewerProps {
     screenshot: string | null;
     number: number;
     description?: string;
+    zoomLevel?: number;
+    onZoomIn?: () => void;
+    onZoomOut?: () => void;
+    onResetZoom?: () => void;
 }
 
 export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
     screenshot,
     number,
-    description,
+    zoomLevel = 100,
+    onZoomIn,
+    onZoomOut,
+    onResetZoom
 }) => {
     return (
         <section className="flex-1 bg-[#F8FAFC] flex flex-col overflow-hidden relative">
-            {/* Background Pattern */}
             <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-40 pointer-events-none" />
 
-            <div className="flex-1 relative flex items-center justify-center p-6 md:p-12 overflow-hidden">
+            <div className="flex-1 relative flex items-start justify-center p-6 md:p-12 overflow-auto custom-scrollbar">
                 {screenshot ? (
-                    <div className="relative w-full h-full flex items-center justify-center group">
-                        {/* Image Shadow/Glow */}
-                        <div className="absolute inset-0 bg-primary/5 blur-[100px] rounded-full scale-75 opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-                        
-                        <div className="relative max-w-full max-h-full flex items-center justify-center rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.15)] overflow-hidden">
+                    <div className="relative flex flex-col items-center transition-all duration-300 ease-out"
+                         style={{ width: `${zoomLevel}%`, minWidth: '320px' }}>
+                        <div
+                            className="relative w-full rounded-2xl bg-white border border-gray-100 shadow-xl overflow-hidden group"
+                        >
                             <img
                                 src={screenshot}
                                 alt={`Step ${number}`}
-                                className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl select-none"
+                                className="w-full h-auto block select-none"
                             />
-                        </div>
-
-                        {/* Step Info Overlay */}
-                        <div className="absolute bottom-8 left-8 z-20 bg-white/90 backdrop-blur-xl border border-gray-100 px-5 py-3 rounded-2xl shadow-xl transform transition-transform group-hover:-translate-y-1">
-                            <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center text-xs font-black">
-                                    {number}
-                                </div>
-                                <div className="flex flex-col">
-                                    <p className="text-gray-900 text-[10px] font-black uppercase tracking-widest">
-                                        Frame Capture
-                                    </p>
-                                    {description && (
-                                        <p className="text-gray-500 text-[10px] font-medium max-w-[200px] truncate">
-                                            {description}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
                         </div>
                     </div>
                 ) : (
@@ -63,6 +51,41 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
                     </div>
                 )}
             </div>
+
+            {screenshot && onZoomIn && onZoomOut && onResetZoom && (
+                <div className="p-4 border-t border-gray-100 bg-white/80 backdrop-blur-md z-20">
+                    <div className="flex items-center justify-center gap-3">
+                        <Button
+                            onClick={onZoomOut}
+                            variant="outline"
+                            size="icon"
+                            className="w-10 h-10 rounded-xl bg-white border-gray-100 text-gray-600 hover:bg-gray-50 hover:text-primary transition-all active:scale-95 shadow-sm"
+                            disabled={zoomLevel <= 50}
+                        >
+                            <ZoomOut className="w-5 h-5" />
+                        </Button>
+
+                        <Button
+                            onClick={onResetZoom}
+                            variant="outline"
+                            className="px-6 h-10 rounded-xl bg-white border-gray-100 text-gray-600 font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 hover:text-primary transition-all active:scale-95 shadow-sm flex items-center gap-2"
+                        >
+                            <Maximize className="w-3 h-3" />
+                            {zoomLevel}% Reset
+                        </Button>
+
+                        <Button
+                            onClick={onZoomIn}
+                            variant="outline"
+                            size="icon"
+                            className="w-10 h-10 rounded-xl bg-white border-gray-100 text-gray-600 hover:bg-gray-50 hover:text-primary transition-all active:scale-95 shadow-sm"
+                            disabled={zoomLevel >= 200}
+                        >
+                            <ZoomIn className="w-5 h-5" />
+                        </Button>
+                    </div>
+                </div>
+            )}
         </section>
     );
 };

@@ -54,10 +54,12 @@ export const mapActiveStepToActionStep = (stepRun: any, currentStepCount: number
     }
 
     return {
-        id: crypto.randomUUID(),
+        id: stepRun.id ? String(stepRun.id) : crypto.randomUUID(),
         number: currentStepCount + 1,
         text: stepRun.llm_action || stepRun.action_description || 'Executing Action...',
         screenshot: formattedScreenshot,
+        status: (stepRun.status?.toLowerCase() === 'passed' || stepRun.status?.toLowerCase() === 'executed') ? 'success' : 
+                (stepRun.status?.toLowerCase() === 'failed' || stepRun.status?.toLowerCase() === 'error') ? 'failure' : 'running',
         type: 'do',
     };
 };
@@ -102,6 +104,7 @@ export const mapTestCaseToViewModel = (dto: TestCaseDTO): TestCase => ({
     status: dto.status || 'idle',
     runVersion: dto.run_version,
     createdAt: dto.created_at,
+    lastRunDuration: dto.last_run_duration,
 });
 export const mapUserToViewModel = (dto: UserDTO): UserProfile => ({
     id: String(dto.id),

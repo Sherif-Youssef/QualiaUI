@@ -1,39 +1,73 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useRunStreaming } from '@/hooks/useRunStreaming';
 import { runService } from '@/services/runService';
 import { ProjectRun, TestSuiteRun } from '@/types/run';
 import { parseUTCDate } from '@/utils/formatters';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
-import { CheckCircle2, XCircle, ChevronLeft, Layers, ArrowRight, Clock, StopCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, XCircle, ChevronLeft, Layers, ArrowRight, Clock, StopCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TopNav } from '@/components/TopNav';
+import { projectService } from '@/services/project/projectService';
+import { Project } from '@/types/project';
 
 export const ProjectHistoryDetailsPage: React.FC = () => {
     const { projectId, runId } = useParams<{ projectId: string; runId: string }>();
     const navigate = useNavigate();
     const [run, setRun] = useState<(ProjectRun & { testsuite_runs: TestSuiteRun[] }) | null>(null);
+    const [project, setProject] = useState<Project | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isAborting, setIsAborting] = useState(false);
+
+    const fetchHistoryDetails = useCallback(async () => {
+        if (!projectId || !runId) return;
+        try {
+            const id = parseInt(runId);
+            const runData = await runService.getProjectRunDetails(id);
+            setRun(runData);
+        } catch (err: any) {
+            console.error('History details error:', err);
+            setError(err.response?.data?.detail || 'Failed to load historical details.');
+        } finally {
+            setIsLoading(false);
+        }
+    }, [projectId, runId]);
 
     useEffect(() => {
-        const fetchHistoryDetails = async () => {
-            if (!projectId || !runId) return;
+        const loadData = async () => {
             setIsLoading(true);
-            setError(null);
-            try {
-                const id = parseInt(runId);
-                const runData = await runService.getProjectRunDetails(id);
-                setRun(runData);
-            } catch (err: any) {
-                console.error('History details error:', err);
-                setError(err.response?.data?.detail || 'Failed to load historical details.');
-            } finally {
-                setIsLoading(false);
-            }
+            await Promise.all([
+                fetchHistoryDetails(),
+                projectId ? projectService.getProjectById(projectId).then(setProject).catch(() => {}) : Promise.resolve()
+            ]);
+            setIsLoading(false);
         };
-
-        fetchHistoryDetails();
+        loadData();
     }, [projectId, runId]);
+
+    const handleStatusChange = useCallback(() => {
+        fetchHistoryDetails();
+    }, [fetchHistoryDetails]);
+
+    useRunStreaming({
+        scope: 'PROJECT',
+        runId: runId!,
+        onStatusChange: handleStatusChange
+    });
+
+    const handleAbortProject = async () => {
+        if (!runId) return;
+        setIsAborting(true);
+        try {
+            await runService.abortProjectRun(parseInt(runId));
+        } catch (err: any) {
+            console.error('Abort project error:', err);
+            setError(err.response?.data?.detail || 'Failed to abort project run.');
+            setIsAborting(false);
+        }
+    };
     const getDuration = (startAt?: string | null, endAt?: string | null) => {
         if (!startAt || !endAt) return 'N/A';
         const start = parseUTCDate(startAt)?.getTime() || 0;
@@ -50,22 +84,26 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 text-left font-sans">
+            <TopNav />
             <main className="max-w-7xl mx-auto px-4 md:px-8 py-12">
                 <div className="space-y-8">
                     {/* Header */}
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-6">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => navigate(`/project/${projectId}/history`)}
-                                className="h-12 w-12 rounded-[1.25rem] bg-white shadow-sm border border-gray-100 hover:bg-gray-50 transition-all hover:scale-105 active:scale-95"
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="flex items-center gap-2 text-gray-400 hover:text-primary transition-all group/back"
                             >
-                                <ChevronLeft className="w-6 h-6 text-gray-600" />
-                            </Button>
+                                <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover/back:border-primary group-hover/back:text-primary transition-colors">
+                                    <ChevronLeft className="w-5 h-5" />
+                                </div>
+                                <span className="text-[11px] font-black uppercase tracking-[0.2em] leading-none">
+                                    Back
+                                </span>
+                            </button>
                             <div>
                                 <h1 className="text-3xl font-black text-gray-900 tracking-tight flex items-center gap-4">
-                                    Project Run Details #{runId}
+                                    {project ? project.name : 'Project Run Details'}
                                     {run.status && (() => {
                                         const s = run.status.toUpperCase();
                                         const isSuccess = s === 'PASSED' || s === 'SUCCESS' || s === 'EXECUTED';
@@ -87,8 +125,8 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
                                                 {isSuccess && <CheckCircle2 className="w-4 h-4" />}
                                                 {isFailure && <XCircle className="w-4 h-4" />}
                                                 {isAborted && <StopCircle className="w-4 h-4" />}
-                                                {isError && <AlertTriangle className="w-4 h-4" />}
-                                                {isRunning && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
+                                                {isError && <AlertCircle className="w-4 h-4" />}
+                                                {isRunning && <Loader2 className="w-4 h-4 animate-spin" />}
                                                 {isQueued && <Clock className="w-3.5 h-3.5" />}
                                                 <span className="text-[10px] font-black uppercase tracking-wider">
                                                     {run.status}
@@ -105,6 +143,17 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+                        {run.status?.toUpperCase() === 'RUNNING' && (
+                            <Button
+                                onClick={handleAbortProject}
+                                disabled={isAborting}
+                                variant="destructive"
+                                className="h-11 px-6 rounded-xl font-bold shadow-lg shadow-red-200 flex items-center gap-2 transition-all active:scale-95"
+                            >
+                                <StopCircle className="w-5 h-5" />
+                                {isAborting ? 'Aborting...' : 'Abort Run'}
+                            </Button>
+                        )}
                     </div>
 
                     {/* Suites Table - Projects Page Style */}
@@ -143,7 +192,7 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
                                     {run.testsuite_runs.map((suiteRun) => (
                                         <tr
                                             key={suiteRun.id}
-                                            onClick={() => navigate(`/project/${projectId}/history/${runId}/suite/${suiteRun.id}`)}
+                                            onClick={() => navigate(`/project/${projectId}/suite/${suiteRun.testsuite_id}/run/${suiteRun.id}`)}
                                             className="hover:bg-gray-50/50 cursor-pointer transition-all group"
                                         >
                                             <td className="px-8 py-6">
@@ -180,8 +229,8 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
                                                             {isSuccess && <CheckCircle2 className="w-4 h-4" />}
                                                             {isFailure && <XCircle className="w-4 h-4" />}
                                                             {isAborted && <StopCircle className="w-4 h-4" />}
-                                                            {isError && <AlertTriangle className="w-4 h-4" />}
-                                                            {isRunning && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
+                                                            {isError && <AlertCircle className="w-4 h-4" />}
+                                                            {isRunning && <Loader2 className="w-4 h-4 animate-spin" />}
                                                             {isQueued && <Clock className="w-3.5 h-3.5" />}
                                                             <span className="text-[10px] font-black uppercase tracking-wider">
                                                                 {suiteRun.status}

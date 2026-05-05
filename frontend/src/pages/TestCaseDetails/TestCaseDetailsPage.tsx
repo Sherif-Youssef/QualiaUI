@@ -11,6 +11,7 @@ import { useTestCaseDetails } from './hooks/useTestCaseDetails';
 import { TestCaseHeader } from './components/TestCaseHeader';
 import { TestCaseTabs } from './components/TestCaseTabs';
 import { ExecutionStepsSidebar } from './components/ExecutionStepsSidebar';
+import { ViewPromptModal } from '@/components/Modal/ViewPromptModal';
 
 export const TestCaseDetailsPage: React.FC = () => {
     const { projectId, suiteId, caseId } = useParams<{ projectId: string; suiteId: string; caseId: string }>();
@@ -41,9 +42,11 @@ export const TestCaseDetailsPage: React.FC = () => {
     } = useTestCaseDetails({ projectId, suiteId, caseId });
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isViewPromptModalOpen, setIsViewPromptModalOpen] = useState(false);
     const [selectedModel, setSelectedModel] = useState('gemini-1.5-pro');
     const [isSaving, setIsSaving] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
+    const [zoomLevel, setZoomLevel] = useState(100);
 
     const handleSaveTestCase = async (data: any) => {
         setIsSaving(true);
@@ -86,6 +89,7 @@ export const TestCaseDetailsPage: React.FC = () => {
                             status={finalStatus}
                             onBack={() => navigate(`/project/${projectId}/suite/${suiteId}`)}
                             onEdit={() => setIsEditModalOpen(true)}
+                            onViewPrompt={() => setIsViewPromptModalOpen(true)}
                             onRun={() => runTestCase(selectedModel)}
                             onAbort={abortTestCase}
                         />
@@ -114,6 +118,10 @@ export const TestCaseDetailsPage: React.FC = () => {
                                 <ScreenshotViewer
                                     screenshot={displaySteps.find(s => String(s.id) === selectedStepId)?.screenshot || currentScreenshot || null}
                                     number={displaySteps.findIndex(s => String(s.id) === selectedStepId) + 1}
+                                    zoomLevel={zoomLevel}
+                                    onZoomIn={() => setZoomLevel(prev => Math.min(prev + 25, 200))}
+                                    onZoomOut={() => setZoomLevel(prev => Math.max(prev - 25, 50))}
+                                    onResetZoom={() => setZoomLevel(100)}
                                 />
                             </main>
                         </>
@@ -155,6 +163,13 @@ export const TestCaseDetailsPage: React.FC = () => {
                     onSave={handleSaveTestCase}
                     isLoading={isSaving}
                     error={modalError}
+                />
+            )}
+            {testCase && (
+                <ViewPromptModal
+                    isOpen={isViewPromptModalOpen}
+                    onClose={() => setIsViewPromptModalOpen(false)}
+                    prompt={testCase.plainText || ''}
                 />
             )}
         </TestCaseDetailsLayout>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, Camera, Circle, CheckCircle2, XCircle, Loader2, Pencil, ChevronsUpDown, Info } from 'lucide-react';
+import { ChevronDown, Circle, CheckCircle2, XCircle, Loader2, Pencil, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { TestCase, ActionStep } from '@/types/test-case';
@@ -15,16 +15,77 @@ interface TestCaseCardProps {
   onInstructionChange: (testId: string, newInstruction: string) => void;
   onStepTextChange: (testId: string, stepId: string, newText: string) => void;
   isReadOnly?: boolean;
+  isRunning?: boolean;
 }
+
+const TestCaseStep: React.FC<{
+  step: ActionStep;
+  testCase: TestCase;
+  onStepClick: (step: ActionStep, testCase: TestCase) => void;
+  isReadOnly?: boolean;
+  onEditStep: (step: ActionStep) => void;
+}> = ({ step, testCase, onStepClick, isReadOnly, onEditStep }) => {
+  const [isStepExpanded, setIsStepExpanded] = useState(false);
+
+  return (
+    <motion.div
+      initial={{ x: -10, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+      className="flex flex-col gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted transition-all duration-200 ease-in-out cursor-pointer group"
+      onClick={() => onStepClick(step, testCase)}
+      role="button"
+      tabIndex={0}
+    >
+      <div className="flex items-center gap-3">
+        <span className="text-body-md font-body font-bold text-primary flex-shrink-0 w-5">
+          {step.number || '•'}
+        </span>
+
+        <div className="flex-1 min-w-0">
+          <div className={`text-body-md font-body text-foreground leading-relaxed ${isStepExpanded ? '' : 'truncate block'}`}>
+            {step.text || (step as any).description || 'Action Step'}
+          </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsStepExpanded(!isStepExpanded);
+            }}
+            className="text-[11px] text-primary/70 hover:text-primary mt-1 transition-colors"
+          >
+            {isStepExpanded ? 'Show less' : 'Show more'}
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1 flex-shrink-0 self-start mt-1">
+          {!isReadOnly && (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                onEditStep(step);
+              }}
+              variant="ghost"
+              size="icon"
+              className="bg-transparent text-foreground hover:bg-muted hover:text-foreground h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+              aria-label="Edit step"
+            >
+              <Pencil className="w-3 h-3" strokeWidth={1.5} />
+            </Button>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 export const TestCaseCard: React.FC<TestCaseCardProps> = ({
   testCase,
   onEditTest,
   onStepClick,
-  onStepDetailsClick,
   onInstructionChange,
   onStepTextChange,
-  isReadOnly
+  isReadOnly,
+  isRunning,
+  onRunTest
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const [editingStep, setEditingStep] = useState<ActionStep | null>(null);
@@ -131,90 +192,16 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
             className="overflow-hidden"
           >
             <div className="mt-3 pt-3 border-t border-border space-y-2">
-              {testCase.steps?.map((stepOrCase: any) => {
-                // Ensure we have an ActionStep for the UI
-                const step = stepOrCase as ActionStep;
-                return (
-                  <motion.div
-                    key={step.id}
-                    initial={{ x: -10, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    className="flex items-center gap-2 p-2 rounded-md bg-muted/50 hover:bg-muted transition-colors duration-200 ease-in-out cursor-pointer group"
-                    onClick={() => onStepClick(step, testCase)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e: React.KeyboardEvent) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault();
-                        onStepClick(step, testCase);
-                      }
-                    }}
-                  >
-                    <span className="text-body-md font-body font-medium text-muted-foreground flex-shrink-0">
-                      {step.number || '•'}.
-                    </span>
-
-                    <div className="flex-shrink-0">
-                      <div className={`w-8 h-8 rounded flex items-center justify-center ${step.screenshot ? 'bg-primary/10' : 'bg-muted'
-                        }`}>
-                        <Camera className={`w-4 h-4 ${step.screenshot ? 'text-primary' : 'text-muted-foreground'
-                          }`} strokeWidth={1.5} />
-                      </div>
-                    </div>
-
-                    <div className="flex-1 min-w-0 flex flex-col">
-                      <span className="text-body-md font-body text-foreground truncate">
-                        {step.text || (step as any).description || 'Action Step'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {step.description && (
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onStepDetailsClick?.(step);
-                          }}
-                          variant="ghost"
-                          size="icon"
-                          className="bg-transparent text-primary/60 hover:bg-primary/5 hover:text-primary h-8 w-8"
-                          aria-label="View description"
-                        >
-                          <Info className="w-4 h-4" strokeWidth={1.5} />
-                        </Button>
-                      )}
-
-                      <Button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onStepDetailsClick?.(step);
-                        }}
-                        variant="ghost"
-                        size="icon"
-                        className="bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground h-8 w-8"
-                        aria-label="View step details"
-                      >
-                        <ChevronsUpDown className="w-4 h-4" strokeWidth={1.5} />
-                      </Button>
-
-                      {!isReadOnly && (
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleEditStep(step);
-                          }}
-                          variant="ghost"
-                          size="icon"
-                          className="bg-transparent text-foreground hover:bg-muted hover:text-foreground h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                          aria-label="Edit step"
-                        >
-                          <Pencil className="w-3 h-3" strokeWidth={1.5} />
-                        </Button>
-                      )}
-                    </div>
-                  </motion.div>
-                );
-              })}
+              {testCase.steps?.map((stepOrCase: any) => (
+                <TestCaseStep
+                  key={stepOrCase.id}
+                  step={stepOrCase as ActionStep}
+                  testCase={testCase}
+                  onStepClick={onStepClick}
+                  isReadOnly={isReadOnly}
+                  onEditStep={handleEditStep}
+                />
+              ))}
             </div>
           </motion.div>
         )}

@@ -65,21 +65,21 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden flex bg-[#f8f9fb] relative">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
-
-        <div className="flex-1 overflow-hidden bg-transparent relative flex items-center justify-center p-6">
-          <div className="relative z-10 w-full h-full flex items-center justify-center transition-transform duration-300 ease-out origin-center" style={{ transform: `scale(${zoomLevel / 100})` }}>
+      <div className="flex-1 overflow-auto bg-[#f8f9fb] p-6 flex justify-center items-start custom-scrollbar">
+        <div 
+          className="transition-all duration-300 ease-out bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden"
+          style={{ width: `${zoomLevel}%`, minWidth: '320px' }}
+        >
+          <div className="relative bg-white">
             <img
               ref={imageRef}
               src={screenshot || 'https://placehold.co/1280x720/e2e8f0/64748b?text=Waiting+for+Automation+Run...'}
               alt="Browser Screenshot"
-              className="max-w-full max-h-full w-auto h-auto object-contain rounded-xl shadow-2xl border border-white/50 backdrop-blur-sm bg-white"
+              className="w-full h-auto block"
               loading="lazy"
             />
           </div>
         </div>
-
       </div>
 
       <div className="p-6 border-t border-border bg-white z-20">

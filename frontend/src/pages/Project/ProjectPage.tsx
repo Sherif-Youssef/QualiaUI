@@ -45,6 +45,9 @@ export const ProjectPage: React.FC = () => {
         handleRunProject,
         handleAbortProject,
         isRunningProject,
+        isAbortingProject,
+        selectedModel,
+        setSelectedModel,
     } = useProjectWorkspace({ projectId });
     return (
         <ProjectLayout
@@ -52,10 +55,13 @@ export const ProjectPage: React.FC = () => {
                 <ProjectHeader
                     onBack={() => navigate('/projects')}
                     onAddSuite={() => setIsModalOpen(true)}
-                    onRunProject={() => handleRunProject()}
+                    onRunProject={() => handleRunProject(selectedModel)}
                     onAbort={handleAbortProject}
                     isRunning={isRunningProject}
+                    isAborting={isAbortingProject}
                     canManageSuites={canManageSuites}
+                    selectedModel={selectedModel}
+                    onModelChange={setSelectedModel}
                 />
             }
             searchBar={

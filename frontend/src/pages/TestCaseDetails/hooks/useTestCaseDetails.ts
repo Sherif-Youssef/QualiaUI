@@ -29,6 +29,18 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
 
     const eventSourceRef = useRef<EventSource | null>(null);
 
+    const syncStatus = useCallback((data: TestCase) => {
+        const status = data.status?.toUpperCase();
+        if (status === 'RUNNING') {
+            setIsRunning(true);
+        } else {
+            setIsRunning(false);
+            if (['PASSED', 'FAILED', 'ERROR', 'ABORTED', 'SUCCESS', 'FAILURE'].includes(status || '')) {
+                setFinalStatus(status?.toLowerCase() as any);
+            }
+        }
+    }, []);
+
     const fetchTestCase = useCallback(async () => {
         if (!caseId || !projectId || !suiteId) return;
         setIsLoading(true);
@@ -36,6 +48,8 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
         try {
             const data = await testCaseService.getTestCaseById(projectId, suiteId, caseId);
             setTestCase(data);
+            syncStatus(data);
+
             if (data.executionSteps && data.executionSteps.length > 0) {
                 setSelectedStepId(String(data.executionSteps[0].id));
             } else if (data.steps && data.steps.length > 0) {
@@ -46,15 +60,16 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
         } finally {
             setIsLoading(false);
         }
-    }, [caseId, projectId, suiteId]);
+    }, [caseId, projectId, suiteId, syncStatus]);
 
     const refreshTestCaseSilent = useCallback(async () => {
         if (!caseId || !projectId || !suiteId) return;
         try {
             const data = await testCaseService.getTestCaseById(projectId, suiteId, caseId);
             setTestCase(data);
+            syncStatus(data);
         } catch { }
-    }, [caseId, projectId, suiteId]);
+    }, [caseId, projectId, suiteId, syncStatus]);
 
     useEffect(() => {
         fetchTestCase();
@@ -62,6 +77,17 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
             if (eventSourceRef.current) eventSourceRef.current.close();
         };
     }, [fetchTestCase]);
+    useEffect(() => {
+        let interval: any;
+        if (isRunning && !activeRunId) {
+            interval = setInterval(() => {
+                refreshTestCaseSilent();
+            }, 3000);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isRunning, activeRunId, refreshTestCaseSilent]);
 
     useEffect(() => {
         const fetchHistory = async () => {
@@ -109,7 +135,7 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
                         else if (['FAILED', 'ABORTED'].includes(eventPayload.status)) {
                             setFinalStatus('failed');
                         }
-                        
+
                         if (['FAILED', 'ERROR', 'ABORTED'].includes(eventPayload.status) && eventPayload.termination_reason) {
                             setTerminationReason(eventPayload.termination_reason);
                         }

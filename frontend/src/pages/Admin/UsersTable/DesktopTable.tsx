@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Pencil, Trash2, User, Mail, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { Pencil, Trash2, User, Mail, ShieldAlert } from 'lucide-react';
 import { UserViewModel } from '@/services/admin/adminService';
 
 interface DesktopTableProps {
@@ -10,11 +10,11 @@ interface DesktopTableProps {
     onRegeneratePassword: (userId: string, name: string) => void;
 }
 
-export const DesktopTable: React.FC<DesktopTableProps> = ({ 
-    users, 
-    onEdit, 
-    onDelete, 
-    onRegeneratePassword 
+export const DesktopTable: React.FC<DesktopTableProps> = ({
+    users,
+    onEdit,
+    onDelete,
+    onRegeneratePassword
 }) => {
 
     return (
@@ -53,7 +53,6 @@ export const DesktopTable: React.FC<DesktopTableProps> = ({
                                 <td className="px-8 py-6">
                                     <div className="flex items-center gap-3">
                                         <div className="px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase flex items-center gap-2 bg-primary/5 text-primary border border-primary/10">
-                                            <ShieldCheck className="w-3.5 h-3.5" strokeWidth={2.5} />
                                             {user.role}
                                         </div>
                                         {user.createdAt && (
