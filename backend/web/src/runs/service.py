@@ -187,7 +187,7 @@ def launch_testsuite_run(
         testsuite_run_id=testsuite_run_id,
         stream_key=stream_key,
         abort_id=testsuite_run_id,
-        stream_steps=False,
+        stream_steps=True,
     )
     workflow.apply_async(task_id=suite_job_uid)  
 
@@ -280,7 +280,7 @@ def launch_project_run(
             testsuite_run_id=cast(int, testsuite_run.id),
             stream_key=stream_key,
             abort_id=project_run_id,
-            stream_steps=False,
+            stream_steps=True,
         )
         testsuite_workflows.append(workflow)
 

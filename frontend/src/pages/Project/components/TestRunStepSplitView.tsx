@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Camera, CheckCircle2, XCircle, AlertCircle, Info } from 'lucide-react';
-import { TestStepRun } from '@/services/runService';
+import { TestStepRun } from '@/types/run';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface TestRunStepSplitViewProps {
@@ -14,7 +14,8 @@ export const TestRunStepSplitView: React.FC<TestRunStepSplitViewProps> = ({ step
 
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'PASSED': return <CheckCircle2 className="w-4 h-4 text-success" />;
+            case 'PASSED':
+            case 'EXECUTED': return <CheckCircle2 className="w-4 h-4 text-success" />;
             case 'FAILED': return <XCircle className="w-4 h-4 text-failure" />;
             default: return <AlertCircle className="w-4 h-4 text-warning" />;
         }

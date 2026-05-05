@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Database, Users } from 'lucide-react';
 import { authService } from '@/services/auth/auth';
 
 import { Brand } from './Brand';
@@ -61,15 +60,15 @@ export const TopNav: React.FC = () => {
   };
 
   const navLinks = [
-    { name: 'Projects Portal', path: '/projects', icon: <Database className="w-4 h-4" /> },
+    { name: 'Projects Portal', path: '/projects' },
   ];
   if (isAdmin) {
-    navLinks.push({ name: 'User Management', path: '/admin/users', icon: <Users className="w-4 h-4" /> });
+    navLinks.push({ name: 'User Management', path: '/admin/users' });
   }
 
   return (
     <header className="sticky top-0 z-[40] w-full border-b border-gray-100 bg-white/80 backdrop-blur-xl h-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+      <div className="px-4 sm:px-6 lg:px-8 h-full">
         <div className="flex items-center justify-between h-full">
           <div className="flex items-center gap-8">
             <Brand />

@@ -7,7 +7,9 @@ import {
     AlertCircle,
     ChevronRight 
 } from 'lucide-react';
-import { ProjectRun } from '@/services/runService';
+import { ProjectRun } from '@/types/run';
+
+import { parseUTCDate } from '@/utils/formatters';
 
 interface ProjectHistoryTableProps {
     runs: ProjectRun[];
@@ -17,7 +19,8 @@ interface ProjectHistoryTableProps {
 export const ProjectHistoryTable: React.FC<ProjectHistoryTableProps> = ({ runs, onView }) => {
     const getStatusIcon = (status: string) => {
         switch (status) {
-            case 'PASSED': return <CheckCircle2 className="w-5 h-5 text-success" />;
+            case 'PASSED':
+            case 'EXECUTED': return <CheckCircle2 className="w-5 h-5 text-success" />;
             case 'FAILED': return <XCircle className="w-5 h-5 text-failure" />;
             case 'ABORTED': return <AlertCircle className="w-5 h-5 text-warning" />;
             default: return <Clock className="w-5 h-5 text-primary" />;
@@ -48,7 +51,7 @@ export const ProjectHistoryTable: React.FC<ProjectHistoryTableProps> = ({ runs, 
                                     <div className="flex items-center gap-3">
                                         {getStatusIcon(run.status)}
                                         <span className={`text-[10px] font-black tracking-widest uppercase px-2.5 py-1 rounded-lg ${
-                                            run.status === 'PASSED' ? 'bg-success/10 text-success' :
+                                            (run.status === 'PASSED' || run.status === 'EXECUTED') ? 'bg-success/10 text-success' :
                                             run.status === 'FAILED' ? 'bg-failure/10 text-failure' :
                                             run.status === 'ABORTED' ? 'bg-warning/10 text-warning' :
                                             'bg-muted text-gray-600'
@@ -60,18 +63,17 @@ export const ProjectHistoryTable: React.FC<ProjectHistoryTableProps> = ({ runs, 
                                 <td className="px-8 py-6">
                                     <div className="flex flex-col gap-0.5">
                                         <span className="text-base font-bold text-gray-800 group-hover:text-primary transition-colors">Run #{run.id}</span>
-                                        <span className="text-xs font-medium text-gray-400 truncate max-w-[250px] font-mono">{run.job_uid}</span>
                                     </div>
                                 </td>
                                 <td className="px-8 py-6 whitespace-nowrap">
                                     <div className="flex flex-col gap-2">
                                         <div className="flex items-center gap-2 text-xs font-bold text-gray-700">
                                             <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                                            {new Date(run.started_at || run.created_at).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            {parseUTCDate(run.started_at || run.created_at)?.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </div>
                                         <div className="flex items-center gap-2 text-[10px] font-black text-gray-400 tracking-wider">
                                             <Clock className="w-3.5 h-3.5" />
-                                            {new Date(run.started_at || run.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            {parseUTCDate(run.started_at || run.created_at)?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                         </div>
                                     </div>
                                 </td>

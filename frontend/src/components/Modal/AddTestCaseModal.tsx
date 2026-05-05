@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { TestCaseStep, TestCase } from '@/types/test-case';
+import { TestCase } from '@/types/test-case';
 import { Textarea } from '../ui/textarea';
 import { ErrorMessage } from '../GeneralComponents';
 
@@ -16,9 +14,7 @@ interface AddTestCaseModalProps {
   onSave: (data: {
     name: string;
     url: string;
-    mode: 'plain' | 'step-based';
-    plainText?: string;
-    steps?: TestCaseStep[];
+    plainText: string;
   }) => void;
   isLoading?: boolean;
   error?: string | null;
@@ -34,58 +30,29 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
-  const [mode, setMode] = useState<'plain' | 'step-based'>('plain');
   const [plainText, setPlainText] = useState('');
-  const [steps, setSteps] = useState<TestCaseStep[]>([
-    { id: '1', type: 'do', description: '' },
-  ]);
 
   useEffect(() => {
     if (editingTestCase) {
       setName(editingTestCase.name);
       setUrl(editingTestCase.url);
-      setMode(editingTestCase.mode || 'plain');
       setPlainText(editingTestCase.plainText || '');
-      setSteps((editingTestCase.steps as TestCaseStep[]) || [{ id: '1', type: 'do', description: '' }]);
     } else {
       setName('');
       setUrl('');
-      setMode('plain');
       setPlainText('');
-      setSteps([{ id: '1', type: 'do', description: '' }]);
     }
   }, [editingTestCase, isOpen]);
-
-  const handleAddStep = () => {
-    setSteps([...steps, { id: Date.now().toString(), type: 'do', description: '' }]);
-  };
-
-  const handleRemoveStep = (stepId: string) => {
-    if (steps.length > 1) {
-      setSteps(steps.filter(s => s.id !== stepId));
-    }
-  };
-
-  const handleStepTypeChange = (stepId: string, type: 'do' | 'check' | 'wait') => {
-    setSteps(steps.map(s => (s.id === stepId ? { ...s, type } : s)));
-  };
-
-  const handleStepDescriptionChange = (stepId: string, description: string) => {
-    setSteps(steps.map(s => (s.id === stepId ? { ...s, description } : s)));
-  };
 
   const handleSubmit = () => {
     if (!name.trim()) return;
     if (!url.trim()) return;
-    if (mode === 'plain' && !plainText.trim()) return;
-    if (mode === 'step-based' && steps.some(s => !s.description.trim())) return;
+    if (!plainText.trim()) return;
 
     onSave({
       name,
       url,
-      mode,
-      plainText: mode === 'plain' ? plainText : undefined,
-      steps: mode === 'step-based' ? steps : undefined,
+      plainText,
     });
   };
 
@@ -135,94 +102,17 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
             />
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-2">
             <Label className="text-sm font-semibold text-gray-700 block">
-              Test Definition Method <span className="text-red-500">*</span>
+              Prompt Instructions <span className="text-red-500">*</span>
             </Label>
-
-            <RadioGroup value={mode} onValueChange={(value) => setMode(value as 'plain' | 'step-based')} disabled={isLoading}>
-              <div className="grid gap-4">
-                <div className={`p-4 rounded-xl border-2 transition-all ${mode === 'plain' ? 'border-primary bg-primary/5' : 'border-gray-100 hover:border-gray-200'}`}>
-                  <div className="flex items-center space-x-3 mb-3">
-                    <RadioGroupItem value="plain" id="mode-plain" />
-                    <Label htmlFor="mode-plain" className="text-sm font-bold text-gray-800 cursor-pointer">
-                      Plain English Instructions
-                    </Label>
-                  </div>
-                  {mode === 'plain' && (
-                    <Textarea
-                      value={plainText}
-                      onChange={(e) => setPlainText(e.target.value)}
-                      placeholder="Describe your test scenario... (e.g., Navigate to login, fill email and pass, then click sign in)"
-                      className="min-h-[120px] bg-white text-gray-700 border-gray-200 focus:border-primary"
-                      disabled={isLoading}
-                    />
-                  )}
-                </div>
-
-                <div className={`p-4 rounded-xl border-2 transition-all ${mode === 'step-based' ? 'border-primary bg-primary/5' : 'border-gray-100 hover:border-gray-200'}`}>
-                  <div className="flex items-center space-x-3 mb-4">
-                    <RadioGroupItem value="step-based" id="mode-step-based" />
-                    <Label htmlFor="mode-step-based" className="text-sm font-bold text-gray-800 cursor-pointer">
-                      Step-by-Step Instructions
-                    </Label>
-                  </div>
-
-                  {mode === 'step-based' && (
-                    <div className="space-y-3">
-                      {steps.map((step, index) => (
-                        <div key={step.id} className="flex flex-col sm:flex-row items-center gap-3 p-3 bg-white rounded-lg border border-gray-100 shadow-sm relative group">
-                          <span className="text-xs font-bold text-gray-400 w-5">
-                            {index + 1}.
-                          </span>
-                          <Select
-                            value={step.type}
-                            onValueChange={(value) => handleStepTypeChange(step.id, value as 'do' | 'check' | 'wait')}
-                            disabled={isLoading}
-                          >
-                            <SelectTrigger className="w-full sm:w-28 h-10 border-gray-200">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="do">Do</SelectItem>
-                              <SelectItem value="check">Check</SelectItem>
-                              <SelectItem value="wait">Wait</SelectItem>
-                            </SelectContent>
-                          </Select>
-
-                          <Input
-                            value={step.description}
-                            onChange={(e) => handleStepDescriptionChange(step.id, e.target.value)}
-                            placeholder="Instruction detail..."
-                            className="flex-1 h-10 border-gray-200"
-                            disabled={isLoading}
-                          />
-                          <Button
-                            onClick={() => handleRemoveStep(step.id)}
-                            variant="ghost"
-                            size="icon"
-                            className="text-red-400 hover:text-red-600 hover:bg-red-50 flex-shrink-0"
-                            disabled={steps.length === 1 || isLoading}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-
-                      <Button
-                        onClick={handleAddStep}
-                        variant="outline"
-                        className="w-full h-11 border-dashed border-2 border-gray-300 hover:border-primary hover:text-primary transition-all rounded-xl"
-                        disabled={isLoading}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Next Step
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </RadioGroup>
+            <Textarea
+              value={plainText}
+              onChange={(e) => setPlainText(e.target.value)}
+              placeholder="Describe your test scenario... (e.g., Navigate to login, fill email and pass, then click sign in)"
+              className="min-h-[160px] bg-white text-gray-700 border-gray-200 focus:border-primary"
+              disabled={isLoading}
+            />
           </div>
         </div>
 
