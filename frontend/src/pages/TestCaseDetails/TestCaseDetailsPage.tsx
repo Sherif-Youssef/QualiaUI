@@ -11,6 +11,7 @@ import { useTestCaseDetails } from './hooks/useTestCaseDetails';
 import { TestCaseHeader } from './components/TestCaseHeader';
 import { TestCaseTabs } from './components/TestCaseTabs';
 import { ExecutionStepsSidebar } from './components/ExecutionStepsSidebar';
+import { ViewPromptModal } from '@/components/Modal/ViewPromptModal';
 
 export const TestCaseDetailsPage: React.FC = () => {
     const { projectId, suiteId, caseId } = useParams<{ projectId: string; suiteId: string; caseId: string }>();
@@ -28,17 +29,24 @@ export const TestCaseDetailsPage: React.FC = () => {
         isRunning,
         activeSteps,
         currentScreenshot,
+        isAborting,
         page,
         setPage,
         limit,
         totalRuns,
         runTestCase,
-        updateTestCase
+        abortTestCase,
+        updateTestCase,
+        terminationReason,
+        finalStatus
     } = useTestCaseDetails({ projectId, suiteId, caseId });
 
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isViewPromptModalOpen, setIsViewPromptModalOpen] = useState(false);
+    const [selectedModel, setSelectedModel] = useState('gemini-1.5-pro');
     const [isSaving, setIsSaving] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
+    const [zoomLevel, setZoomLevel] = useState(100);
 
     const handleSaveTestCase = async (data: any) => {
         setIsSaving(true);
@@ -71,44 +79,54 @@ export const TestCaseDetailsPage: React.FC = () => {
 
     return (
         <TestCaseDetailsLayout>
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
                 <div className="bg-white border-b border-gray-100 shrink-0">
                     <div className="px-8 pt-4 pb-0">
-                        <TestCaseHeader 
-                            title={testCase.name} 
-                            isRunning={isRunning} 
-                            onBack={() => navigate(`/project/${projectId}/suite/${suiteId}`)} 
-                            onEdit={() => setIsEditModalOpen(true)} 
-                            onRun={runTestCase} 
+                        <TestCaseHeader
+                            title={testCase.name}
+                            isRunning={isRunning}
+                            isAborting={isAborting}
+                            status={finalStatus}
+                            onBack={() => navigate(`/project/${projectId}/suite/${suiteId}`)}
+                            onEdit={() => setIsEditModalOpen(true)}
+                            onViewPrompt={() => setIsViewPromptModalOpen(true)}
+                            onRun={() => runTestCase(selectedModel)}
+                            onAbort={abortTestCase}
                         />
-                        <TestCaseTabs 
-                            activeView={activeView} 
-                            setActiveView={setActiveView} 
+                        <TestCaseTabs
+                            activeView={activeView}
+                            setActiveView={setActiveView}
                         />
                     </div>
                 </div>
-
-                {/* Main Content Area (Sidebar + Viewer) */}
-                <div className="flex-1 flex overflow-hidden">
+                <div className="flex-1 flex overflow-hidden min-h-0">
                     {activeView === 'steps' ? (
                         <>
-                            <ExecutionStepsSidebar 
-                                testCaseMode={testCase.mode || 'plain'} 
-                                plainText={testCase.plainText} 
-                                displaySteps={displaySteps} 
-                                selectedStepId={selectedStepId} 
-                                onSelectStep={setSelectedStepId} 
-                                onEditPrompt={() => setIsEditModalOpen(true)} 
+                            <ExecutionStepsSidebar
+                                testCaseMode={testCase.mode || 'plain'}
+                                plainText={testCase.plainText}
+                                displaySteps={displaySteps}
+                                selectedStepId={selectedStepId}
+                                onSelectStep={setSelectedStepId}
+                                onEditPrompt={() => setIsEditModalOpen(true)}
+                                terminationReason={terminationReason || testCase.terminationReason}
+                                selectedModel={selectedModel}
+                                onModelChange={(val) => setSelectedModel(val)}
+                                isRunning={isRunning}
                             />
-                            <main className="flex-1 flex overflow-hidden bg-gray-50/30">
+                            <main className="flex-1 flex flex-col overflow-hidden bg-gray-50/30 min-h-0">
                                 <ScreenshotViewer
                                     screenshot={displaySteps.find(s => String(s.id) === selectedStepId)?.screenshot || currentScreenshot || null}
                                     number={displaySteps.findIndex(s => String(s.id) === selectedStepId) + 1}
+                                    zoomLevel={zoomLevel}
+                                    onZoomIn={() => setZoomLevel(prev => Math.min(prev + 25, 200))}
+                                    onZoomOut={() => setZoomLevel(prev => Math.max(prev - 25, 50))}
+                                    onResetZoom={() => setZoomLevel(100)}
                                 />
                             </main>
                         </>
                     ) : (
-                        <main className="flex-1 overflow-auto p-8 bg-gray-50/30">
+                        <main className="flex-1 overflow-auto p-8 bg-gray-50/30 min-h-0">
                             <div className="max-w-6xl mx-auto space-y-6">
                                 <TestRunHistoryTable
                                     history={history}
@@ -145,6 +163,13 @@ export const TestCaseDetailsPage: React.FC = () => {
                     onSave={handleSaveTestCase}
                     isLoading={isSaving}
                     error={modalError}
+                />
+            )}
+            {testCase && (
+                <ViewPromptModal
+                    isOpen={isViewPromptModalOpen}
+                    onClose={() => setIsViewPromptModalOpen(false)}
+                    prompt={testCase.plainText || ''}
                 />
             )}
         </TestCaseDetailsLayout>

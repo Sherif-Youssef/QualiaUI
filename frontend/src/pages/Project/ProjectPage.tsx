@@ -42,17 +42,26 @@ export const ProjectPage: React.FC = () => {
         confirmDelete,
         handleMemberAdd,
         handleMemberRemove,
-        handleRunProject
+        handleRunProject,
+        handleAbortProject,
+        isRunningProject,
+        isAbortingProject,
+        selectedModel,
+        setSelectedModel,
     } = useProjectWorkspace({ projectId });
-
     return (
         <ProjectLayout
             header={
                 <ProjectHeader
                     onBack={() => navigate('/projects')}
                     onAddSuite={() => setIsModalOpen(true)}
-                    onRunProject={handleRunProject}
+                    onRunProject={() => handleRunProject(selectedModel)}
+                    onAbort={handleAbortProject}
+                    isRunning={isRunningProject}
+                    isAborting={isAbortingProject}
                     canManageSuites={canManageSuites}
+                    selectedModel={selectedModel}
+                    onModelChange={setSelectedModel}
                 />
             }
             searchBar={
@@ -90,8 +99,6 @@ export const ProjectPage: React.FC = () => {
                             members={projectMembers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)}
                             isLoading={isLoading}
                             canManageProject={canManageProject}
-                            isSearchEmpty={projectMembers.length === 0 && debouncedSearch !== '' && !isLoading}
-                            searchQuery={debouncedSearch}
                             onInvite={() => setIsAddMemberModalOpen(true)}
                             onRemoveMember={handleMemberRemove}
                         />

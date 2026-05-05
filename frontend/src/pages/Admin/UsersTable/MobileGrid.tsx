@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Pencil, Trash2, User, Mail, ShieldCheck, ShieldAlert, Calendar } from 'lucide-react';
+import { Pencil, Trash2, User, Mail, Shield, ShieldAlert, Calendar } from 'lucide-react';
 import { UserViewModel } from '@/services/admin/adminService';
 
 interface MobileGridProps {
@@ -36,7 +36,7 @@ export const MobileGrid: React.FC<MobileGridProps> = ({
                             </div>
                         </div>
                         <div className="p-2 rounded-xl border bg-primary/5 text-primary border-primary/10">
-                            <ShieldCheck className="w-5 h-5" />
+                            <Shield className="w-5 h-5" />
                         </div>
                     </div>
                     <div className="space-y-3">

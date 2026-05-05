@@ -1,52 +1,91 @@
-import { Camera } from 'lucide-react';
+import { Camera, ZoomIn, ZoomOut, Maximize } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ScreenshotViewerProps {
     screenshot: string | null;
     number: number;
     description?: string;
+    zoomLevel?: number;
+    onZoomIn?: () => void;
+    onZoomOut?: () => void;
+    onResetZoom?: () => void;
 }
 
 export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
     screenshot,
     number,
-    description,
+    zoomLevel = 100,
+    onZoomIn,
+    onZoomOut,
+    onResetZoom
 }) => {
     return (
-        <section className="flex-1 bg-slate-50 flex flex-col items-stretch overflow-hidden">
-            <div className="flex-1 overflow-auto bg-slate-50 relative custom-scrollbar">
-                <div className="min-w-full min-h-full flex items-center justify-center p-4 md:p-8">
-                    {screenshot ? (
-                        <div className="relative group perspective-1000 origin-center transition-transform duration-300 ease-out">
-                            <div className="absolute -inset-4 bg-primary/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+        <section className="flex-1 bg-[#F8FAFC] flex flex-col overflow-hidden relative">
+            <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:20px_20px] opacity-40 pointer-events-none" />
+
+            <div className="flex-1 relative flex items-start justify-center p-6 md:p-12 overflow-auto custom-scrollbar">
+                {screenshot ? (
+                    <div className="relative flex flex-col items-center transition-all duration-300 ease-out"
+                         style={{ width: `${zoomLevel}%`, minWidth: '320px' }}>
+                        <div
+                            className="relative w-full rounded-2xl bg-white border border-gray-100 shadow-xl overflow-hidden group"
+                        >
                             <img
                                 src={screenshot}
                                 alt={`Step ${number}`}
-                                className="max-w-[95%] max-h-[85vh] rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.15)] border border-gray-200 relative z-10 bg-white"
+                                className="w-full h-auto block select-none"
                             />
-                            <div className="absolute bottom-6 left-6 z-20 bg-white/80 backdrop-blur-xl border border-gray-200 px-4 py-2 rounded-xl shadow-lg">
-                                <p className="text-gray-900 text-xs font-black uppercase tracking-widest">
-                                    Step <span className="text-primary">{number}</span> Frame
-                                </p>
-                                {description && (
-                                    <p className="text-gray-600 text-xs mt-1 max-w-sm break-words font-medium">
-                                        {description}
-                                    </p>
-                                )}
-                            </div>
                         </div>
-                    ) : (
-                        <div className="text-center space-y-4 animate-in fade-in zoom-in duration-500">
-                            <div className="w-24 h-24 mx-auto bg-white/5 rounded-[40px] flex items-center justify-center border border-white/10">
-                                <Camera className="w-10 h-10 text-white/20" />
-                            </div>
-                            <div className="space-y-1">
-                                <p className="text-white/40 text-sm font-bold uppercase tracking-widest">No Capture Available</p>
-                                <p className="text-white/20 text-xs font-medium">Select a step or run the test to see screenshots</p>
-                            </div>
+                    </div>
+                ) : (
+                    <div className="text-center space-y-6 max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-700">
+                        <div className="w-24 h-24 mx-auto bg-white rounded-[32px] shadow-sm border border-gray-100 flex items-center justify-center">
+                            <Camera className="w-10 h-10 text-gray-200" />
                         </div>
-                    )}
-                </div>
+                        <div className="space-y-2">
+                            <h3 className="text-sm font-black text-gray-400 uppercase tracking-[0.2em]">Ready for Capture</h3>
+                            <p className="text-xs text-gray-400 font-medium leading-relaxed">
+                                Select an execution step or start a new run to view live browser frames here.
+                            </p>
+                        </div>
+                    </div>
+                )}
             </div>
+
+            {screenshot && onZoomIn && onZoomOut && onResetZoom && (
+                <div className="p-4 border-t border-gray-100 bg-white/80 backdrop-blur-md z-20">
+                    <div className="flex items-center justify-center gap-3">
+                        <Button
+                            onClick={onZoomOut}
+                            variant="outline"
+                            size="icon"
+                            className="w-10 h-10 rounded-xl bg-white border-gray-100 text-gray-600 hover:bg-gray-50 hover:text-primary transition-all active:scale-95 shadow-sm"
+                            disabled={zoomLevel <= 50}
+                        >
+                            <ZoomOut className="w-5 h-5" />
+                        </Button>
+
+                        <Button
+                            onClick={onResetZoom}
+                            variant="outline"
+                            className="px-6 h-10 rounded-xl bg-white border-gray-100 text-gray-600 font-black text-[10px] uppercase tracking-widest hover:bg-gray-50 hover:text-primary transition-all active:scale-95 shadow-sm flex items-center gap-2"
+                        >
+                            <Maximize className="w-3 h-3" />
+                            {zoomLevel}% Reset
+                        </Button>
+
+                        <Button
+                            onClick={onZoomIn}
+                            variant="outline"
+                            size="icon"
+                            className="w-10 h-10 rounded-xl bg-white border-gray-100 text-gray-600 hover:bg-gray-50 hover:text-primary transition-all active:scale-95 shadow-sm"
+                            disabled={zoomLevel >= 200}
+                        >
+                            <ZoomIn className="w-5 h-5" />
+                        </Button>
+                    </div>
+                </div>
+            )}
         </section>
     );
 };

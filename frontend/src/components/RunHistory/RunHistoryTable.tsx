@@ -1,5 +1,4 @@
-import React from 'react';
-import { Play, CheckCircle, XCircle, AlertCircle, StopCircle, Clock, Calendar } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Calendar, Loader2, StopCircle, AlertCircle } from 'lucide-react';
 import { ProjectRun, TestSuiteRun, TestCaseRun } from '@/types/run';
 import { parseUTCDate } from '@/utils/formatters';
 
@@ -42,20 +41,23 @@ export const RunHistoryTable: React.FC<RunHistoryTableProps> = ({ runs, isLoadin
     };
 
     const getStatusStyles = (status: string) => {
-        switch (status) {
+        const s = status?.toUpperCase();
+        switch (s) {
             case 'PASSED':
+            case 'SUCCESS':
             case 'EXECUTED':
                 return {
-                    bg: 'bg-green-50',
-                    text: 'text-green-700',
-                    border: 'border-green-100',
+                    bg: 'bg-emerald-50',
+                    text: 'text-emerald-700',
+                    border: 'border-emerald-100',
                     icon: <CheckCircle className="w-4 h-4" />
                 };
             case 'FAILED':
+            case 'FAILURE':
                 return {
-                    bg: 'bg-red-50',
-                    text: 'text-red-700',
-                    border: 'border-red-100',
+                    bg: 'bg-rose-50',
+                    text: 'text-rose-700',
+                    border: 'border-rose-100',
                     icon: <XCircle className="w-4 h-4" />
                 };
             case 'ERROR':
@@ -67,17 +69,32 @@ export const RunHistoryTable: React.FC<RunHistoryTableProps> = ({ runs, isLoadin
                 };
             case 'ABORTED':
                 return {
-                    bg: 'bg-gray-50',
-                    text: 'text-gray-700',
-                    border: 'border-gray-100',
+                    bg: 'bg-slate-100',
+                    text: 'text-slate-600',
+                    border: 'border-slate-200',
                     icon: <StopCircle className="w-4 h-4" />
                 };
-            default:
+            case 'RUNNING':
                 return {
                     bg: 'bg-blue-50',
                     text: 'text-blue-700',
                     border: 'border-blue-100',
-                    icon: <Play className="w-4 h-4" />
+                    icon: <Loader2 className="w-4 h-4 animate-spin" />
+                };
+            case 'QUEUED':
+            case 'PENDING':
+                return {
+                    bg: 'bg-indigo-50',
+                    text: 'text-indigo-600',
+                    border: 'border-indigo-100',
+                    icon: <Clock className="w-4 h-4" />
+                };
+            default:
+                return {
+                    bg: 'bg-gray-50',
+                    text: 'text-gray-600',
+                    border: 'border-gray-100',
+                    icon: <Clock className="w-4 h-4" />
                 };
         }
     };
@@ -99,11 +116,11 @@ export const RunHistoryTable: React.FC<RunHistoryTableProps> = ({ runs, isLoadin
                             const statusStyle = getStatusStyles(run.status);
                             const start = parseUTCDate(run.started_at);
                             const finish = parseUTCDate(run.finished_at);
-                            
+
                             let duration = '-';
                             if (start && finish) {
                                 const durationSeconds = Math.floor((finish.getTime() - start.getTime()) / 1000);
-                                duration = durationSeconds > 60 
+                                duration = durationSeconds > 60
                                     ? `${Math.floor(durationSeconds / 60)}m ${durationSeconds % 60}s`
                                     : `${durationSeconds}s`;
                             } else if (start && run.status === 'RUNNING') {
@@ -113,8 +130,8 @@ export const RunHistoryTable: React.FC<RunHistoryTableProps> = ({ runs, isLoadin
                             const idStr = String(run.id);
 
                             return (
-                                <tr 
-                                    key={idStr} 
+                                <tr
+                                    key={idStr}
                                     className="hover:bg-primary/[0.02] transition-all cursor-pointer group"
                                     onClick={() => onViewDetails?.(run)}
                                 >

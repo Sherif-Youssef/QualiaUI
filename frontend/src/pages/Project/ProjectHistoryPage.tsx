@@ -6,7 +6,6 @@ import {
 } from 'lucide-react';
 import { runService } from '@/services/runService';
 import { ProjectRun } from '@/types/run';
-import { Button } from '@/components/ui/button';
 import { ProjectLayout } from './ProjectLayout';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { Pagination } from '@/components/Pagination';
@@ -50,14 +49,17 @@ export const ProjectHistoryPage: React.FC = () => {
             header={
                 <div className="flex items-center justify-between pb-2">
                     <div className="flex items-center gap-4">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => navigate(`/project/${projectId}`)}
-                            className="rounded-xl hover:bg-gray-100 transition-all border border-transparent hover:border-gray-200"
+                        <button
+                            onClick={() => navigate(-1)}
+                            className="flex items-center gap-2 text-gray-400 hover:text-primary transition-all group/back"
                         >
-                            <ChevronLeft className="w-6 h-6 text-gray-600" />
-                        </Button>
+                            <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover/back:border-primary group-hover/back:text-primary transition-colors">
+                                <ChevronLeft className="w-5 h-5" />
+                            </div>
+                            <span className="text-[11px] font-black uppercase tracking-[0.2em] leading-none">
+                                Back
+                            </span>
+                        </button>
                         <div className="flex flex-col">
                             <h2 className="text-2xl font-sans font-bold text-gray-800 tracking-tight uppercase flex items-center gap-2">
                                 <History className="w-6 h-6 text-primary" />

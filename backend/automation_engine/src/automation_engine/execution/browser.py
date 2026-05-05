@@ -73,7 +73,12 @@ class PlaywrightBrowser:
             new_page.close()
             self.page.goto(url)
 
-    async def start(self, url: str, init_scripts: list[str | Path] | None = None) -> None:
+    async def start(
+        self,
+        url: str,
+        init_scripts: list[str | Path] | None = None,
+        record_video_dir: str | Path | None = None,
+    ) -> None:
         if self._playwright is not None:
             raise RuntimeError("Browser already started.")
 
@@ -81,6 +86,8 @@ class PlaywrightBrowser:
         self._browser = await self._playwright.chromium.launch(headless=self._headless)
         self.context = await self._browser.new_context(
             viewport={"width": self._viewport_width, "height": self._viewport_height},
+            record_video_dir=record_video_dir,
+            record_video_size={"width": self._viewport_width, "height": self._viewport_height} if record_video_dir else None,
         )
 
         if self._default_timeout is not None:

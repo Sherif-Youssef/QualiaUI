@@ -13,6 +13,7 @@ import { ProjectHistoryPage } from './Project/ProjectHistoryPage';
 import { ProjectHistoryDetailsPage } from './Project/ProjectHistoryDetailsPage';
 import { ProjectSuiteHistoryDetailsPage } from './Project/ProjectSuiteHistoryDetailsPage';
 import { ProjectCaseHistoryDetailsPage } from './Project/ProjectCaseHistoryDetailsPage';
+import { TestSuiteRunDashboardPage } from './TestSuite/TestSuiteRunDashboardPage';
 
 export {
     LoginPage,
@@ -29,5 +30,6 @@ export {
     ProjectHistoryPage,
     ProjectHistoryDetailsPage,
     ProjectSuiteHistoryDetailsPage,
-    ProjectCaseHistoryDetailsPage
+    ProjectCaseHistoryDetailsPage,
+    TestSuiteRunDashboardPage
 }
