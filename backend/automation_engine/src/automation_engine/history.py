@@ -65,12 +65,10 @@ class TestStep(TestHierarchyElement):
         self,
         status: TestStatus,
         error_message: str | None = None,
-        abort_reason: str | None = None,
     ) -> None:
         super(TestStep, self).finalize()
         self.status = status
         self.error_message = error_message
-        self.abort_reason = abort_reason
 
     @property
     def is_success(self) -> bool:
@@ -133,6 +131,8 @@ class TestStepGroup(TestHierarchyElement):
     @computed_field
     @property
     def termination_reason(self) -> str | None:
+        if self.term is not None:
+            return self.term.term_signal.reason
         if self.status in (TestStatus.FAILED, TestStatus.ERROR):
             return self.steps[-1].termination_reason
         elif self.status == TestStatus.ABORTED:
@@ -174,12 +174,7 @@ class TestRun(TestHierarchyElement):
     @computed_field
     @property
     def termination_reason(self) -> str | None:
-        if self.status in (TestStatus.FAILED, TestStatus.ERROR):
-            return self.groups[-1].termination_reason
-        elif self.status == TestStatus.ABORTED:
-            return self.groups[-1].abort_reason
-        else:
-            return None
+        return self.groups[-1].termination_reason if self.groups else None
 
     @property
     def current_group(self) -> TestStepGroup | None:

@@ -87,6 +87,7 @@ class PlaywrightBrowser:
         self.context = await self._browser.new_context(
             viewport={"width": self._viewport_width, "height": self._viewport_height},
             record_video_dir=record_video_dir,
+            record_video_size={"width": self._viewport_width, "height": self._viewport_height} if record_video_dir else None,
         )
 
         if self._default_timeout is not None:
