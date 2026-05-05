@@ -11,6 +11,7 @@ export interface TestCaseDTO {
     status?: TestStatus;
     run_version?: string;
     created_at?: string;
+    last_run_duration?: string;
 }
 
 export interface TestCase {
@@ -26,8 +27,10 @@ export interface TestCase {
     steps?: (TestCaseStep | ActionStep)[];
     executionSteps?: TestStep[];
     status: TestStatus;
+    terminationReason?: string;
     runVersion?: string;
     createdAt?: string;
+    lastRunDuration?: string;
 }
 
 export interface TestCaseStep {

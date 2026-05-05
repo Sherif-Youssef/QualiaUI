@@ -7,8 +7,6 @@ interface ProjectTeamViewProps {
     members: any[];
     isLoading: boolean;
     canManageProject: boolean;
-    isSearchEmpty: boolean;
-    searchQuery: string;
     onInvite: () => void;
     onRemoveMember: (email: string) => void;
 }
@@ -17,8 +15,6 @@ export const ProjectTeamView: React.FC<ProjectTeamViewProps> = ({
     members,
     isLoading,
     canManageProject,
-    isSearchEmpty,
-    searchQuery,
     onInvite,
     onRemoveMember
 }) => {
@@ -50,11 +46,6 @@ export const ProjectTeamView: React.FC<ProjectTeamViewProps> = ({
                 canManageMembers={canManageProject}
                 onRemoveMember={onRemoveMember}
             />
-            {isSearchEmpty && (
-                <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
-                    <p className="text-gray-500 font-medium">No members found matching "{searchQuery}"</p>
-                </div>
-            )}
         </>
     );
 };

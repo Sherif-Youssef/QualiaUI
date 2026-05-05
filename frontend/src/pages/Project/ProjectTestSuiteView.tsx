@@ -1,7 +1,7 @@
 import React from 'react';
 import { TestSuite } from '@/types/test-suit';
 import { TestSuiteList } from './TestSuiteList';
-import { TestSuitEmptyState } from './TestSuitEmptyState';
+import { TestSuiteEmptyState } from './TestSuiteEmptyState';
 
 interface ProjectTestSuiteViewProps {
     suites: TestSuite[];
@@ -36,7 +36,7 @@ export const ProjectTestSuiteView: React.FC<ProjectTestSuiteViewProps> = ({
     }
 
     if (isTrulyEmpty) {
-        return <TestSuitEmptyState canManageSuites={canManageSuites} onCreate={onAddSuite} />;
+        return <TestSuiteEmptyState canManageSuites={canManageSuites} onCreate={onAddSuite} />;
     }
 
     return (

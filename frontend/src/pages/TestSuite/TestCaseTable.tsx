@@ -1,6 +1,6 @@
 import React from 'react';
-import { Pencil, Trash2, Circle, CheckCircle, XCircle, Loader2 } from 'lucide-react';
-import { TestCase, TestStatus } from '@/types/test-case';
+import { Pencil, Trash2 } from 'lucide-react';
+import { TestCase } from '@/types/test-case';
 
 interface TestCaseTableProps {
     testCases: TestCase[];
@@ -9,24 +9,6 @@ interface TestCaseTableProps {
     onDelete: (id: string, name: string, e: React.MouseEvent) => void;
     canManageCases: boolean;
 }
-
-const getStatusIcon = (status: TestStatus) => {
-    switch (status) {
-        case 'idle':
-            return <Circle className="w-5 h-5 text-gray-300" />;
-        case 'running':
-            return <Loader2 className="w-5 h-5 text-primary animate-spin" />;
-        case 'passed':
-        case 'success':
-        case 'executed':
-            return <CheckCircle className="w-5 h-5 text-success" />;
-        case 'failed':
-        case 'failure':
-            return <XCircle className="w-5 h-5 text-failure" />;
-        default:
-            return <Circle className="w-5 h-5 text-gray-200" />;
-    }
-};
 
 export const TestCaseTable: React.FC<TestCaseTableProps> = ({
     testCases,
@@ -40,8 +22,6 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
                 <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
                         <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Test Case Name</th>
-                        <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Execution Status</th>
-                        <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-center">Version</th>
                         <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
                     </tr>
                 </thead>
@@ -66,19 +46,6 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
                                         </p>
                                     )}
                                 </div>
-                            </td>
-                            <td className="px-6 py-5">
-                                <div className="flex items-center justify-center gap-3">
-                                    {getStatusIcon(testCase.status)}
-                                    <span className="text-xs text-gray-500 font-black uppercase tracking-tighter min-w-[70px]">
-                                        {testCase.status}
-                                    </span>
-                                </div>
-                            </td>
-                            <td className="px-6 py-5 text-center">
-                                <span className="px-3 py-1 bg-gray-100 text-gray-500 text-[10px] font-black uppercase tracking-wider rounded-full border border-gray-200 group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/20 transition-colors">
-                                    {testCase.runVersion || 'v1.0'}
-                                </span>
                             </td>
                             <td className="px-6 py-5 text-right">
                                 <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

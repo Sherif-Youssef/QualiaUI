@@ -1,20 +1,21 @@
 import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { TestSuiteLayout } from './TestSuiteLayout';
+import { TestSuiteHeader } from './TestSuiteHeader';
+import { TestCaseTable } from './TestCaseTable';
+import { RunHistoryTable } from '@/components/RunHistory/RunHistoryTable';
 import { SearchBar } from '@/components/SearchBar';
 import { Pagination } from '@/components/Pagination';
 import { AddTestCaseModal } from '@/components/Modal/AddTestCaseModal';
 import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
 import { ErrorMessage } from '@/components/GeneralComponents';
-import { TestSuiteLayout } from './TestSuiteLayout';
-import { TestSuiteHeader } from './TestSuiteHeader';
-import { TestCaseTable } from './TestCaseTable';
-import { RunHistoryTable } from '@/components/RunHistory/RunHistoryTable';
-import { Clock, LayoutGrid } from 'lucide-react';
 import { useTestSuite } from './hooks/useTestSuite';
+import { LayoutGrid, Clock } from 'lucide-react';
 
 export const TestSuitePage: React.FC = () => {
-    const navigate = useNavigate();
     const { projectId, suiteId } = useParams<{ projectId: string; suiteId: string }>();
+    const navigate = useNavigate();
+    const [selectedModel, setSelectedModel] = React.useState('gemini-1.5-pro');
 
     const {
         searchQuery, setSearchQuery,
@@ -25,8 +26,7 @@ export const TestSuitePage: React.FC = () => {
         testCases,
         history,
         activeView, setActiveView,
-        isLoading,
-        setError,
+        isLoading, setError,
         modalLoading,
         modalError, setModalError,
         canManageCases,
@@ -41,6 +41,9 @@ export const TestSuitePage: React.FC = () => {
         confirmDelete,
         handleEditClick,
         handleRunAll,
+        handleAbortSuite,
+        isRunningSuite,
+        isAborting,
         handleSaveTestCase
     } = useTestSuite({ projectId, suiteId });
 
@@ -49,8 +52,13 @@ export const TestSuitePage: React.FC = () => {
             error={pageError && <ErrorMessage message={pageError} onClose={() => setError(null)} />}
             header={
                 <TestSuiteHeader
-                    isRunningAll={isLoading && activeView === 'history'}
-                    onRunAll={handleRunAll}
+                    suiteName={testCases[0]?.suiteName}
+                    isRunningAll={isRunningSuite}
+                    isAborting={isAborting}
+                    onRunAll={() => handleRunAll(selectedModel)}
+                    onAbort={handleAbortSuite}
+                    selectedModel={selectedModel}
+                    onModelChange={setSelectedModel}
                     onAddTestCase={() => {
                         setEditingTestCase(null);
                         setModalError(null);

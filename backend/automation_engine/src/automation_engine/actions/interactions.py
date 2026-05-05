@@ -54,13 +54,14 @@ class Press(InteractionAction):
     key: str = Field(min_length=1, description='Keys to press separated by "+". Uses Playwright key names: "Enter", "Tab", "ArrowDown", "Control+a", etc.')
     target_id: Optional[int] = Field(default=None, description="Focus target. None = page-level.")
 
-
+# TODO: Support refresh, back, forward, etc. Also, add URL to rendered history for better context
 class Navigate(InteractionAction):
     """Go to a URL."""
     action_type: Literal[Interaction.NAVIGATE] = Field(default=Interaction.NAVIGATE, exclude=True)
 
     url: str = Field(description="Absolute or relative URL to navigate to.")
     wait_until: Literal["commit", "domcontentloaded", "load", "networkidle"] = "load"
+
 
 class DragDrop(InteractionAction):
     """Drag one element and drop it onto another."""

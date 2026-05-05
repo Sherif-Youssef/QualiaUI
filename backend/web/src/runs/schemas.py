@@ -54,6 +54,7 @@ class TestCaseRunRead(BaseModel):
     termination_reason: str | None = None
     testcase_id: int
     testsuite_run_id: int | None = None
+    name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -73,6 +74,7 @@ class TestSuiteRunRead(BaseModel):
     status: RunStatus
     testsuite_id: int
     project_run_id: int | None = None
+    name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -91,6 +93,7 @@ class ProjectRunRead(BaseModel):
     mode: RunMode
     status: RunStatus
     project_id: int
+    name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
