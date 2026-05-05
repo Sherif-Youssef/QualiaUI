@@ -10,8 +10,8 @@ class BrowserConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     headless: bool = False
-    viewport_width: int = 1280
-    viewport_height: int = 780
+    viewport_width: int = 1920
+    viewport_height: int = 1080
 
 
 class LLMConfig(BaseModel):
