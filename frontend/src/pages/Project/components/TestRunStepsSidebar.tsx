@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle, StopCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, XCircle, StopCircle, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { TestStepRun } from '@/types/run';
 import { ExpandableStepText } from '@/components/ExpandableStepText';
 
@@ -10,6 +10,7 @@ interface TestRunStepsSidebarProps {
     onShowDiagnostics?: (step: TestStepRun, e: React.MouseEvent) => void;
     terminationReason?: string | null;
     status?: string;
+    onBack?: () => void;
 }
 
 export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
@@ -18,7 +19,8 @@ export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
     selectedStepId,
     onSelectStep,
     terminationReason,
-    status
+    status,
+    onBack
 }) => {
     const getFullDescription = (llmAction: string | null): string | null => {
         if (!llmAction) return null;
@@ -35,6 +37,21 @@ export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
 
     return (
         <aside className="w-[400px] md:w-[450px] bg-white border-r border-gray-100 flex flex-col shadow-xl z-10">
+            {onBack && (
+                <div className="p-4 border-b border-gray-50 flex items-center bg-white">
+                    <button
+                        onClick={onBack}
+                        className="flex items-center gap-2 text-gray-400 hover:text-primary transition-all group/back"
+                    >
+                        <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover/back:border-primary group-hover/back:text-primary transition-colors">
+                            <ChevronLeft className="w-5 h-5" />
+                        </div>
+                        <span className="text-[11px] font-black uppercase tracking-[0.2em] leading-none">
+                            Back
+                        </span>
+                    </button>
+                </div>
+            )}
             <div className="p-6 border-b border-gray-100 bg-gray-50/50">
 
                 <div className="flex-1 min-w-0">

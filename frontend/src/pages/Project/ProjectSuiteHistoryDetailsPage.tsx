@@ -1,46 +1,86 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useRunStreaming } from '@/hooks/useRunStreaming';
 import { runService } from '@/services/runService';
 import { TestSuiteRun, TestCaseRun } from '@/types/run';
 import { parseUTCDate } from '@/utils/formatters';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
-import { CheckCircle2, XCircle, AlertCircle, ChevronLeft, ArrowRight, Clock, FileText, StopCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, ChevronLeft, ArrowRight, Clock, FileText, StopCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TopNav } from '@/components/TopNav';
+import { projectService } from '@/services/project/projectService';
+import { Project } from '@/types/project';
 
 export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
     const { projectId, runId, suiteRunId } = useParams<{ projectId: string; runId: string; suiteRunId: string }>();
     const navigate = useNavigate();
     const [suiteRun, setSuiteRun] = useState<(TestSuiteRun & { testcase_runs: TestCaseRun[] }) | null>(null);
+    const [project, setProject] = useState<Project | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isAborting, setIsAborting] = useState(false);
 
-    useEffect(() => {
-        const fetchSuiteDetails = async () => {
-            if (!suiteRunId) return;
-            setIsLoading(true);
-            setError(null);
-            try {
-                const id = parseInt(suiteRunId);
-                const data = await runService.getTestSuiteRunDetails(id);
-                setSuiteRun(data);
-            } catch (err: any) {
-                console.error('Suite history details error:', err);
-                setError(err.response?.data?.detail || 'Failed to load suite run details.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        fetchSuiteDetails();
+    const fetchSuiteDetails = useCallback(async () => {
+        if (!suiteRunId) return;
+        try {
+            const id = parseInt(suiteRunId);
+            const data = await runService.getTestSuiteRunDetails(id);
+            setSuiteRun(data);
+        } catch (err: any) {
+            console.error('Suite history details error:', err);
+            setError(err.response?.data?.detail || 'Failed to load suite run details.');
+        } finally {
+            setIsLoading(false);
+        }
     }, [suiteRunId]);
 
+    useEffect(() => {
+        const loadData = async () => {
+            setIsLoading(true);
+            await Promise.all([
+                fetchSuiteDetails(),
+                projectId ? projectService.getProjectById(projectId).then(setProject).catch(console.error) : Promise.resolve()
+            ]);
+            setIsLoading(false);
+        };
+        loadData();
+    }, [suiteRunId, projectId]);
+
+    const handleStatusChange = useCallback(() => {
+        setTimeout(() => {
+            fetchSuiteDetails();
+        }, 500);
+    }, [fetchSuiteDetails]);
+
+    useRunStreaming({
+        scope: runId === 'standalone' ? 'TESTSUITE' : 'PROJECT',
+        runId: runId === 'standalone' ? suiteRunId! : runId!,
+        onStatusChange: handleStatusChange,
+        onStepUpdate: handleStatusChange
+    });
+
+    const handleAbortSuite = async () => {
+        if (!suiteRunId) return;
+        setIsAborting(true);
+        try {
+            await runService.abortTestSuiteRun(parseInt(suiteRunId));
+        } catch (err: any) {
+            console.error('Abort suite error:', err);
+            setError(err.response?.data?.detail || 'Failed to abort suite run.');
+            setIsAborting(false);
+        }
+    };
+
     const getStatusIcon = (status: string) => {
-        switch (status) {
+        const s = status.toUpperCase();
+        switch (s) {
             case 'PASSED':
-            case 'EXECUTED': return <CheckCircle2 className="w-5 h-5 text-success" />;
-            case 'FAILED': return <XCircle className="w-5 h-5 text-failure" />;
-            default: return <AlertCircle className="w-5 h-5 text-warning" />;
+            case 'EXECUTED': return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
+            case 'FAILED': return <XCircle className="w-5 h-5 text-rose-500" />;
+            case 'ERROR': return <AlertCircle className="w-5 h-5 text-amber-500" />;
+            case 'RUNNING': return <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />;
+            default: return <Clock className="w-5 h-5 text-gray-400" />;
         }
     };
 
@@ -59,29 +99,27 @@ export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-gray-50 text-left font-sans">
+            <TopNav />
             <main className="max-w-7xl mx-auto px-4 md:px-8 py-12">
                 <div className="space-y-8">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-6">
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                    if (runId === 'standalone' && suiteRun?.testsuite_id) {
-                                        navigate(`/project/${projectId}/suite/${suiteRun.testsuite_id}`);
-                                    } else {
-                                        navigate(`/project/${projectId}/history/${runId}`);
-                                    }
-                                }}
-                                className="h-12 w-12 rounded-[1.25rem] bg-white shadow-sm border border-gray-100 hover:bg-gray-50 transition-all hover:scale-105 active:scale-95"
+                            <button
+                                onClick={() => navigate(-1)}
+                                className="flex items-center gap-2 text-gray-400 hover:text-primary transition-all group/back"
                             >
-                                <ChevronLeft className="w-6 h-6 text-gray-600" />
-                            </Button>
+                                <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover/back:border-primary group-hover/back:text-primary transition-colors">
+                                    <ChevronLeft className="w-5 h-5" />
+                                </div>
+                                <span className="text-[11px] font-black uppercase tracking-[0.2em] leading-none">
+                                    Back
+                                </span>
+                            </button>
                             <div>
                                 <h1 className="text-3xl font-black text-gray-900 tracking-tight capitalize truncate max-w-2xl flex items-center gap-3">
                                     <div className="truncate">
-                                        {runId !== 'standalone' && (
-                                            <span className="text-primary/40 mr-2">Run #{runId} /</span>
+                                        {project && (
+                                            <span className="text-primary/40 mr-2">{project.name} /</span>
                                         )}
                                         {suiteRun.name || 'Test Suite Run'}
                                     </div>
@@ -95,19 +133,19 @@ export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
                                         const isQueued = s === 'QUEUED' || s === 'PENDING';
 
                                         const colors = isSuccess ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                                       isFailure ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                                       isAborted ? 'bg-slate-100 text-slate-600 border-slate-200' :
-                                                       isError ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                       isRunning ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                       'bg-gray-50 text-gray-500 border-gray-100';
+                                            isFailure ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                                isAborted ? 'bg-slate-100 text-slate-600 border-slate-200' :
+                                                    isError ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                                        isRunning ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                            'bg-gray-50 text-gray-500 border-gray-100';
 
                                         return (
                                             <div className={`shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm ${colors} text-[10px] normal-case tracking-wider`}>
                                                 {isSuccess && <CheckCircle2 className="w-4 h-4" />}
                                                 {isFailure && <XCircle className="w-4 h-4" />}
                                                 {isAborted && <StopCircle className="w-4 h-4" />}
-                                                {isError && <AlertTriangle className="w-4 h-4" />}
-                                                {isRunning && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />}
+                                                {isError && <AlertCircle className="w-4 h-4" />}
+                                                {isRunning && <Loader2 className="w-4 h-4 animate-spin" />}
                                                 {isQueued && <Clock className="w-3.5 h-3.5" />}
                                                 <span className="font-black uppercase">
                                                     {suiteRun.status}
@@ -124,9 +162,18 @@ export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
+                        {suiteRun.status?.toUpperCase() === 'RUNNING' && (
+                            <Button
+                                onClick={handleAbortSuite}
+                                disabled={isAborting}
+                                variant="destructive"
+                                className="h-11 px-6 rounded-xl font-bold shadow-lg shadow-red-200 flex items-center gap-2 transition-all active:scale-95"
+                            >
+                                <StopCircle className="w-5 h-5" />
+                                {isAborting ? 'Aborting...' : 'Abort Run'}
+                            </Button>
+                        )}
                     </div>
-
-                    {/* Cases Table - Projects Page Style */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between px-2">
                             <div className="flex items-center gap-3">
@@ -162,7 +209,9 @@ export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
                                     {suiteRun.testcase_runs.map((caseRun) => (
                                         <tr
                                             key={caseRun.id}
-                                            onClick={() => navigate(`/project/${projectId}/history/${runId}/suite/${suiteRunId}/case/${caseRun.id}`)}
+                                            onClick={() => navigate(`/project/${projectId}/suite/${suiteRun?.testsuite_id}/case/${caseRun.testcase_id}/manager`, {
+                                                state: { runId: suiteRun?.id, scope: 'TESTSUITE' }
+                                            })}
                                             className="hover:bg-gray-50/50 cursor-pointer transition-all group"
                                         >
                                             <td className="px-8 py-6">

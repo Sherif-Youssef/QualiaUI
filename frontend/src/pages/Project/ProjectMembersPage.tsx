@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ProjectLayout } from './ProjectLayout';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, UserPlus, Users } from 'lucide-react';
+import { ChevronLeft, UserPlus, Users } from 'lucide-react';
 import { projectService } from '@/services/project/projectService';
 import { ProjectMembers } from './ProjectMembers';
 import { AddMemberModal } from '@/components/Modal/AddMemberModal';
@@ -13,6 +13,7 @@ import { SearchBar } from '@/components/SearchBar';
 
 export const ProjectMembersPage: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
+    const navigate = useNavigate();
 
     const [projectMembers, setProjectMembers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -99,15 +100,17 @@ export const ProjectMembersPage: React.FC = () => {
         <ProjectLayout
             header={
                 <div className="flex flex-col gap-6">
-                    <Link
-                        to={`/project/${projectId}`}
-                        className="flex items-center gap-2 text-gray-500 hover:text-primary transition-all group w-fit"
+                    <button
+                        onClick={() => navigate(-1)}
+                        className="flex items-center gap-2 text-gray-400 hover:text-primary transition-all group/back w-fit"
                     >
-                        <div className="p-2 rounded-xl group-hover:bg-primary/5 transition-colors">
-                            <ArrowLeft className="w-4 h-4" />
+                        <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover/back:border-primary group-hover/back:text-primary transition-colors">
+                            <ChevronLeft className="w-5 h-5" />
                         </div>
-                        <span className="text-sm font-black uppercase tracking-widest leading-none">Back to Workspace</span>
-                    </Link>
+                        <span className="text-[11px] font-black uppercase tracking-[0.2em] leading-none">
+                            Back
+                        </span>
+                    </button>
 
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">

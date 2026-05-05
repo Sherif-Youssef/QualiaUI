@@ -5,6 +5,8 @@ import { TestCase } from '@/types/test-case';
 import { TestSuiteRun } from '@/types/run';
 import { useProjectPermissions } from '@/hooks/useProjectPermissions';
 import { useNavigate } from 'react-router-dom';
+import { useRunStreaming } from '@/hooks/useRunStreaming';
+import { parseUTCDate } from '@/utils/formatters';
 
 interface UseTestSuiteProps {
     projectId?: string;
@@ -126,9 +128,7 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
         try {
             const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL', model);
             setActiveRunId(run.run_id);
-            navigate(`/project/${projectId}/suite/${suiteId}/manager`, {
-                state: { runId: run.run_id, scope: 'TESTSUITE' }
-            });
+            navigate(`/project/${projectId}/suite/${suiteId}/run/${run.run_id}`);
         } catch (err: any) {
             setError(err.response?.data?.detail || 'Failed to start test run.');
             setIsRunningSuite(false);
@@ -147,6 +147,48 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
             setIsAborting(false);
         }
     };
+
+    const handleStatusChange = useCallback((event: any) => {
+        if (!event || event.element !== 'TESTCASE') {
+            if (event?.element === 'TESTSUITE' && ['PASSED', 'FAILED', 'ABORTED', 'ERROR'].includes(event.status)) {
+                setIsRunningSuite(false);
+                setIsAborting(false);
+                setActiveRunId(null);
+                fetchData();
+            }
+            return;
+        }
+
+        setTestCases(prev => prev.map(tc => {
+            if (tc.id !== String(event.id)) return tc;
+            
+            let duration = tc.lastRunDuration;
+            if (event.started_at && event.finished_at) {
+                try {
+                    const start = parseUTCDate(event.started_at)?.getTime() || 0;
+                    const end = parseUTCDate(event.finished_at)?.getTime() || 0;
+                    if (start > 0 && end > 0) {
+                        const diff = Math.floor((end - start) / 1000);
+                        duration = diff < 60 ? `${diff}s` : `${Math.floor(diff / 60)}m ${diff % 60}s`;
+                    }
+                } catch (e) {
+                    console.error("Error calculating duration:", e);
+                }
+            }
+
+            return {
+                ...tc,
+                status: (event.status?.toLowerCase() || tc.status) as any,
+                lastRunDuration: duration
+            };
+        }));
+    }, [fetchData]);
+
+    useRunStreaming({
+        scope: 'TESTSUITE',
+        runId: activeRunId ? String(activeRunId) : '',
+        onStatusChange: handleStatusChange
+    });
 
     const handleSaveTestCase = async (data: any) => {
         if (!suiteId || !projectId) return;

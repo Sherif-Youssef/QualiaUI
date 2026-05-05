@@ -17,8 +17,11 @@ import {
   ProjectHistoryPage,
   ProjectHistoryDetailsPage,
   ProjectSuiteHistoryDetailsPage,
-  ProjectCaseHistoryDetailsPage
+  ProjectCaseHistoryDetailsPage,
+  TestSuiteRunDashboardPage
 } from './pages/PagesExporter';
+
+import { TooltipProvider } from './components/ui/tooltip';
 
 function App() {
   const [mustChangePassword, setMustChangePassword] = useState(false);
@@ -41,7 +44,8 @@ function App() {
   }, []);
 
   return (
-    <Router>
+    <TooltipProvider>
+      <Router>
       {mustChangePassword && (
         <UpdatePasswordModal
           isForced={true}
@@ -65,6 +69,7 @@ function App() {
           <Route path="/project/:projectId/history/:runId/suite/:suiteRunId" element={<ProjectSuiteHistoryDetailsPage />} />
           <Route path="/project/:projectId/history/:runId/suite/:suiteRunId/case/:caseRunId" element={<ProjectCaseHistoryDetailsPage />} />
           <Route path="/project/:projectId/suite/:suiteId" element={<TestSuitePage />} />
+          <Route path="/project/:projectId/suite/:suiteId/run/:runId" element={<TestSuiteRunDashboardPage />} />
           <Route path="/project/:projectId/suite/:suiteId/case/:caseId" element={<TestCaseDetailsPage />} />
           <Route path="/project/:projectId/suite/:suiteId/manager" element={<TestSuiteManagerPage />} />
           <Route path="/project/:projectId/manager" element={<TestSuiteManagerPage />} />
@@ -74,9 +79,9 @@ function App() {
         </Route>
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-    </Router>
+      </Router>
+    </TooltipProvider>
   );
 }
 
 export default App;
-

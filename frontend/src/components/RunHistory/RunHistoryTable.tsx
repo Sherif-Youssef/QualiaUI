@@ -1,4 +1,4 @@
-import { CheckCircle, XCircle, Clock, Calendar, Loader2, StopCircle, AlertTriangle } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Calendar, Loader2, StopCircle, AlertCircle } from 'lucide-react';
 import { ProjectRun, TestSuiteRun, TestCaseRun } from '@/types/run';
 import { parseUTCDate } from '@/utils/formatters';
 
@@ -65,7 +65,7 @@ export const RunHistoryTable: React.FC<RunHistoryTableProps> = ({ runs, isLoadin
                     bg: 'bg-amber-50',
                     text: 'text-amber-700',
                     border: 'border-amber-100',
-                    icon: <AlertTriangle className="w-4 h-4" />
+                    icon: <AlertCircle className="w-4 h-4" />
                 };
             case 'ABORTED':
                 return {

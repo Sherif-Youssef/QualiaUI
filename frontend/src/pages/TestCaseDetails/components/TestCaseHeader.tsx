@@ -1,7 +1,7 @@
-import React from 'react';
-import { ArrowLeft, Play, Pencil } from 'lucide-react';
+import { ArrowLeft, Play, Pencil, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ModelSelector } from '@/components/ModelSelector';
+import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 interface TestCaseHeaderProps {
     title: string;
@@ -11,6 +11,7 @@ interface TestCaseHeaderProps {
     onModelChange?: (model: string) => void;
     onBack: () => void;
     onEdit: () => void;
+    onViewPrompt: () => void;
     onRun: () => void;
     onAbort?: () => void;
     status?: string | null;
@@ -24,6 +25,7 @@ export const TestCaseHeader: React.FC<TestCaseHeaderProps> = ({
     onModelChange,
     onBack,
     onEdit,
+    onViewPrompt,
     onRun,
     onAbort,
     status
@@ -43,18 +45,16 @@ export const TestCaseHeader: React.FC<TestCaseHeaderProps> = ({
                             {title}
                         </h1>
                         {status && (
-                            <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm border ${
-                                status === 'passed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                status === 'failed' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                status === 'error' ? 'bg-red-50 text-red-600 border-red-100' :
-                                'bg-gray-50 text-gray-600 border-gray-100'
-                            }`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${
-                                    status === 'passed' ? 'bg-emerald-500' :
-                                    status === 'failed' ? 'bg-rose-500' :
-                                    status === 'error' ? 'bg-red-500' :
-                                    'bg-gray-400'
-                                }`} />
+                            <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm border ${status === 'passed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                    status === 'failed' ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                        status === 'error' ? 'bg-red-50 text-red-600 border-red-100' :
+                                            'bg-gray-50 text-gray-600 border-gray-100'
+                                }`}>
+                                <div className={`w-1.5 h-1.5 rounded-full ${status === 'passed' ? 'bg-emerald-500' :
+                                        status === 'failed' ? 'bg-rose-500' :
+                                            status === 'error' ? 'bg-red-500' :
+                                                'bg-gray-400'
+                                    }`} />
                                 {status}
                             </div>
                         )}
@@ -63,12 +63,28 @@ export const TestCaseHeader: React.FC<TestCaseHeaderProps> = ({
             </div>
             <div className="flex items-center gap-3">
                 {selectedModel && onModelChange && (
-                    <ModelSelector 
-                        value={selectedModel} 
-                        onChange={onModelChange} 
-                        disabled={isRunning || !!isAborting} 
+                    <ModelSelector
+                        value={selectedModel}
+                        onChange={onModelChange}
+                        disabled={isRunning || !!isAborting}
                     />
                 )}
+
+
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            onClick={onViewPrompt}
+                            variant="outline"
+                            className="h-11 px-4 font-bold text-gray-400 hover:bg-white hover:text-primary hover:border-primary rounded-xl transition-all"
+                        >
+                            <FileText className="w-4 h-4" />
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="bg-primary text-white font-bold py-2 px-4 rounded-xl shadow-xl border-none">
+                        <p>View Prompt Instructions</p>
+                    </TooltipContent>
+                </Tooltip>
 
                 <Button
                     onClick={onEdit}

@@ -28,6 +28,7 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
     const [activeRunId, setActiveRunId] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [selectedModel, setSelectedModel] = useState('gemini-1.5-pro');
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -160,9 +161,7 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
         try {
             const run = await runService.startProjectRun(parseInt(projectId), 'NATURAL', model);
             setActiveRunId(run.run_id);
-            navigate(`/project/${projectId}/manager`, {
-                state: { runId: run.run_id, scope: 'PROJECT' }
-            });
+            navigate(`/project/${projectId}/history/${run.run_id}`);
         } catch (err: any) {
             setIsRunningProject(false);
             setError(err.response?.data?.detail || 'Failed to start project run.');
@@ -211,5 +210,7 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
         handleAbortProject,
         isRunningProject,
         isAbortingProject,
+        selectedModel,
+        setSelectedModel,
     };
 };

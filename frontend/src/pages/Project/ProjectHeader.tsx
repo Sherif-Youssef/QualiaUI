@@ -10,7 +10,6 @@ interface ProjectHeaderProps {
     onAbort?: () => void;
     isRunning?: boolean;
     isAborting?: boolean;
-    canManageSuites: boolean;
     selectedModel?: string;
     onModelChange?: (model: string) => void;
 }
@@ -22,7 +21,6 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     onAbort,
     isRunning,
     isAborting,
-    canManageSuites,
     selectedModel,
     onModelChange
 }) => {
@@ -43,10 +41,10 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
 
             <div className="flex items-center gap-3">
                 {selectedModel && onModelChange && (
-                    <ModelSelector 
-                        value={selectedModel} 
-                        onChange={onModelChange} 
-                        disabled={isRunning} 
+                    <ModelSelector
+                        value={selectedModel}
+                        onChange={onModelChange}
+                        disabled={isRunning}
                     />
                 )}
 
@@ -70,15 +68,13 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                         {isAborting ? 'Aborting...' : 'Abort'}
                     </Button>
                 )}
-                {canManageSuites && (
-                    <Button
-                        onClick={onAddSuite}
-                        className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/10 transition-all rounded-xl h-11 px-6 font-bold flex items-center gap-2"
-                    >
-                        <Plus className="w-5 h-5" strokeWidth={3} />
-                        Add Test Suite
-                    </Button>
-                )}
+                <Button
+                    onClick={onAddSuite}
+                    className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/10 transition-all rounded-xl h-11 px-6 font-bold flex items-center gap-2"
+                >
+                    <Plus className="w-5 h-5" strokeWidth={3} />
+                    Add Test Suite
+                </Button>
             </div>
         </div>
     );
