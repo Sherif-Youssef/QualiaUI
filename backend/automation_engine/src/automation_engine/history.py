@@ -57,7 +57,6 @@ class TestStep(TestHierarchyElement):
     error_message: Optional[str] = Field(default=None, description="Error message if the action failed.")
     snapshot_before: Optional[StateSnapshot] = Field(default=None, description="Browser state before executing the step.")
     snapshot_after: Optional[StateSnapshot] = Field(default=None, description="Browser state after executing the step.")
-    abort_reason: Optional[str] = Field(default=None)
 
     def set_exe(self, exe_action: ExecAction) -> None:
         self.executable = exe_action
@@ -76,6 +75,14 @@ class TestStep(TestHierarchyElement):
     @property
     def is_success(self) -> bool:
         return self.status == TestStatus.PASSED
+    
+    @computed_field
+    @property
+    def termination_reason(self) -> str | None:
+        if self.status in (TestStatus.FAILED, TestStatus.ERROR):
+            return self.error_message
+        else:
+            return None
 
 
 class TestTermination(BaseModel):
@@ -123,6 +130,16 @@ class TestStepGroup(TestHierarchyElement):
         else:
             return TestStatus.PASSED
 
+    @computed_field
+    @property
+    def termination_reason(self) -> str | None:
+        if self.status in (TestStatus.FAILED, TestStatus.ERROR):
+            return self.steps[-1].termination_reason
+        elif self.status == TestStatus.ABORTED:
+            return self.abort_reason
+        else:
+            return None
+
     @property
     def failed_steps(self) -> list[TestStep]:
         return [s for s in self.steps if s.status in (TestStatus.FAILED, TestStatus.ERROR)]
@@ -153,6 +170,16 @@ class TestRun(TestHierarchyElement):
                 return nxt
         
         return TestStatus.PASSED
+
+    @computed_field
+    @property
+    def termination_reason(self) -> str | None:
+        if self.status in (TestStatus.FAILED, TestStatus.ERROR):
+            return self.groups[-1].termination_reason
+        elif self.status == TestStatus.ABORTED:
+            return self.groups[-1].abort_reason
+        else:
+            return None
 
     @property
     def current_group(self) -> TestStepGroup | None:

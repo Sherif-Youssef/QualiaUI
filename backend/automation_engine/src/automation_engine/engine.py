@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 from typing import AsyncGenerator, Any
+from pathlib import Path
 
 from automation_engine.compilation import ExecAction, ValidateExec
 from automation_engine.compilation.variables import Variable, VariableStore
@@ -66,10 +67,11 @@ class TestingEngine:
     def launch(
         self,
         url: str,
-        variables: list[Variable] | None = None
+        variables: list[Variable] | None = None,
+        record_video_dir: str | Path | None = None,
     ) -> TestingSession:
         session_variables = (variables or []) + self._variables
-        return TestingSession(self, url=url, variables=session_variables)
+        return TestingSession(self, url=url, variables=session_variables, record_video_dir=record_video_dir)
 
 
 class TestingSession:
@@ -82,6 +84,7 @@ class TestingSession:
         engine: TestingEngine,
         url: str,
         variables: list[Variable] | None = None,
+        record_video_dir: str | Path | None = None,
     ) -> None:
         self._engine = engine
         self._url = url
@@ -89,6 +92,7 @@ class TestingSession:
         self._test_run: TestRun | None = None
         self._browser: PlaywrightBrowser | None = None
         self._planning_agent: PlanningAgent | None = None
+        self._record_video_dir = record_video_dir
 
         self._exec_pipeline = IterationPipeline(
             steps=[
@@ -176,6 +180,13 @@ class TestingSession:
         self._test_run.finalize()
         logger.info("Finalized run")
         return self._test_run
+
+    async def get_video_path(self) -> Path | None:
+        if not self._record_video_dir:
+            raise ValueError("Video recording not enabled for this session")
+        if not self._test_run.is_finalized:
+            raise ValueError("Test run must be finalized to get video path")
+        return await self._browser.page.video.path() if self._browser and self._browser.page.video else None  
 
     def finalize_group(self) -> TestStepGroup:
         if (
