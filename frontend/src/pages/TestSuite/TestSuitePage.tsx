@@ -1,178 +1,70 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { TestSuiteLayout } from './TestSuiteLayout';
+import { TestSuiteHeader } from './TestSuiteHeader';
+import { TestCaseTable } from './TestCaseTable';
+import { RunHistoryTable } from '@/components/RunHistory/RunHistoryTable';
 import { SearchBar } from '@/components/SearchBar';
 import { Pagination } from '@/components/Pagination';
 import { AddTestCaseModal } from '@/components/Modal/AddTestCaseModal';
 import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
-import { TestCase } from '@/types/test-case';
-import { testCaseService } from '@/services/testCase/testCaseService';
-import { useProjectPermissions } from '@/hooks/useProjectPermissions';
 import { ErrorMessage } from '@/components/GeneralComponents';
-import { TestSuiteLayout } from './TestSuiteLayout';
-import { TestSuiteHeader } from './TestSuiteHeader';
-import { TestCaseTable } from './TestCaseTable';
-import { runService, TestSuiteRun } from '@/services/runService';
-import { RunHistoryTable } from '@/components/RunHistory/RunHistoryTable';
-import { Clock, LayoutGrid } from 'lucide-react';
+import { useTestSuite } from './hooks/useTestSuite';
+import { LayoutGrid, Clock } from 'lucide-react';
 
 export const TestSuitePage: React.FC = () => {
-    const navigate = useNavigate();
     const { projectId, suiteId } = useParams<{ projectId: string; suiteId: string }>();
-    const [searchQuery, setSearchQuery] = useState('');
-    const [currentPage, setCurrentPage] = useState(1);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingTestCase, setEditingTestCase] = useState<TestCase | null>(null);
-    const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
-    const [testCases, setTestCases] = useState<TestCase[]>([]);
-    const [history, setHistory] = useState<TestSuiteRun[]>([]);
-    const [activeView, setActiveView] = useState<'cases' | 'history'>('cases');
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [modalLoading, setModalLoading] = useState(false);
-    const [modalError, setModalError] = useState<string | null>(null);
-    const { canManageCases, isLoading: permissionsLoading, error: permissionsError } = useProjectPermissions(projectId);
+    const navigate = useNavigate();
+    const [selectedModel, setSelectedModel] = React.useState('gemini-1.5-pro');
 
-    const [totalItems, setTotalItems] = useState(0);
-    const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
-
-    const itemsPerPage = 6;
-
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearch(searchQuery);
-            setCurrentPage(1);
-        }, 500);
-        return () => clearTimeout(timer);
-    }, [searchQuery]);
-
-    const fetchData = React.useCallback(async () => {
-        if (!suiteId || !projectId) return;
-        setIsLoading(true);
-        setError(null);
-        try {
-            const offset = (currentPage - 1) * itemsPerPage;
-            
-            if (activeView === 'cases') {
-                const result = await testCaseService.getTestCases(projectId, suiteId, offset, itemsPerPage, debouncedSearch);
-
-                if (result.testCases.length === 0 && currentPage > 1 && result.total > 0) {
-                    setCurrentPage(prev => {
-                        const next = prev - 1;
-                        return next > 0 ? next : 1;
-                    });
-                    return;
-                }
-
-                setTestCases(result.testCases);
-                setTotalItems(result.total);
-            } else {
-                const historyResult = await runService.getTestSuiteRuns(projectId, suiteId, offset, itemsPerPage);
-                
-                if (historyResult.runs.length === 0 && currentPage > 1 && historyResult.total > 0) {
-                    setCurrentPage(prev => prev - 1);
-                    return;
-                }
-
-                setHistory(historyResult.runs);
-                setTotalItems(historyResult.total);
-            }
-        } catch (err: any) {
-            setError(err.response?.data?.detail || `Failed to load ${activeView === 'cases' ? 'test cases' : 'history'}.`);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [suiteId, projectId, currentPage, debouncedSearch, activeView]);
-
-    useEffect(() => {
-        fetchData();
-    }, [fetchData]);
-
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
-
-    const isPageLoading = isLoading || permissionsLoading;
-    const pageError = error || permissionsError;
-
-    const handleDeleteClick = (id: string, name: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setModalError(null);
-        setDeleteConfirmation({ id, name });
-    };
-
-    const confirmDelete = async () => {
-        if (!deleteConfirmation) return;
-
-        setModalLoading(true);
-        setModalError(null);
-        try {
-            await testCaseService.deleteTestCase(projectId!, suiteId!, deleteConfirmation.id);
-            await fetchData();
-            setDeleteConfirmation(null);
-        } catch (err: any) {
-            setModalError(err.response?.data?.detail || 'Failed to delete test case.');
-        } finally {
-            setModalLoading(false);
-        }
-    };
-
-    const handleEditClick = (testCase: TestCase, e: React.MouseEvent) => {
-        e.stopPropagation();
-        setEditingTestCase(testCase);
-        setModalError(null);
-        setIsModalOpen(true);
-    };
-
-    const handleRunAll = async () => {
-        if (!projectId || !suiteId) return;
-        
-        setIsLoading(true);
-        setError(null);
-        try {
-            await runService.startTestSuiteRun(parseInt(suiteId), 'EXECUTABLE');
-            navigate(`/project/${projectId}/suite/${suiteId}/manager`);
-        } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to start test run.');
-            setIsLoading(false);
-        }
-    };
-
-    const handleSaveTestCase = async (data: any) => {
-        if (!suiteId) return;
-
-        setModalLoading(true);
-        setModalError(null);
-        try {
-            if (editingTestCase) {
-                await testCaseService.updateTestCase(projectId!, suiteId!, editingTestCase.id, data);
-            } else {
-                await testCaseService.createTestCase(projectId!, suiteId!, data);
-                setCurrentPage(1);
-            }
-            await fetchData();
-            setIsModalOpen(false);
-            setEditingTestCase(null);
-        } catch (err: any) {
-            setModalError(err.response?.data?.detail || 'Failed to save test case.');
-        } finally {
-            setModalLoading(false);
-        }
-    };
-
-    const isTrulyEmpty = totalItems === 0 && debouncedSearch === '' && !isLoading;
-    const isSearchEmpty = testCases.length === 0 && debouncedSearch !== '' && !isLoading;
+    const {
+        searchQuery, setSearchQuery,
+        currentPage, setCurrentPage,
+        isModalOpen, setIsModalOpen,
+        editingTestCase, setEditingTestCase,
+        deleteConfirmation, setDeleteConfirmation,
+        testCases,
+        history,
+        activeView, setActiveView,
+        isLoading, setError,
+        modalLoading,
+        modalError, setModalError,
+        canManageCases,
+        totalItems,
+        itemsPerPage,
+        totalPages,
+        isPageLoading,
+        pageError,
+        isTrulyEmpty,
+        isSearchEmpty,
+        handleDeleteClick,
+        confirmDelete,
+        handleEditClick,
+        handleRunAll,
+        handleAbortSuite,
+        isRunningSuite,
+        isAborting,
+        handleSaveTestCase
+    } = useTestSuite({ projectId, suiteId });
 
     return (
         <TestSuiteLayout
-            error={pageError && <ErrorMessage message={pageError} />}
+            error={pageError && <ErrorMessage message={pageError} onClose={() => setError(null)} />}
             header={
                 <TestSuiteHeader
-                    isRunningAll={isLoading && activeView === 'history'}
-                    onRunAll={handleRunAll}
+                    suiteName={testCases[0]?.suiteName}
+                    isRunningAll={isRunningSuite}
+                    isAborting={isAborting}
+                    onRunAll={() => handleRunAll(selectedModel)}
+                    onAbort={handleAbortSuite}
+                    selectedModel={selectedModel}
+                    onModelChange={setSelectedModel}
                     onAddTestCase={() => {
                         setEditingTestCase(null);
                         setModalError(null);
                         setIsModalOpen(true);
                     }}
-                    canManageCases={canManageCases}
+                    onBack={() => navigate(`/project/${projectId}`)}
                 />
             }
             searchBar={(
@@ -180,9 +72,8 @@ export const TestSuitePage: React.FC = () => {
                     <div className="flex border-b border-gray-200">
                         <button
                             onClick={() => { setActiveView('cases'); setCurrentPage(1); }}
-                            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors relative ${
-                                activeView === 'cases' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
-                            }`}
+                            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors relative ${activeView === 'cases' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
+                                }`}
                         >
                             <LayoutGrid className="w-4 h-4" />
                             Test Cases
@@ -190,9 +81,8 @@ export const TestSuitePage: React.FC = () => {
                         </button>
                         <button
                             onClick={() => { setActiveView('history'); setCurrentPage(1); }}
-                            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors relative ${
-                                activeView === 'history' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
-                            }`}
+                            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors relative ${activeView === 'history' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
+                                }`}
                         >
                             <Clock className="w-4 h-4" />
                             Runs History
@@ -217,10 +107,10 @@ export const TestSuitePage: React.FC = () => {
                         </div>
                     ) : activeView === 'cases' ? (
                         isTrulyEmpty ? (
-                             <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
-                                 <p className="text-gray-500 font-medium text-lg mb-2">Workspace is currently empty</p>
-                                 <p className="text-gray-400">Add your first test case to get started.</p>
-                             </div>
+                            <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
+                                <p className="text-gray-500 font-medium text-lg mb-2">Workspace is currently empty</p>
+                                <p className="text-gray-400">Add your first test case to get started.</p>
+                            </div>
                         ) : (
                             <>
                                 <TestCaseTable
@@ -238,9 +128,9 @@ export const TestSuitePage: React.FC = () => {
                             </>
                         )
                     ) : (
-                        <RunHistoryTable 
-                            runs={history} 
-                            isLoading={isLoading} 
+                        <RunHistoryTable
+                            runs={history}
+                            isLoading={isLoading}
                             onViewDetails={(run) => {
                                 const rId = run.project_run_id || 'standalone';
                                 navigate(`/project/${projectId}/history/${rId}/suite/${run.id}`);

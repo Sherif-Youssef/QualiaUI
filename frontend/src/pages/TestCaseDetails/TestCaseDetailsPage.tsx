@@ -1,66 +1,65 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { testCaseService } from '@/services/testCase/testCaseService';
 import { ErrorMessage } from '@/components/GeneralComponents';
-import { TestCase } from '@/types/test-case';
-import { runService, TestCaseRun } from '@/services/runService';
-import { ListChecks } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Pagination } from '@/components/Pagination';
+import { AddTestCaseModal } from '@/components/Modal/AddTestCaseModal';
 
 import { TestRunHistoryTable } from './components/TestRunHistoryTable';
 import { TestCaseDetailsLayout } from './TestCaseDetailsLayout';
-import { StepsSidebar } from './StepsSidebar';
 import { ScreenshotViewer } from './ScreenshotViewer';
+import { useTestCaseDetails } from './hooks/useTestCaseDetails';
+import { TestCaseHeader } from './components/TestCaseHeader';
+import { TestCaseTabs } from './components/TestCaseTabs';
+import { ExecutionStepsSidebar } from './components/ExecutionStepsSidebar';
+import { ViewPromptModal } from '@/components/Modal/ViewPromptModal';
 
 export const TestCaseDetailsPage: React.FC = () => {
     const { projectId, suiteId, caseId } = useParams<{ projectId: string; suiteId: string; caseId: string }>();
     const navigate = useNavigate();
 
-    const [testCase, setTestCase] = useState<TestCase | null>(null);
-    const [history, setHistory] = useState<TestCaseRun[]>([]);
-    const [activeView, setActiveView] = useState<'steps' | 'history'>('steps');
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [selectedStepId, setSelectedStepId] = useState<string>('');
+    const {
+        testCase,
+        history,
+        activeView,
+        setActiveView,
+        isLoading,
+        error,
+        selectedStepId,
+        setSelectedStepId,
+        isRunning,
+        activeSteps,
+        currentScreenshot,
+        isAborting,
+        page,
+        setPage,
+        limit,
+        totalRuns,
+        runTestCase,
+        abortTestCase,
+        updateTestCase,
+        terminationReason,
+        finalStatus
+    } = useTestCaseDetails({ projectId, suiteId, caseId });
+
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isViewPromptModalOpen, setIsViewPromptModalOpen] = useState(false);
+    const [selectedModel, setSelectedModel] = useState('gemini-1.5-pro');
+    const [isSaving, setIsSaving] = useState(false);
+    const [modalError, setModalError] = useState<string | null>(null);
     const [zoomLevel, setZoomLevel] = useState(100);
 
-    useEffect(() => {
-        const fetchTestCase = async () => {
-            if (!caseId || !projectId || !suiteId) return;
-            setIsLoading(true);
-            setError(null);
-            try {
-                const data = await testCaseService.getTestCaseById(projectId, suiteId, caseId);
-                setTestCase(data);
-                if (data.executionSteps && data.executionSteps.length > 0) {
-                    const firstStep = data.executionSteps[0];
-                    if (firstStep && firstStep.id) {
-                        setSelectedStepId(String(firstStep.id));
-                    }
-                }
-            } catch (err: any) {
-                setError(err.response?.data?.detail || 'Failed to load test case details.');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        fetchTestCase();
-    }, [caseId, projectId, suiteId]);
-
-    useEffect(() => {
-        const fetchHistory = async () => {
-            if (!caseId || !projectId || !suiteId || activeView !== 'history') return;
-            try {
-                const result = await runService.getTestCaseRuns(projectId, suiteId, caseId, 0, 50);
-                setHistory(result.runs);
-            } catch (err: any) {
-                console.error('Failed to load test case history:', err);
-            }
-        };
-        fetchHistory();
-    }, [caseId, projectId, suiteId, activeView]);
-
-    const selectedStep = testCase?.executionSteps?.find(s => String(s.id) === selectedStepId);
+    const handleSaveTestCase = async (data: any) => {
+        setIsSaving(true);
+        setModalError(null);
+        try {
+            await updateTestCase(data);
+            setIsEditModalOpen(false);
+        } catch (err: any) {
+            setModalError(err.response?.data?.detail || err.message || 'Failed to update test case.');
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     if (isLoading) {
         return (
@@ -74,63 +73,105 @@ export const TestCaseDetailsPage: React.FC = () => {
     if (error) return <div className="p-8"><ErrorMessage message={error} /></div>;
     if (!testCase) return <div className="p-8 text-center text-gray-500 font-bold">Test Case not found</div>;
 
-    const renderSidebar = () => (
-        <StepsSidebar
-            testCase={testCase}
-            steps={testCase.executionSteps || []}
-            selectedStepId={selectedStepId}
-            onSelectStep={setSelectedStepId}
-            isRunning={false}
-            finalStatus={null}
-        />
-    );
+    const displaySteps = (isRunning || activeSteps.length > 0)
+        ? activeSteps
+        : (testCase.steps && testCase.steps.length > 0 ? testCase.steps : (testCase.executionSteps || []));
 
-    const renderContent = () => {
-        if (activeView === 'history') {
-            return (
-                <div className="flex-1 overflow-auto p-8">
-                    <div className="max-w-5xl mx-auto space-y-8">
-                        <div className="flex items-center justify-between">
-                            <h2 className="text-2xl font-black text-gray-900 tracking-tight capitalize">Run History</h2>
-                            <Button
-                                onClick={() => setActiveView('steps')}
-                                variant="outline"
-                                className="rounded-xl border-gray-200"
-                            >
-                                <ListChecks className="w-4 h-4 mr-2" />
-                                Back to Steps
-                            </Button>
-                        </div>
-                        <TestRunHistoryTable
-                            history={history}
-                            projectId={projectId || ''}
-                            onRunClick={(run) => {
-                                const sId = run.testsuite_run_id || 'standalone';
-                                const rId = (run as any).project_run_id || 'standalone';
-                                navigate(`/project/${projectId}/history/${rId}/suite/${sId}/case/${run.id}`);
-                            }}
+    return (
+        <TestCaseDetailsLayout>
+            <div className="flex-1 flex flex-col overflow-hidden min-h-0">
+                <div className="bg-white border-b border-gray-100 shrink-0">
+                    <div className="px-8 pt-4 pb-0">
+                        <TestCaseHeader
+                            title={testCase.name}
+                            isRunning={isRunning}
+                            isAborting={isAborting}
+                            status={finalStatus}
+                            onBack={() => navigate(`/project/${projectId}/suite/${suiteId}`)}
+                            onEdit={() => setIsEditModalOpen(true)}
+                            onViewPrompt={() => setIsViewPromptModalOpen(true)}
+                            onRun={() => runTestCase(selectedModel)}
+                            onAbort={abortTestCase}
+                        />
+                        <TestCaseTabs
+                            activeView={activeView}
+                            setActiveView={setActiveView}
                         />
                     </div>
                 </div>
-            );
-        }
-
-        return (
-            <div className="flex-1 flex overflow-hidden">
-                <ScreenshotViewer
-                    screenshot={selectedStep?.screenshot || null}
-                    number={selectedStep?.number || 0}
-                    zoomLevel={zoomLevel}
-                    setZoomLevel={setZoomLevel}
-                />
+                <div className="flex-1 flex overflow-hidden min-h-0">
+                    {activeView === 'steps' ? (
+                        <>
+                            <ExecutionStepsSidebar
+                                testCaseMode={testCase.mode || 'plain'}
+                                plainText={testCase.plainText}
+                                displaySteps={displaySteps}
+                                selectedStepId={selectedStepId}
+                                onSelectStep={setSelectedStepId}
+                                onEditPrompt={() => setIsEditModalOpen(true)}
+                                terminationReason={terminationReason || testCase.terminationReason}
+                                selectedModel={selectedModel}
+                                onModelChange={(val) => setSelectedModel(val)}
+                                isRunning={isRunning}
+                            />
+                            <main className="flex-1 flex flex-col overflow-hidden bg-gray-50/30 min-h-0">
+                                <ScreenshotViewer
+                                    screenshot={displaySteps.find(s => String(s.id) === selectedStepId)?.screenshot || currentScreenshot || null}
+                                    number={displaySteps.findIndex(s => String(s.id) === selectedStepId) + 1}
+                                    zoomLevel={zoomLevel}
+                                    onZoomIn={() => setZoomLevel(prev => Math.min(prev + 25, 200))}
+                                    onZoomOut={() => setZoomLevel(prev => Math.max(prev - 25, 50))}
+                                    onResetZoom={() => setZoomLevel(100)}
+                                />
+                            </main>
+                        </>
+                    ) : (
+                        <main className="flex-1 overflow-auto p-8 bg-gray-50/30 min-h-0">
+                            <div className="max-w-6xl mx-auto space-y-6">
+                                <TestRunHistoryTable
+                                    history={history}
+                                    projectId={projectId || ''}
+                                    onRunClick={(run) => {
+                                        const sId = run.testsuite_run_id || 'standalone';
+                                        const rId = (run as any).project_run_id || 'standalone';
+                                        navigate(`/project/${projectId}/history/${rId}/suite/${sId}/case/${run.id}`);
+                                    }}
+                                />
+                                {totalRuns > limit && (
+                                    <Pagination
+                                        currentPage={page}
+                                        totalPages={Math.ceil(totalRuns / limit)}
+                                        itemsPerPage={limit}
+                                        totalItems={totalRuns}
+                                        onPageChange={setPage}
+                                    />
+                                )}
+                            </div>
+                        </main>
+                    )}
+                </div>
             </div>
-        );
-    };
 
-    return (
-        <TestCaseDetailsLayout
-            sidebar={activeView === 'steps' ? renderSidebar() : null}
-            content={renderContent()}
-        />
+            {testCase && (
+                <AddTestCaseModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => {
+                        setIsEditModalOpen(false);
+                        setModalError(null);
+                    }}
+                    editingTestCase={testCase}
+                    onSave={handleSaveTestCase}
+                    isLoading={isSaving}
+                    error={modalError}
+                />
+            )}
+            {testCase && (
+                <ViewPromptModal
+                    isOpen={isViewPromptModalOpen}
+                    onClose={() => setIsViewPromptModalOpen(false)}
+                    prompt={testCase.plainText || ''}
+                />
+            )}
+        </TestCaseDetailsLayout>
     );
 };

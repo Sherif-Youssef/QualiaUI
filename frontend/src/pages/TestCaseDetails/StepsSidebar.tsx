@@ -1,10 +1,11 @@
 import React from 'react';
-import { Camera, Pencil, Trash2, Play, Loader2, CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
+import { Camera, CheckCircle2, XCircle, AlertCircle, Trash2, Pencil, Play, Loader2, ArrowLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { TestStep, TestCase } from '@/types/test-case';
 import { formatAction } from '@/utils/formatters';
+import { ExpandableStepText } from '@/components/ExpandableStepText';
 
 interface StepsSidebarProps {
     testCase: TestCase | null;
@@ -15,7 +16,18 @@ interface StepsSidebarProps {
     finalStatus: 'passed' | 'failed' | null;
     onEditStep?: (step: TestStep, e: React.MouseEvent) => void;
     onDeleteStep?: (id: string, text: string, e: React.MouseEvent) => void;
+    onRun: () => void;
+    activeView: 'steps' | 'history';
+    onViewChange: (view: 'steps' | 'history') => void;
 }
+
+const getStatusIcon = (status?: string) => {
+    switch (status) {
+        case 'passed': return <CheckCircle2 className="w-3 h-3 text-emerald-500" />;
+        case 'failed': return <XCircle className="w-3 h-3 text-rose-500" />;
+        default: return <AlertCircle className="w-3 h-3 text-gray-300" />;
+    }
+};
 
 export const StepsSidebar: React.FC<StepsSidebarProps> = ({
     testCase,
@@ -25,7 +37,10 @@ export const StepsSidebar: React.FC<StepsSidebarProps> = ({
     isRunning,
     finalStatus,
     onEditStep,
-    onDeleteStep
+    onDeleteStep,
+    onRun,
+    activeView,
+    onViewChange
 }) => {
     const navigate = useNavigate();
     const { projectId, suiteId } = useParams<{ projectId: string; suiteId: string }>();
@@ -45,42 +60,58 @@ export const StepsSidebar: React.FC<StepsSidebarProps> = ({
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] leading-none">Back to Suite</span>
                 </button>
 
-                <div className="flex items-start justify-between gap-4 mb-4">
-                    <div className="flex-1 min-w-0">
-                        <div
-                            className="flex items-center gap-2 mb-1 relative"
-                            onMouseEnter={() => setIsHoveringTooltip(true)}
-                            onMouseLeave={() => setIsHoveringTooltip(false)}
-                        >
-                            <h2 className="text-lg font-black text-gray-800 truncate leading-tight">
-                                {testCase?.name || 'Test Case'}
-                            </h2>
-                            <div className="relative flex items-center">
+                <div className="flex items-start justify-between gap-4 mb-6">
+                    <div className="space-y-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                            <h1 className="text-xl font-black text-gray-900 tracking-tight leading-tight truncate">
+                                {testCase?.name || 'Loading...'}
+                            </h1>
+                            {finalStatus === 'passed' && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+                            {finalStatus === 'failed' && <XCircle className="w-5 h-5 text-rose-500" />}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onMouseEnter={() => setIsHoveringTooltip(true)}
+                                onMouseLeave={() => setIsHoveringTooltip(false)}
+                                className="text-[10px] font-bold text-primary uppercase tracking-widest hover:underline relative"
+                            >
+                                Details
                                 <AnimatePresence>
                                     {isHoveringTooltip && (
                                         <motion.div
-                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            initial={{ opacity: 0, y: 5, scale: 0.95 }}
                                             animate={{ opacity: 1, y: 0, scale: 1 }}
-                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                            transition={{ duration: 0.2, ease: "easeOut" }}
-                                            className="absolute left-0 top-full mt-2 w-64 p-4 bg-gray-900/95 backdrop-blur-xl text-white text-[11px] font-medium rounded-2xl z-[100] shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/10 pointer-events-none"
+                                            exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="absolute left-0 top-full mt-2 w-64 p-4 bg-gray-900 text-white text-[11px] font-medium rounded-xl z-[100] shadow-2xl border border-white/10 pointer-events-none"
                                         >
-                                            <div className="absolute -top-1 left-4 w-2 h-2 bg-gray-900/95 rotate-45" />
                                             <p className="leading-relaxed opacity-90">{testCase?.prompt || 'No instruction provided'}</p>
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
-                            </div>
-                            {isRunning && <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />}
-                            {!isRunning && finalStatus === 'passed' && <CheckCircle2 className="w-4 h-4 text-success shrink-0" />}
-                            {!isRunning && finalStatus === 'failed' && <XCircle className="w-4 h-4 text-failure shrink-0" />}
+                            </button>
                         </div>
-                        <p className="text-[10px] font-black capitalize tracking-widest text-muted-foreground flex items-center gap-1.5">
-                            Version <span className="text-primary">{testCase?.runVersion || 'N/A'}</span>
-                        </p>
                     </div>
                 </div>
+
+                <div className="flex bg-gray-100 p-1 rounded-xl mb-6 shadow-inner">
+                    <button
+                        onClick={() => onViewChange('steps')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeView === 'steps' ? 'bg-white text-primary shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        Steps
+                    </button>
+                    <button
+                        onClick={() => onViewChange('history')}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${activeView === 'history' ? 'bg-white text-primary shadow-sm ring-1 ring-black/5' : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        Run History
+                    </button>
+                </div>
                 <Button
+                    onClick={onRun}
                     disabled={isRunning}
                     className="w-full h-11 bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/20 rounded-xl font-bold flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                 >
@@ -125,9 +156,15 @@ export const StepsSidebar: React.FC<StepsSidebarProps> = ({
                                             }`}>
                                             <Camera className={`w-5 h-5 ${step.screenshot ? 'scale-110' : 'opacity-40'}`} />
                                         </div>
-                                        <p className="text-sm text-gray-700 font-medium leading-relaxed pt-0.5 line-clamp-1 group-hover:line-clamp-none transition-all">
-                                            {formatAction(step.text)}
-                                        </p>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <ExpandableStepText text={formatAction(step.text)} />
+                                            </div>
+                                            <div className="flex items-center gap-2 mt-1 mb-2">
+                                                {getStatusIcon(step.status)}
+                                                <span className="text-[10px] font-black text-gray-400 capitalize tracking-widest">{step.status}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div className="flex items-center justify-end gap-1 mt-1">
                                         {onEditStep && (

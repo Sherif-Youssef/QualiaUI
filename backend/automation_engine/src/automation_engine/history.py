@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from enum import StrEnum
 from pydantic import BaseModel, Field, computed_field
@@ -22,7 +22,7 @@ class StateSnapshot(BaseModel):
 
 
 class TestHierarchyElement(BaseModel):
-    started_at: datetime = Field(default_factory=datetime.now, init=False)
+    started_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), init=False)
     finished_at: Optional[datetime] = Field(default=None, init=False)
 
     def _assert_running(self):
@@ -35,7 +35,7 @@ class TestHierarchyElement(BaseModel):
 
     def finalize(self) -> None:
         self._assert_running()
-        self.finished_at = datetime.now()
+        self.finished_at = datetime.now(timezone.utc)
 
     @computed_field
     @property
