@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trash2, User, Shield } from 'lucide-react';
+import { Trash2, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface ProjectMember {
@@ -74,7 +74,6 @@ export const ProjectMembers: React.FC<ProjectMembersProps> = ({
                                 <td className="px-8 py-5 text-center">
                                     <div className="flex items-center justify-center">
                                         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/5 text-primary border border-primary/10 shadow-sm transition-all hover:bg-primary/10">
-                                            <Shield className="w-3 h-3" />
                                             <span className="text-[10px] font-black uppercase tracking-[0.05em]">
                                                 {member.role}
                                             </span>
