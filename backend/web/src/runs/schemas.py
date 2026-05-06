@@ -32,8 +32,13 @@ class TestStepRunRead(BaseModel):
     screenshot_before: str | None = None
     screenshot_after: str | None = None
     error_message: str | None = None
-    llm_action: str | None = None
+    llm_action: dict | None = None
+    
+    intent: str | None 
+    recreation_prompt: str | None
+
     status: TestCaseStepRunStatus
+
     testcase_run_id: int
 
     model_config = ConfigDict(from_attributes=True)
@@ -42,20 +47,22 @@ class TestStepRunRead(BaseModel):
 
 class TestCaseRunRead(BaseModel):
     id: int
+    
     scope: Scope
     created_at: datetime
     started_at: datetime | None = None
     finished_at: datetime | None = None
     job_uid: str
     mode: RunMode
+
     base_url: str
     instruction: str | None = None
     status: RunStatus
     termination_reason: str | None = None
+    
     testcase_id: int
     testsuite_run_id: int | None = None
-    name: str | None = None
-
+    
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -65,16 +72,18 @@ class TestCaseRunWithStepsRead(TestCaseRunRead):
 
 class TestSuiteRunRead(BaseModel):
     id: int
+
     scope: Scope
     created_at: datetime
     started_at: datetime | None = None
     finished_at: datetime | None = None
     job_uid: str
+    
     mode: RunMode
     status: RunStatus
+
     testsuite_id: int
     project_run_id: int | None = None
-    name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -85,15 +94,18 @@ class TestSuiteRunWithCasesRead(TestSuiteRunRead):
 
 class ProjectRunRead(BaseModel):
     id: int
+
     scope: Scope
+
     created_at: datetime
     started_at: datetime | None = None
     finished_at: datetime | None = None
     job_uid: str
+
     mode: RunMode
     status: RunStatus
+    
     project_id: int
-    name: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
