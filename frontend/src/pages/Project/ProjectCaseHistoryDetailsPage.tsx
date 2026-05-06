@@ -171,7 +171,7 @@ export const ProjectCaseHistoryDetailsPage: React.FC = () => {
             <ScreenshotViewer
                 screenshot={selectedStep ? (selectedStep.screenshot_after || selectedStep.screenshot_before) : null}
                 number={caseRun.teststep_runs.indexOf(selectedStep!) + 1}
-                description={selectedStep ? formatAction(selectedStep.llm_action) : undefined}
+                description={selectedStep ? formatAction(selectedStep.recreation_prompt) : undefined}
                 zoomLevel={zoomLevel}
                 onZoomIn={() => setZoomLevel(prev => Math.min(prev + 25, 200))}
                 onZoomOut={() => setZoomLevel(prev => Math.max(prev - 25, 50))}
