@@ -167,7 +167,7 @@ async def test_upload_screenshot_uses_generated_key_and_storage(monkeypatch):
 	fake_storage = FakeStorage()
 	monkeypatch.setattr(execution, "get_s3_storage", lambda: fake_storage)
 	monkeypatch.setattr(execution, "generate_uuid", lambda: "generated-key")
-	monkeypatch.setattr(execution, "settings", SimpleNamespace(AWS_SCREENSHOTS_BUCKET="screenshots"))
+	monkeypatch.setattr(execution, "settings", SimpleNamespace(S3_SCREENSHOTS_BUCKET="screenshots"))
 
 	url = await execution.upload_screenshot(b"image-bytes")
 

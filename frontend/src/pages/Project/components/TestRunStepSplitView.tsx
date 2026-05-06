@@ -9,6 +9,7 @@ interface TestRunStepSplitViewProps {
 
 export const TestRunStepSplitView: React.FC<TestRunStepSplitViewProps> = ({ steps }) => {
     const [selectedStepId, setSelectedStepId] = useState<number | null>(steps[0]?.id || null);
+    const [viewMode, setViewMode] = useState<'before' | 'after'>('after');
     
     const selectedStep = steps.find(s => s.id === selectedStepId) || steps[0];
 
@@ -52,7 +53,7 @@ export const TestRunStepSplitView: React.FC<TestRunStepSplitViewProps> = ({ step
                                     <p className={`text-sm font-bold leading-relaxed transition-all ${
                                         selectedStepId === step.id ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-700'
                                     }`}>
-                                        {step.llm_action || 'Action performed'}
+                                        {step.recreation_prompt || 'Action performed'}
                                     </p>
                                     <div className="flex items-center gap-2">
                                         {getStatusIcon(step.status)}
@@ -74,14 +75,16 @@ export const TestRunStepSplitView: React.FC<TestRunStepSplitViewProps> = ({ step
                         <AnimatePresence mode="wait">
                             {selectedStep?.screenshot_after || selectedStep?.screenshot_before ? (
                                 <motion.img
-                                    key={selectedStep.id}
+                                    key={`${selectedStep.id}-${viewMode}`}
                                     initial={{ opacity: 0, scale: 1.05 }}
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.95 }}
                                     transition={{ duration: 0.4, ease: "easeOut" }}
-                                    src={(selectedStep.screenshot_after || selectedStep.screenshot_before)!.startsWith('data:') 
-                                        ? (selectedStep.screenshot_after || selectedStep.screenshot_before)! 
-                                        : `data:image/png;base64,${selectedStep.screenshot_after || selectedStep.screenshot_before}`}
+                                    src={(() => {
+                                        return viewMode === 'after' 
+                                            ? (selectedStep.screenshot_after || selectedStep.screenshot_before) 
+                                            : (selectedStep.screenshot_before || selectedStep.screenshot_after);
+                                    })()!}
                                     alt="Step Result"
                                     className="w-full h-full object-contain"
                                 />
@@ -97,12 +100,37 @@ export const TestRunStepSplitView: React.FC<TestRunStepSplitViewProps> = ({ step
 
                         {/* Selected Step Label */}
                         {selectedStep && (
-                            <div className="absolute top-6 left-6 px-4 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 flex items-center gap-3">
-                                <span className="text-xs font-black text-white/90 capitalize tracking-widest">
-                                    Step Details
-                                </span>
-                                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                                {getStatusIcon(selectedStep.status)}
+                            <div className="absolute top-6 left-6 right-6 flex items-center justify-between">
+                                <div className="px-4 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 flex items-center gap-3">
+                                    <span className="text-xs font-black text-white/90 capitalize tracking-widest">
+                                        Step Details
+                                    </span>
+                                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                    {getStatusIcon(selectedStep.status)}
+                                </div>
+
+                                <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md p-1 rounded-xl border border-white/10 shadow-xl">
+                                    <button
+                                        onClick={() => setViewMode('before')}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                                            viewMode === 'before' 
+                                                ? 'bg-primary text-white shadow-lg' 
+                                                : 'text-white/40 hover:text-white/70'
+                                        }`}
+                                    >
+                                        Before
+                                    </button>
+                                    <button
+                                        onClick={() => setViewMode('after')}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                                            viewMode === 'after' 
+                                                ? 'bg-primary text-white shadow-lg' 
+                                                : 'text-white/40 hover:text-white/70'
+                                        }`}
+                                    >
+                                        After
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -117,7 +145,7 @@ export const TestRunStepSplitView: React.FC<TestRunStepSplitViewProps> = ({ step
                                 <h4 className="text-sm font-black text-gray-900 tracking-tight capitalize">Action Details</h4>
                             </div>
                             <pre className="text-xs font-mono font-bold text-gray-700 bg-gray-50 p-4 rounded-2xl border border-gray-100 whitespace-pre-wrap leading-relaxed shadow-inner">
-                                {selectedStep.llm_action || 'No action data available'}
+                                {selectedStep.recreation_prompt || 'No action data available'}
                             </pre>
                             
                             {selectedStep.error_message && (

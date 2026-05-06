@@ -38,7 +38,9 @@ export interface TestStepRun {
     executable: any | null;
     screenshot_before: string | null;
     screenshot_after: string | null;
-    llm_action: string | null;
+    llm_action: any | null;
+    intent: string | null;
+    recreation_prompt: string | null;
     error_message: string | null;
     status: 'PASSED' | 'FAILED' | 'ERROR' | 'EXECUTED';
 }
