@@ -14,6 +14,7 @@ import { ProjectHistoryDetailsPage } from './Project/ProjectHistoryDetailsPage';
 import { ProjectSuiteHistoryDetailsPage } from './Project/ProjectSuiteHistoryDetailsPage';
 import { ProjectCaseHistoryDetailsPage } from './Project/ProjectCaseHistoryDetailsPage';
 import { TestSuiteRunDashboardPage } from './TestSuite/TestSuiteRunDashboardPage';
+import { LandingPage } from './Landing';
 
 export {
     LoginPage,
@@ -31,5 +32,6 @@ export {
     ProjectHistoryDetailsPage,
     ProjectSuiteHistoryDetailsPage,
     ProjectCaseHistoryDetailsPage,
-    TestSuiteRunDashboardPage
+    TestSuiteRunDashboardPage,
+    LandingPage
 }

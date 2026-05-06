@@ -19,7 +19,7 @@ from src.runs.models import (
     TestSuiteRun,
 )
 from src.runs.schemas import StartRunResponse
-from src.runs.stream import abort_async, get_stream_key
+from src.runs.stream import abort_async, get_stream_key, cleanup_stream
 from src.testcases.models import TestCase
 from src.testsuites.models import TestSuite
 from src.base.schemas import Scope
@@ -104,6 +104,7 @@ def launch_testcase_run(
 
     testcase_run_id = cast(int, test_case_run.id)
     stream_key = get_stream_key(Scope.TESTCASE, testcase_run_id)  
+    cleanup_stream(stream_key)
     
     app.send_task(
         "runs.execute_testcase",
@@ -180,6 +181,7 @@ def launch_testsuite_run(
     session.commit()
 
     stream_key = get_stream_key(Scope.TESTSUITE, testsuite_run_id)
+    cleanup_stream(stream_key)
 
     workflow = _build_testsuite_workflow_signature(
         testcase_runs_ids=testcase_runs_ids,
@@ -222,6 +224,7 @@ def launch_project_run(
     project_run_id = cast(int, project_run.id)
 
     stream_key = get_stream_key(Scope.PROJECT, project_run_id)
+    cleanup_stream(stream_key)
 
     all_testcase_runs: list[TestCaseRun] = []
     # Holds per-suite data needed to build workflows after the batch flush

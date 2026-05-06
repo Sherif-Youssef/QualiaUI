@@ -18,7 +18,8 @@ import {
   ProjectHistoryDetailsPage,
   ProjectSuiteHistoryDetailsPage,
   ProjectCaseHistoryDetailsPage,
-  TestSuiteRunDashboardPage
+  TestSuiteRunDashboardPage,
+  LandingPage
 } from './pages/PagesExporter';
 
 import { TooltipProvider } from './components/ui/tooltip';
@@ -56,7 +57,7 @@ function App() {
           />
         )}
         <Routes>
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
@@ -78,7 +79,7 @@ function App() {
             <Route path="/admin/users" element={<AdminUsersPage />} />
             <Route path="/profile/:userId?" element={<ProfilePage />} />
           </Route>
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </TooltipProvider>
