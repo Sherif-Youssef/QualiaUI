@@ -22,19 +22,6 @@ export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
     status,
     onBack
 }) => {
-    const getFullDescription = (llmAction: string | null): string | null => {
-        if (!llmAction) return null;
-        try {
-            const parsed = JSON.parse(llmAction);
-            if (typeof parsed === 'object' && parsed !== null) {
-                return parsed?.recreation_prompt || parsed?.intent || parsed?.action_description || llmAction;
-            }
-            return llmAction;
-        } catch {
-            return llmAction;
-        }
-    };
-
     return (
         <aside className="w-[400px] md:w-[450px] bg-white border-r border-gray-100 flex flex-col shadow-xl z-10">
             {onBack && (
@@ -78,9 +65,58 @@ export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
                 </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                {terminationReason && (
+                    <div className={`p-4 rounded-2xl border shadow-sm relative overflow-hidden ${
+                        status === 'PASSED' 
+                            ? 'bg-emerald-50/30 border-emerald-100' 
+                            : status === 'FAILED'
+                                ? 'bg-rose-50/30 border-rose-100'
+                                : 'bg-blue-50/30 border-blue-100'
+                    }`}>
+                        <div className="flex gap-4">
+                            <div className={`w-8 h-8 rounded-xl text-white text-[10px] font-black flex items-center justify-center shadow-lg ${
+                                status === 'PASSED'
+                                    ? 'bg-emerald-500 shadow-emerald-200'
+                                    : status === 'FAILED'
+                                        ? 'bg-rose-500 shadow-rose-200'
+                                        : 'bg-blue-500 shadow-blue-200'
+                            }`}>
+                                {status === 'PASSED' ? <CheckCircle2 className="w-4 h-4" /> : 'X'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h4 className={`text-[10px] font-black uppercase tracking-widest mb-1 ${
+                                    status === 'PASSED'
+                                        ? 'text-emerald-600'
+                                        : status === 'FAILED'
+                                            ? 'text-rose-600'
+                                            : 'text-blue-600'
+                                }`}>
+                                    Run Conclusion
+                                </h4>
+                                <p className={`text-xs font-bold leading-relaxed italic border-l-2 pl-3 ${
+                                    status === 'PASSED'
+                                        ? 'text-emerald-700/80 border-emerald-200'
+                                        : status === 'FAILED'
+                                            ? 'text-rose-700/80 border-rose-200'
+                                            : 'text-blue-700/80 border-blue-200'
+                                }`}>
+                                    {terminationReason}
+                                </p>
+                            </div>
+                        </div>
+                        <div className={`absolute top-0 left-0 w-1 h-full ${
+                            status === 'PASSED'
+                                ? 'bg-emerald-500'
+                                : status === 'FAILED'
+                                    ? 'bg-rose-500'
+                                    : 'bg-blue-500'
+                        }`} />
+                    </div>
+                )}
+
                 {steps.map((step, index) => {
-                    const fullDesc = getFullDescription(step.llm_action);
+                    const fullDesc = step.recreation_prompt;
                     const isActive = selectedStepId === step.id;
 
                     return (
@@ -159,23 +195,6 @@ export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
                         </div>
                     );
                 })}
-
-                {terminationReason && (
-                    <div className="p-4 rounded-2xl border border-rose-100 bg-rose-50/30 shadow-sm relative overflow-hidden">
-                        <div className="flex gap-4">
-                            <div className="w-8 h-8 rounded-xl bg-rose-500 text-white text-[10px] font-black flex items-center justify-center shadow-lg shadow-rose-200">
-                                X
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <h4 className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Execution Terminated</h4>
-                                <p className="text-xs font-bold text-rose-700/80 leading-relaxed italic border-l-2 border-rose-200 pl-3">
-                                    {terminationReason}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
-                    </div>
-                )}
             </div>
         </aside>
     );
