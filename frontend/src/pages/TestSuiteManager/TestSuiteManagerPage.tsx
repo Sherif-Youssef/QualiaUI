@@ -1,11 +1,9 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { ChevronLeft, FileText } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { ChevronLeft } from 'lucide-react';
 import { TestSuiteManager } from '@/components/TestSuiteManager';
 import { ScreenshotViewer } from '@/components/ScreenshotViewer';
 import { AddTestCaseModal } from '@/components/Modal/AddTestCaseModal';
-import { ViewPromptModal } from '@/components/Modal/ViewPromptModal';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLayout } from './TestSuiteManagerLayout';
 import { TestSuiteManagerLoading } from './TestSuiteManagerLoading';
@@ -14,9 +12,6 @@ import { useTestSuiteManager } from './hooks/useTestSuiteManager';
 
 export const TestSuiteManagerPage: React.FC = () => {
     const { projectId, suiteId, caseId } = useParams<{ projectId: string; suiteId?: string; caseId?: string }>();
-    const [selectedModel] = React.useState('gemini-1.5-pro');
-    const [isViewPromptModalOpen, setIsViewPromptModalOpen] = React.useState(false);
-
     const {
         testCases,
         suites,
@@ -30,22 +25,17 @@ export const TestSuiteManagerPage: React.FC = () => {
         modalError, setModalError,
         editingTestCase, setEditingTestCase,
         selectedStep,
-        isRunning,
-        isAborting,
+        activeCaseId,
         handleSaveTestCase,
-        handleRunAllTests,
-        handleRunSingleTest,
-        handleAbortRun,
-        handleInstructionChange,
         handleStepTextChange,
         handleStepClick,
         handleBack
     } = useTestSuiteManager({ projectId, suiteId, caseId });
 
     const activeTestCase = React.useMemo(() => {
-        if (!caseId) return null;
-        return testCases.find(tc => tc.id === caseId) || testCases[0];
-    }, [testCases, caseId]);
+        if (!testCases || testCases.length === 0) return null;
+        return testCases.find(tc => String(tc.id) === String(activeCaseId)) || testCases[0];
+    }, [testCases, activeCaseId]);
 
     if (isLoading) return <TestSuiteManagerLoading />;
 
@@ -78,45 +68,36 @@ export const TestSuiteManagerPage: React.FC = () => {
                                     </h2>
                                     {activeTestCase && (
                                         <div className="flex items-center gap-2">
-                                            <div className={`shrink-0 px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm ${activeTestCase.status === 'success' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                                activeTestCase.status === 'failure' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                                    activeTestCase.status === 'running' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                        'bg-gray-50 text-gray-500 border-gray-100'
-                                                }`}>
-                                                {activeTestCase.status}
+                                            <div className="flex items-center gap-2">
+                                                <div className={`shrink-0 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-[0.1em] border shadow-sm flex items-center gap-1.5 ${(activeTestCase.status === 'success' || activeTestCase.status === 'passed') ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
+                                                    (activeTestCase.status === 'failure' || activeTestCase.status === 'failed') ? 'bg-rose-50 text-rose-600 border-rose-100' :
+                                                        activeTestCase.status === 'error' ? 'bg-red-50 text-red-600 border-red-100' :
+                                                            activeTestCase.status === 'aborted' ? 'bg-slate-100 text-slate-600 border-slate-200' :
+                                                                activeTestCase.status === 'running' ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                                    'bg-gray-50 text-gray-500 border-gray-100'
+                                                    }`}>
+                                                    <div className={`w-1 h-1 rounded-full ${(activeTestCase.status === 'success' || activeTestCase.status === 'passed') ? 'bg-emerald-500' :
+                                                        (activeTestCase.status === 'failure' || activeTestCase.status === 'failed') ? 'bg-rose-500' :
+                                                            activeTestCase.status === 'error' ? 'bg-red-500' :
+                                                                activeTestCase.status === 'aborted' ? 'bg-slate-500' :
+                                                                    activeTestCase.status === 'running' ? 'bg-blue-500 animate-pulse' :
+                                                                        'bg-gray-400'
+                                                        }`} />
+                                                    {(activeTestCase.status === 'success' || activeTestCase.status === 'passed') ? 'Passed' :
+                                                        (activeTestCase.status === 'failure' || activeTestCase.status === 'failed') ? 'Failed' :
+                                                            activeTestCase.status || 'Idle'}
+                                                </div>
                                             </div>
-                                            <Button
-                                                onClick={() => setIsViewPromptModalOpen(true)}
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-7 px-2.5 rounded-lg text-primary hover:bg-primary hover:text-white font-black text-[9px] uppercase tracking-widest flex items-center gap-1.5 border border-primary/10 transition-all duration-200"
-                                            >
-                                                <FileText className="w-3 h-3" />
-                                                Read Prompt
-                                            </Button>
                                         </div>
                                     )}
                                 </div>
                             </div>
                         </div>
                     }
-                    onAddTestCase={() => {
-                        setModalError(null);
-                        setIsModalOpen(true);
-                    }}
-                    onRunAllTests={() => handleRunAllTests(selectedModel)}
-                    onAbortRun={handleAbortRun}
-                    isRunning={isRunning}
-                    isAborting={isAborting}
-                    onRunSingleTest={(testId) => handleRunSingleTest(testId, selectedModel)}
-                    onEditTestCase={(tc) => {
-                        setEditingTestCase(tc);
-                        setIsModalOpen(true);
-                    }}
-                    onInstructionChange={handleInstructionChange}
                     onStepTextChange={handleStepTextChange}
                     onStepClick={handleStepClick}
                     isReadOnly={false}
+                    selectedStepId={selectedStep ? String(selectedStep.id) : undefined}
                 />
             }
             content={
@@ -144,13 +125,6 @@ export const TestSuiteManagerPage: React.FC = () => {
                         isLoading={modalLoading}
                         error={modalError}
                     />
-                    {activeTestCase && (
-                        <ViewPromptModal
-                            isOpen={isViewPromptModalOpen}
-                            onClose={() => setIsViewPromptModalOpen(false)}
-                            prompt={activeTestCase.plainText || ''}
-                        />
-                    )}
                 </>
             }
         />

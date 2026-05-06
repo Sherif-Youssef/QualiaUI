@@ -2,6 +2,8 @@ import api, { ApiResponse } from "@/lib/api";
 import { ProjectDTO, Project } from "@/types/project";
 import { mapProjectToViewModel } from "@/utils/mappers";
 
+const projectPromises = new Map<string, Promise<Project>>();
+
 export const projectService = {
     getAllProjects: async (offset = 0, limit = 6, name?: string): Promise<{ projects: Project[]; total: number }> => {
         try {
@@ -17,12 +19,21 @@ export const projectService = {
         }
     },
     getProjectById: async (id: string): Promise<Project> => {
-        try {
-            const response = await api.get<ProjectDTO>(`/projects/${id}`);
-            return mapProjectToViewModel(response.data);
-        } catch (error) {
-            throw error;
-        }
+        if (projectPromises.has(id)) return projectPromises.get(id)!;
+
+        const promise = (async () => {
+            try {
+                const response = await api.get<ProjectDTO>(`/projects/${id}`);
+                return mapProjectToViewModel(response.data);
+            } finally {
+                setTimeout(() => {
+                    projectPromises.delete(id);
+                }, 2000);
+            }
+        })();
+
+        projectPromises.set(id, promise);
+        return promise;
     },
     createProject: async (data: { name: string; description: string; members?: Array<{ user_id: number | string; role: string }> }): Promise<Project> => {
         try {

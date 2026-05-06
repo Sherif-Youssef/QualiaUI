@@ -40,7 +40,7 @@ export interface TestStepRun {
     screenshot_after: string | null;
     llm_action: string | null;
     error_message: string | null;
-    status: 'PASSED' | 'FAILED' | 'ERROR' | 'EXECUTED';
+    status: 'PASSED' | 'FAILED' | 'ERROR' | 'EXECUTED' | 'ABORTED';
 }
 
 export interface StartRunResponse {

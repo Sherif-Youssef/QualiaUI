@@ -1,28 +1,15 @@
 import React from 'react';
-import { Plus, Play, ArrowLeft } from 'lucide-react';
+import { Plus, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ModelSelector } from '@/components/ModelSelector';
 
 interface ProjectHeaderProps {
     onBack: () => void;
     onAddSuite: () => void;
-    onRunProject: () => void;
-    onAbort?: () => void;
-    isRunning?: boolean;
-    isAborting?: boolean;
-    selectedModel?: string;
-    onModelChange?: (model: string) => void;
 }
 
 export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
     onBack,
-    onAddSuite,
-    onRunProject,
-    onAbort,
-    isRunning,
-    isAborting,
-    selectedModel,
-    onModelChange
+    onAddSuite
 }) => {
     return (
         <div className="flex items-center justify-between">
@@ -39,35 +26,8 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
                 </h2>
             </div>
 
+
             <div className="flex items-center gap-3">
-                {selectedModel && onModelChange && (
-                    <ModelSelector
-                        value={selectedModel}
-                        onChange={onModelChange}
-                        disabled={isRunning}
-                    />
-                )}
-
-                <Button
-                    onClick={onRunProject}
-                    disabled={isRunning || isAborting}
-                    variant="outline"
-                    className="bg-white hover:bg-white border-gray-200 hover:border-primary/30 text-gray-900 hover:text-primary transition-all duration-300 rounded-xl h-11 px-6 font-bold flex items-center gap-2 shadow-sm group"
-                >
-                    <Play className={`w-4 h-4 ${isRunning ? 'fill-gray-400' : 'fill-gray-900'} group-hover:fill-primary transition-colors`} />
-                    {isRunning ? 'Running...' : 'Run Project'}
-                </Button>
-
-                {(isRunning || isAborting) && onAbort && (
-                    <Button
-                        onClick={onAbort}
-                        disabled={isAborting}
-                        variant="destructive"
-                        className="shadow-lg shadow-red-500/10 transition-all rounded-xl h-11 px-6 font-bold flex items-center gap-2"
-                    >
-                        {isAborting ? 'Aborting...' : 'Abort'}
-                    </Button>
-                )}
                 <Button
                     onClick={onAddSuite}
                     className="bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/10 transition-all rounded-xl h-11 px-6 font-bold flex items-center gap-2"

@@ -9,7 +9,7 @@ import { TestCaseDetailsLayout } from '../TestCaseDetails/TestCaseDetailsLayout'
 import { ScreenshotViewer } from '../TestCaseDetails/ScreenshotViewer';
 import { TestRunStepsSidebar } from './components/TestRunStepsSidebar';
 import { formatAction } from '@/utils/formatters';
-import { useRunStreaming } from '@/hooks/useRunStreaming';
+
 import { projectService } from '@/services/project/projectService';
 import { Project } from '@/types/project';
 
@@ -59,16 +59,7 @@ export const ProjectCaseHistoryDetailsPage: React.FC = () => {
         loadData();
     }, [caseRunId, projectId, suiteRunId]);
 
-    const handleStatusChange = useCallback(() => {
-        fetchCaseDetails();
-    }, [fetchCaseDetails]);
 
-    useRunStreaming({
-        scope: runId === 'standalone' ? 'TESTSUITE' : 'PROJECT',
-        runId: runId === 'standalone' ? suiteRunId! : runId!,
-        onStatusChange: handleStatusChange,
-        onStepUpdate: handleStatusChange
-    });
     useEffect(() => {
         if (caseRun?.status === 'RUNNING' && caseRun.teststep_runs?.length > 0) {
             const latestStepId = caseRun.teststep_runs[caseRun.teststep_runs.length - 1].id;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRunStreaming } from '@/hooks/useRunStreaming';
 import { runService } from '@/services/runService';
@@ -20,9 +20,14 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
     const [isAborting, setIsAborting] = useState(false);
     const [isStartingRun, setIsStartingRun] = useState(false);
     const [selectedModel, setSelectedModel] = useState('gemini-1.5-pro');
+    const isStartingRef = useRef(false);
+
+    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const isFetchingRef = useRef(false);
 
     const fetchRunDetails = useCallback(async () => {
         if (!runId) return;
+
         try {
             const id = parseInt(runId);
             const data = await runService.getTestSuiteRunDetails(id);
@@ -35,19 +40,38 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
         }
     }, [runId]);
 
+    const debouncedFetchRunDetails = useCallback(() => {
+        if (debounceTimerRef.current) {
+            clearTimeout(debounceTimerRef.current);
+        }
+        debounceTimerRef.current = setTimeout(async () => {
+            if (isFetchingRef.current) return;
+            isFetchingRef.current = true;
+            try {
+                await fetchRunDetails();
+            } finally {
+                isFetchingRef.current = false;
+            }
+        }, 1000);
+    }, [fetchRunDetails]);
+
     useEffect(() => {
         if (!suiteRun) setIsLoading(true);
-        fetchRunDetails();
-    }, [runId]);
+        fetchRunDetails(); // Initial fetch
+        return () => {
+            if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+        };
+    }, [runId, fetchRunDetails]);
 
     const handleStatusChange = useCallback(() => {
-        fetchRunDetails();
-    }, [fetchRunDetails]);
+        debouncedFetchRunDetails();
+    }, [debouncedFetchRunDetails]);
 
     useRunStreaming({
         scope: 'TESTSUITE',
         runId: runId!,
-        onStatusChange: handleStatusChange
+        onStatusChange: handleStatusChange,
+        onStepUpdate: handleStatusChange
     });
 
     const handleAbort = async () => {
@@ -63,13 +87,15 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
     };
 
     const handleRunAll = async () => {
-        if (!projectId || !suiteId) return;
+        if (!projectId || !suiteId || isStartingRef.current) return;
+        isStartingRef.current = true;
         setIsStartingRun(true);
         try {
             const newRun = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL', selectedModel);
             navigate(`/project/${projectId}/suite/${suiteId}/run/${newRun.run_id}`);
         } catch (err: any) {
             setError(err.response?.data?.detail || 'Failed to start run.');
+            isStartingRef.current = false;
         } finally {
             setIsStartingRun(false);
         }
@@ -128,7 +154,9 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
                                         {suiteRun.name || 'Test Suite Run'}
                                     </div>
                                     {suiteRun.status && (() => {
-                                        const s = suiteRun.status.toUpperCase();
+                                        const isAnyCaseRunning = suiteRun.testcase_runs.some(tr => tr.status.toUpperCase() === 'RUNNING');
+                                        const s = (suiteRun.status.toUpperCase() === 'QUEUED' && isAnyCaseRunning) ? 'RUNNING' : suiteRun.status.toUpperCase();
+
                                         const isSuccess = s === 'PASSED' || s === 'SUCCESS' || s === 'EXECUTED';
                                         const isFailure = s === 'FAILED' || s === 'FAILURE';
                                         const isAborted = s === 'ABORTED';
@@ -144,7 +172,7 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
                                                             'bg-gray-50 text-gray-500 border-gray-100';
 
                                         return (
-                                            <div className={`shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm ${colors} text-[10px] normal-case tracking-wider`}>
+                                            <div className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full border shadow-sm ${colors} text-[9px] normal-case tracking-wider`}>
                                                 {isSuccess && <CheckCircle2 className="w-4 h-4" />}
                                                 {isFailure && <XCircle className="w-4 h-4" />}
                                                 {isAborted && <StopCircle className="w-4 h-4" />}
@@ -152,7 +180,7 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
                                                 {isRunningStatus && <Loader2 className="w-4 h-4 animate-spin" />}
                                                 {isQueued && <Clock className="w-3.5 h-3.5" />}
                                                 <span className="font-black uppercase">
-                                                    {suiteRun.status}
+                                                    {s}
                                                 </span>
                                             </div>
                                         );

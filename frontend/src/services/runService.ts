@@ -1,4 +1,4 @@
-import api, { ApiResponse } from "@/lib/api";
+import api, { ApiResponse, getDeduplicated } from "@/lib/api";
 import {
     RunMode,
     Scope,
@@ -30,14 +30,7 @@ export const runService = {
         return response.data;
     },
 
-    startProjectRun: async (projectId: number, mode: RunMode, model?: string): Promise<StartRunResponse> => {
-        const response = await api.post<StartRunResponse>(`/runs/projects`, {
-            project_id: projectId,
-            mode,
-            model
-        });
-        return response.data;
-    },
+
 
     // --- Aborting Runs ---
 
@@ -49,9 +42,7 @@ export const runService = {
         await api.post(`/runs/testsuites/${runId}/abort`);
     },
 
-    abortProjectRun: async (runId: number): Promise<void> => {
-        await api.post(`/runs/projects/${runId}/abort`);
-    },
+
 
     // --- Run History Listing ---
 
@@ -86,28 +77,54 @@ export const runService = {
     },
 
     // --- Run Details ---
-
-    getProjectRunDetails: async (runId: number): Promise<ProjectRun & { testsuite_runs: TestSuiteRun[] }> => {
-        const response = await api.get<ProjectRun & { testsuite_runs: TestSuiteRun[] }>(`/runs/projects/${runId}`);
-        return response.data;
+    getProjectRunDetails: async (runId: number, force = false): Promise<ProjectRun & { testsuite_runs: TestSuiteRun[] }> => {
+        try {
+            const response = await getDeduplicated<ProjectRun & { testsuite_runs: TestSuiteRun[] }>(
+                `/runs/projects/${runId}`,
+                undefined,
+                force
+            );
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
     },
 
-    getTestSuiteRunDetails: async (runId: number): Promise<TestSuiteRun & { testcase_runs: TestCaseRun[] }> => {
-        const response = await api.get<TestSuiteRun & { testcase_runs: TestCaseRun[] }>(`/runs/testsuites/${runId}`);
-        return response.data;
+    getTestSuiteRunDetails: async (runId: number, force = false): Promise<TestSuiteRun & { testcase_runs: TestCaseRun[] }> => {
+        try {
+            const response = await getDeduplicated<TestSuiteRun & { testcase_runs: TestCaseRun[] }>(
+                `/runs/testsuites/${runId}`,
+                undefined,
+                force
+            );
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
     },
 
-    getTestCaseRunDetails: async (runId: number): Promise<TestCaseRun & { teststep_runs: TestStepRun[] }> => {
-        const response = await api.get<TestCaseRun & { teststep_runs: TestStepRun[] }>(`/runs/testcases/${runId}`);
-        return response.data;
+    getTestCaseRunDetails: async (runId: number, force = false): Promise<TestCaseRun & { teststep_runs: TestStepRun[] }> => {
+        try {
+            const response = await getDeduplicated<TestCaseRun & { teststep_runs: TestStepRun[] }>(
+                `/runs/testcases/${runId}`,
+                undefined,
+                force
+            );
+            return response.data;
+        } catch (error) {
+            throw error;
+        }
     },
 
-    // --- Real-time Progress ---
 
     subscribeToRunProgress: (scope: Scope, runId: number, onMessage: (data: any) => void): EventSource => {
         const token = localStorage.getItem('token');
         const url = `/api/v1/runs/${scope.toLowerCase()}s/${runId}/stream${token ? `?token=${token}` : ''}`;
         const eventSource = new EventSource(url);
+
+        eventSource.onopen = () => {
+            console.log(`[SSE] Connection established for ${scope} run ${runId}`);
+        };
 
         eventSource.onmessage = (event) => {
             try {

@@ -45,7 +45,7 @@ export const ExecutionStepsSidebar: React.FC<ExecutionStepsSidebarProps> = ({
 
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                {displaySteps.length === 0 && !terminationReason ? (
+                {(displaySteps.length === 0 && !terminationReason && !isRunning) ? (
                     <div className="flex flex-col items-center justify-center py-20 opacity-40">
                         <LayoutGrid className="w-8 h-8 text-gray-300 mb-3" />
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">No steps recorded</p>
@@ -74,7 +74,7 @@ export const ExecutionStepsSidebar: React.FC<ExecutionStepsSidebarProps> = ({
                                                 }`}>
                                                 {index + 1}
                                             </div>
-                                            {index < displaySteps.length - 1 && (
+                                            {(index < displaySteps.length - 1 || terminationReason) && (
                                                 <div className="w-0.5 flex-1 bg-gray-50 rounded-full" />
                                             )}
                                         </div>
@@ -93,14 +93,14 @@ export const ExecutionStepsSidebar: React.FC<ExecutionStepsSidebarProps> = ({
                                             <div className="flex items-center justify-between mt-auto">
                                                 <div className={`px-2 py-0.5 rounded-md flex items-center gap-1.5 ${step.status === 'passed' ? 'bg-emerald-50 text-emerald-600' :
                                                     step.status === 'failed' ? 'bg-rose-50 text-rose-600' :
-                                                        step.status === 'error' ? 'bg-red-50 text-red-600' :
-                                                            step.status === 'aborted' ? 'bg-amber-50 text-amber-600' :
+                                                        step.status === 'error' ? 'bg-amber-50 text-amber-600' :
+                                                            step.status === 'aborted' ? 'bg-slate-100 text-slate-600' :
                                                                 'bg-blue-50 text-blue-600'
                                                     }`}>
                                                     <div className={`w-1 h-1 rounded-full ${step.status === 'passed' ? 'bg-emerald-500' :
                                                         step.status === 'failed' ? 'bg-rose-500' :
-                                                            step.status === 'error' ? 'bg-red-500' :
-                                                                step.status === 'aborted' ? 'bg-amber-500' :
+                                                            step.status === 'error' ? 'bg-amber-500' :
+                                                                step.status === 'aborted' ? 'bg-slate-500' :
                                                                     'bg-blue-500 animate-pulse'
                                                         }`} />
                                                     <span className="text-[10px] font-black uppercase tracking-wider">
@@ -125,22 +125,69 @@ export const ExecutionStepsSidebar: React.FC<ExecutionStepsSidebarProps> = ({
                             );
                         })}
 
-                        {terminationReason && (
-                            <div className="p-4 rounded-xl border border-red-100 bg-red-50/50 shadow-sm relative overflow-hidden">
-                                <div className="flex items-start gap-4">
-                                    <span className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-500 text-white text-[10px] font-black flex items-center justify-center">
-                                        X
-                                    </span>
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="text-[10px] font-black text-red-600 uppercase tracking-widest mb-1">Execution Terminated</h4>
-                                        <p className="text-xs font-bold text-red-700 leading-relaxed italic border-l-2 border-red-200 pl-3">
-                                            {terminationReason}
-                                        </p>
+                        {terminationReason && (() => {
+                            const isAborted = terminationReason.toLowerCase().includes('abort');
+                            const colors = isAborted ? {
+                                bg: 'bg-slate-50/50',
+                                border: 'border-slate-200',
+                                text: 'text-slate-600',
+                                darkText: 'text-slate-700',
+                                iconBg: 'bg-slate-500',
+                                iconShadow: 'shadow-slate-200',
+                                badgeBg: 'bg-slate-100',
+                                badgeText: 'text-slate-700',
+                                badgeBorder: 'border-slate-200',
+                                accent: 'bg-slate-500',
+                                label: 'Execution Aborted',
+                                statusLabel: 'Aborted'
+                            } : {
+                                bg: 'bg-red-50/30',
+                                border: 'border-red-200',
+                                text: 'text-red-600',
+                                darkText: 'text-red-700',
+                                iconBg: 'bg-red-500',
+                                iconShadow: 'shadow-red-200',
+                                badgeBg: 'bg-red-100',
+                                badgeText: 'text-red-700',
+                                badgeBorder: 'border-red-200',
+                                accent: 'bg-red-500',
+                                label: 'Execution Terminated',
+                                statusLabel: 'Terminated'
+                            };
+
+                            return (
+                                <div className={`group relative p-4 rounded-2xl border transition-all duration-300 ${colors.bg} ${colors.border} shadow-sm overflow-hidden`}>
+                                    <div className="flex gap-4">
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className={`w-8 h-8 rounded-xl text-xs font-black flex items-center justify-center ${colors.iconBg} text-white shadow-lg ${colors.iconShadow}`}>
+                                                {displaySteps.length + 1}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex-1 min-w-0 flex flex-col gap-3">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex-1 pt-1">
+                                                    <h4 className={`text-[10px] font-black ${colors.text} uppercase tracking-widest mb-1`}>{colors.label}</h4>
+                                                    <p className={`text-xs font-bold ${colors.darkText} leading-relaxed italic`}>
+                                                        {terminationReason}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center justify-between mt-auto">
+                                                <div className={`px-2 py-0.5 rounded-md flex items-center gap-1.5 ${colors.badgeBg} ${colors.badgeText}`}>
+                                                    <div className={`w-1 h-1 rounded-full ${colors.accent}`} />
+                                                    <span className="text-[10px] font-black uppercase tracking-wider">
+                                                        {colors.statusLabel}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
+                                    <div className={`absolute top-0 left-0 w-1 h-full ${colors.accent}`} />
                                 </div>
-                                <div className="absolute top-0 left-0 w-1 h-full bg-red-500" />
-                            </div>
-                        )}
+                            );
+                        })()}
                     </>
                 )}
             </div>
