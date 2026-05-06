@@ -1,13 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useRunStreaming } from '@/hooks/useRunStreaming';
 import { runService } from '@/services/runService';
 import { ProjectRun, TestSuiteRun } from '@/types/run';
 import { parseUTCDate } from '@/utils/formatters';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
 import { CheckCircle2, XCircle, ChevronLeft, Layers, ArrowRight, Clock, StopCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { TopNav } from '@/components/TopNav';
 import { projectService } from '@/services/project/projectService';
 import { Project } from '@/types/project';
@@ -19,11 +17,20 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
     const [project, setProject] = useState<Project | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isAborting, setIsAborting] = useState(false);
 
-    const fetchHistoryDetails = useCallback(async () => {
+    const lastFetchTimeRef = useRef<number>(0);
+
+    const fetchHistoryDetails = useCallback(async (force = false) => {
         if (!projectId || !runId) return;
+
+        const now = Date.now();
+        if (!force && now - lastFetchTimeRef.current < 2000) {
+            console.log('[ProjectHistory] Skipping redundant fetch (throttled)');
+            return;
+        }
+
         try {
+            lastFetchTimeRef.current = now;
             const id = parseInt(runId);
             const runData = await runService.getProjectRunDetails(id);
             setRun(runData);
@@ -39,35 +46,16 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
         const loadData = async () => {
             setIsLoading(true);
             await Promise.all([
-                fetchHistoryDetails(),
-                projectId ? projectService.getProjectById(projectId).then(setProject).catch(() => {}) : Promise.resolve()
+                fetchHistoryDetails(true),
+                projectId ? projectService.getProjectById(projectId).then(setProject).catch(() => { }) : Promise.resolve()
             ]);
             setIsLoading(false);
         };
         loadData();
-    }, [projectId, runId]);
+    }, [projectId, runId, fetchHistoryDetails]);
 
-    const handleStatusChange = useCallback(() => {
-        fetchHistoryDetails();
-    }, [fetchHistoryDetails]);
 
-    useRunStreaming({
-        scope: 'PROJECT',
-        runId: runId!,
-        onStatusChange: handleStatusChange
-    });
 
-    const handleAbortProject = async () => {
-        if (!runId) return;
-        setIsAborting(true);
-        try {
-            await runService.abortProjectRun(parseInt(runId));
-        } catch (err: any) {
-            console.error('Abort project error:', err);
-            setError(err.response?.data?.detail || 'Failed to abort project run.');
-            setIsAborting(false);
-        }
-    };
     const getDuration = (startAt?: string | null, endAt?: string | null) => {
         if (!startAt || !endAt) return 'N/A';
         const start = parseUTCDate(startAt)?.getTime() || 0;
@@ -143,20 +131,9 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        {run.status?.toUpperCase() === 'RUNNING' && (
-                            <Button
-                                onClick={handleAbortProject}
-                                disabled={isAborting}
-                                variant="destructive"
-                                className="h-11 px-6 rounded-xl font-bold shadow-lg shadow-red-200 flex items-center gap-2 transition-all active:scale-95"
-                            >
-                                <StopCircle className="w-5 h-5" />
-                                {isAborting ? 'Aborting...' : 'Abort Run'}
-                            </Button>
-                        )}
+
                     </div>
 
-                    {/* Suites Table - Projects Page Style */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between px-2">
                             <div className="flex items-center gap-3">
@@ -210,26 +187,23 @@ export const ProjectHistoryDetailsPage: React.FC = () => {
                                             <td className="px-8 py-6 text-center">
                                                 {(() => {
                                                     const s = suiteRun.status?.toUpperCase();
-                                                    const isSuccess = s === 'PASSED' || s === 'SUCCESS' || s === 'EXECUTED';
-                                                    const isFailure = s === 'FAILED' || s === 'FAILURE';
+                                                    const isSuccess = ['PASSED', 'SUCCESS', 'EXECUTED', 'COMPLETED', 'FINISHED'].includes(s);
+                                                    const isFailure = ['FAILED', 'ERROR', 'FAILURE', 'STOPPED'].includes(s);
                                                     const isAborted = s === 'ABORTED';
-                                                    const isError = s === 'ERROR';
                                                     const isRunning = s === 'RUNNING';
-                                                    const isQueued = s === 'QUEUED' || s === 'PENDING';
+                                                    const isQueued = ['QUEUED', 'PENDING', 'IDLE'].includes(s);
 
                                                     const colors = isSuccess ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
                                                         isFailure ? 'bg-rose-50 text-rose-600 border-rose-100' :
                                                             isAborted ? 'bg-slate-100 text-slate-600 border-slate-200' :
-                                                                isError ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                                    isRunning ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                                        'bg-gray-50 text-gray-500 border-gray-100';
+                                                                isRunning ? 'bg-blue-50 text-blue-600 border-blue-100' :
+                                                                    'bg-gray-50 text-gray-500 border-gray-100';
 
                                                     return (
                                                         <div className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-full border shadow-sm mx-auto w-fit transition-all ${colors}`}>
                                                             {isSuccess && <CheckCircle2 className="w-4 h-4" />}
                                                             {isFailure && <XCircle className="w-4 h-4" />}
                                                             {isAborted && <StopCircle className="w-4 h-4" />}
-                                                            {isError && <AlertCircle className="w-4 h-4" />}
                                                             {isRunning && <Loader2 className="w-4 h-4 animate-spin" />}
                                                             {isQueued && <Clock className="w-3.5 h-3.5" />}
                                                             <span className="text-[10px] font-black uppercase tracking-wider">

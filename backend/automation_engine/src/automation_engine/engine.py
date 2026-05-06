@@ -123,7 +123,11 @@ class TestingSession:
             viewport_width=cfg.browser.viewport_width,
             viewport_height=cfg.browser.viewport_height,
         )
-        await self._browser.start(self._url, init_scripts=[get_js_serializer_path()])
+        await self._browser.start(
+            self._url,
+            init_scripts=[get_js_serializer_path()],
+            record_video_dir=self._record_video_dir,
+        )
 
         self._test_run = TestRun(base_url=self._url)
         self._planning_agent = PlanningAgent(

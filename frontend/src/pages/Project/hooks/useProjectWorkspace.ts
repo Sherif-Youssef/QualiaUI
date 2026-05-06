@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { TestSuite } from '@/types/test-suit';
 import { testSuiteService } from '@/services/testSuit/testSuiteService';
 import { projectService } from '@/services/project/projectService';
@@ -13,7 +12,6 @@ interface UseProjectWorkspaceProps {
 }
 
 export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => {
-    const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [activeView, setActiveView] = useState<ProjectView>('suites');
@@ -24,11 +22,8 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
     const [history, setHistory] = useState<ProjectRun[]>([]);
     const [totalItems, setTotalItems] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
-    const [isRunningProject, setIsRunningProject] = useState(false);
-    const [activeRunId, setActiveRunId] = useState<number | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [debouncedSearch, setDebouncedSearch] = useState('');
-    const [selectedModel, setSelectedModel] = useState('gemini-1.5-pro');
 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -155,31 +150,7 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
         }
     };
 
-    const handleRunProject = async (model: string = 'gemini-1.5-pro') => {
-        if (!projectId) return;
-        setIsRunningProject(true);
-        try {
-            const run = await runService.startProjectRun(parseInt(projectId), 'NATURAL', model);
-            setActiveRunId(run.run_id);
-            navigate(`/project/${projectId}/history/${run.run_id}`);
-        } catch (err: any) {
-            setIsRunningProject(false);
-            setError(err.response?.data?.detail || 'Failed to start project run.');
-        }
-    };
 
-    const [isAbortingProject, setIsAbortingProject] = useState(false);
-
-    const handleAbortProject = async () => {
-        if (!activeRunId) return;
-        setIsAbortingProject(true);
-        try {
-            await runService.abortProjectRun(activeRunId);
-        } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to abort project run.');
-            setIsAbortingProject(false);
-        }
-    };
 
     return {
         searchQuery, setSearchQuery,
@@ -206,11 +177,5 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
         confirmDelete,
         handleMemberAdd,
         handleMemberRemove,
-        handleRunProject,
-        handleAbortProject,
-        isRunningProject,
-        isAbortingProject,
-        selectedModel,
-        setSelectedModel,
     };
 };

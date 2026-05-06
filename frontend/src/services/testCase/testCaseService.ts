@@ -1,4 +1,4 @@
-import api, { ApiResponse } from "@/lib/api";
+import api, { ApiResponse, getDeduplicated } from "@/lib/api";
 import { TestCaseDTO, TestCase } from "@/types/test-case";
 import { testSuiteService } from "../testSuit/testSuiteService";
 import { mapTestCaseToViewModel } from "@/utils/mappers";
@@ -6,9 +6,9 @@ import { mapTestCaseToViewModel } from "@/utils/mappers";
 export const testCaseService = {
     getTestCases: async (projectId: string, suiteId: string, offset = 0, limit = 5, name?: string): Promise<{ testCases: TestCase[]; total: number }> => {
         try {
-            const response = await api.get<ApiResponse<TestCaseDTO>>(
+            const response = await getDeduplicated<ApiResponse<TestCaseDTO>>(
                 `/projects/${projectId}/testsuites/${suiteId}/testcases`,
-                { params: { offset, limit, name: name || undefined } }
+                { offset, limit, name: name || undefined }
             );
             return {
                 testCases: response.data.items.map(mapTestCaseToViewModel),
@@ -22,7 +22,7 @@ export const testCaseService = {
 
     getTestCaseById: async (projectId: string, suiteId: string, caseId: string): Promise<TestCase> => {
         try {
-            const response = await api.get<TestCaseDTO>(
+            const response = await getDeduplicated<TestCaseDTO>(
                 `/projects/${projectId}/testsuites/${suiteId}/testcases/${caseId}`
             );
             return mapTestCaseToViewModel(response.data);

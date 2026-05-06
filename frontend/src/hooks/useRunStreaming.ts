@@ -19,10 +19,8 @@ export const useRunStreaming = ({
 }: UseRunStreamingProps) => {
     const [isRunning, setIsRunning] = useState(false);
     const eventSourceRef = useRef<EventSource | null>(null);
-
-    // Use refs for callbacks to avoid re-subscribing if they change
     const callbacksRef = useRef({ onStatusChange, onStepUpdate, onComplete });
-    
+
     useEffect(() => {
         callbacksRef.current = { onStatusChange, onStepUpdate, onComplete };
     }, [onStatusChange, onStepUpdate, onComplete]);
@@ -45,7 +43,7 @@ export const useRunStreaming = ({
                 // If the main entity (PROJECT/TESTSUITE) is finished
                 const eventElement = (event.element || '').toUpperCase();
                 const scopeElement = scope.toUpperCase();
-                
+
                 if (eventElement === scopeElement && ['PASSED', 'FAILED', 'ABORTED', 'ERROR', 'SUCCESS', 'FAILURE'].includes(event.status?.toUpperCase())) {
                     console.log(`[Streaming] ${scope} run ${id} completed with status ${event.status}`);
                     eventSource.close();

@@ -1,13 +1,14 @@
-import api, { ApiResponse } from "@/lib/api";
+import api, { ApiResponse, getDeduplicated } from "@/lib/api";
 import { TestSuiteDTO, TestSuite } from "@/types/test-suit";
 import { mapTestSuiteToViewModel } from "@/utils/mappers";
 
 export const testSuiteService = {
     getTestSuites: async (projectId: string, offset = 0, limit = 10, name?: string): Promise<{ testSuites: TestSuite[]; total: number }> => {
         try {
-            const response = await api.get<ApiResponse<TestSuiteDTO>>(`/projects/${projectId}/testsuites`, {
-                params: { offset, limit, name: name || undefined }
-            });
+            const response = await getDeduplicated<ApiResponse<TestSuiteDTO>>(
+                `/projects/${projectId}/testsuites`,
+                { offset, limit, name: name || undefined }
+            );
             return {
                 testSuites: response.data.items.map(mapTestSuiteToViewModel),
                 total: response.data.total_items
@@ -19,7 +20,9 @@ export const testSuiteService = {
     },
     getTestSuiteById: async (projectId: string, suiteId: string): Promise<TestSuite> => {
         try {
-            const response = await api.get<TestSuiteDTO>(`/projects/${projectId}/testsuites/${suiteId}`);
+            const response = await getDeduplicated<TestSuiteDTO>(
+                `/projects/${projectId}/testsuites/${suiteId}`
+            );
             return mapTestSuiteToViewModel(response.data);
         } catch (error) {
             console.error(`Service error (getTestSuiteById ${suiteId}):`, error);

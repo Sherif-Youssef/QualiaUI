@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { TestCase, ActionStep } from '@/types/test-case';
 import { testCaseService } from '@/services/testCase/testCaseService';
 import { runService } from '@/services/runService';
-import { Scope, TestCaseRun } from '@/types/run';
+import { Scope } from '@/types/run';
 import { SuiteWithCases } from '@/components/TestSuiteManager';
 import { mapActiveStepToActionStep } from '@/utils/mappers';
 
@@ -29,6 +29,15 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
     const [modalError, setModalError] = useState<string | null>(null);
     const [editingTestCase, setEditingTestCase] = useState<TestCase | null>(null);
     const [selectedStep, setSelectedStep] = useState<ActionStep | null>(null);
+    const [activeCaseId, setActiveCaseId] = useState<string | null>(caseId || null);
+    const activeCaseIdRef = useRef<string | null>(caseId || null);
+    const [runScope, setRunScope] = useState<Scope | null>(location.state?.scope || null);
+    const [isAborting, setIsAborting] = useState(false);
+    const isStartingRef = useRef(false);
+
+    useEffect(() => {
+        activeCaseIdRef.current = activeCaseId;
+    }, [activeCaseId]);
 
     const eventSourceRef = useRef<EventSource | null>(null);
     const suites = useMemo((): SuiteWithCases[] | undefined => {
@@ -53,40 +62,56 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
             eventSourceRef.current.close();
             eventSourceRef.current = null;
         }
+        setIsRunning(true);
 
         const eventSource = runService.subscribeToRunProgress(scope, runId, (data: any) => {
-            console.log(`[SSE] Received event type: ${data.type}`);
+            console.log(`[SSE] Received event type: ${data.type} for run ${runId}`);
             if (data.type === 'STATUS_CHANGE') {
                 const event = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
                 const element = (event.element || '').toUpperCase();
                 const status = (event.status || '').toUpperCase();
                 const eventId = event.id;
 
+                console.log(`[SSE] Status Change: ${element} ${status} (ID: ${eventId})`);
+
                 if (element === 'TESTCASE' || element === 'TESTCASE_RUN') {
                     const eventTestCaseId = String(event.testcase_id || (event.element_data?.testcase_id) || '');
 
                     setTestCases(prev => prev.map(tc => {
                         const isMatch = (eventTestCaseId && String(tc.id) === eventTestCaseId) ||
-                            (eventId && String((tc as any).runId) === String(eventId));
+                            (element === 'TESTCASE' && eventId && String(tc.id) === String(eventId)) ||
+                            (element === 'TESTCASE_RUN' && eventId && String((tc as any).runId) === String(eventId));
 
                         if (!isMatch) return tc;
 
                         let tcStatus: TestCase['status'] = 'running';
-                        if (['PASSED', 'SUCCESS', 'EXECUTED'].includes(status)) tcStatus = 'success';
-                        else if (['FAILED', 'ERROR', 'ABORTED', 'FAILURE'].includes(status)) tcStatus = 'failure';
+                        if (['PASSED', 'SUCCESS', 'EXECUTED', 'COMPLETED', 'FINISHED'].includes(status)) {
+                            tcStatus = 'passed';
+                        } else if (['FAILED', 'FAILURE', 'STOPPED'].includes(status)) {
+                            tcStatus = 'failed';
+                        } else if (status === 'ABORTED') {
+                            tcStatus = 'aborted';
+                        } else if (status === 'ERROR') {
+                            tcStatus = 'error';
+                        } else if (['QUEUED', 'PENDING', 'IDLE'].includes(status)) {
+                            tcStatus = 'idle';
+                        }
 
                         return {
                             ...tc,
                             status: tcStatus,
-                            runId: eventId || (tc as any).runId,
+                            terminationReason: event.termination_reason || tc.terminationReason,
+                            runId: (element === 'TESTCASE_RUN' ? eventId : (tc as any).runId),
                             steps: tcStatus === 'running' && tc.status !== 'running' ? [] : tc.steps
                         };
                     }));
                 }
-                else if ((element === scope || element === `${scope}_RUN`) &&
+
+                if ((element === scope || element === `${scope}_RUN`) &&
                     ['PASSED', 'FAILED', 'ABORTED', 'ERROR', 'SUCCESS', 'FAILURE'].includes(status)) {
                     eventSource.close();
                     setIsRunning(false);
+                    isStartingRef.current = false;
                     setIsAborting(false);
                     setActiveRunId(null);
                 }
@@ -99,8 +124,13 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
 
                 setTestCases(prev => {
                     return prev.map(tc => {
+                        // Match if:
+                        // 1. Definition IDs match (testcase_id)
+                        // 2. Specific Run IDs match (testcase_run_id)
+                        // 3. We are in a single-case view and the event belongs to the active run we subscribed to
                         const isMatch = (testcaseId && String(tc.id) === testcaseId) ||
-                            (testcaseRunId && String((tc as any).runId) === testcaseRunId);
+                            (testcaseRunId && String((tc as any).runId) === testcaseRunId) ||
+                            (testcaseRunId && String(runId) === testcaseRunId && prev.length === 1);
 
                         if (!isMatch) return tc;
 
@@ -117,7 +147,8 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
                         }
 
                         // Auto-follow logic for the large screenshot viewer
-                        const isCurrentlyViewed = caseId ? String(tc.id) === String(caseId) : true;
+                        const currentActiveId = activeCaseIdRef.current;
+                        const isCurrentlyViewed = currentActiveId ? String(tc.id) === String(currentActiveId) : true;
 
                         if (isCurrentlyViewed && (mappedStep.screenshot || mappedStep.text)) {
                             if (mappedStep.screenshot) setCurrentScreenshot(mappedStep.screenshot);
@@ -135,7 +166,33 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
         });
 
         eventSourceRef.current = eventSource;
-    }, [caseId]);
+    }, []);
+
+    useEffect(() => {
+        if (activeRunId && runScope) {
+            console.log(`[SSE] Managing connection for run ${activeRunId} (${runScope})`);
+            subscribeToRun(activeRunId, runScope);
+        }
+    }, [activeRunId, runScope, subscribeToRun]);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            if (eventSourceRef.current) {
+                console.log('[SSE] Cleaning up connection on unmount');
+                eventSourceRef.current.close();
+                eventSourceRef.current = null;
+            }
+        };
+    }, []);
+
+    useEffect(() => {
+        if (caseId) {
+            setActiveCaseId(caseId);
+        } else if (!activeCaseId && testCases && testCases.length > 0) {
+            setActiveCaseId(String(testCases[0].id));
+        }
+    }, [caseId, testCases, activeCaseId]);
 
     useEffect(() => {
         const fetchContextData = async () => {
@@ -155,84 +212,77 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
                 }
                 setTestCases(initialTestCases);
 
-                if (location.state?.runId) {
-                    const rId = location.state.runId;
-                    const scope: Scope = location.state.scope || 'TESTSUITE';
+                let rId = location.state?.runId ? Number(location.state.runId) : undefined;
+                let scope = (location.state?.scope as Scope) || 'TESTSUITE';
 
-                    setIsRunning(true);
-                    subscribeToRun(rId, scope);
+                // Aggressive Reconnect: Fallback to suite run if active
+                try {
+                    if (!rId && suiteId) {
+                        const suiteRuns = await runService.getTestSuiteRuns(projectId, suiteId, 0, 1);
+                        const latestSuite = suiteRuns.runs[0];
+                        if (latestSuite && (latestSuite.status === 'RUNNING' || latestSuite.status === 'QUEUED')) {
+                            rId = latestSuite.id;
+                            scope = 'TESTSUITE';
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Failed to auto-reconnect to active runs:", err);
+                }
+
+                if (rId) {
+                    setActiveRunId(rId);
+                    setRunScope(scope);
+                }
+
+                const currentRunId = rId;
+                const currentScope = scope;
+
+                if (currentRunId) {
 
                     try {
                         let runDetails: any;
-                        if (scope === 'TESTSUITE') {
-                            runDetails = await runService.getTestSuiteRunDetails(rId);
-                        } else if (scope === 'PROJECT') {
-                            runDetails = await runService.getProjectRunDetails(rId);
-                            const testcaseRuns: TestCaseRun[] = [];
-                            (runDetails as any).testsuite_runs?.forEach((sr: any) => {
-                                testcaseRuns.push(...(sr.testcase_runs || []));
-                            });
-                            (runDetails as any).testcase_runs = testcaseRuns;
-                        } else if (scope === 'TESTCASE') {
-                            const tcr = await runService.getTestCaseRunDetails(rId);
+                        if (currentScope === 'TESTSUITE') {
+                            runDetails = await runService.getTestSuiteRunDetails(currentRunId);
+                        } else if (currentScope === 'TESTCASE') {
+                            const tcr = await runService.getTestCaseRunDetails(currentRunId);
                             runDetails = { testcase_runs: [tcr], status: tcr.status };
                         }
 
                         if (runDetails && runDetails.testcase_runs) {
-                            let activeCaseRunDetails: any = null;
-                            if (caseId) {
-                                const caseRun = runDetails.testcase_runs.find((r: any) => String(r.testcase_id) === caseId);
-                                if (caseRun) {
-                                    try {
-                                        activeCaseRunDetails = await runService.getTestCaseRunDetails(caseRun.id);
-                                    } catch (err) {
-                                        console.warn("Failed to fetch detailed case run:", err);
-                                    }
-                                }
-                            }
-
                             setTestCases(prev => prev.map(tc => {
-                                const run = (activeCaseRunDetails && String(activeCaseRunDetails.testcase_id) === tc.id)
-                                    ? activeCaseRunDetails
-                                    : runDetails.testcase_runs.find((r: any) => String(r.testcase_id) === tc.id);
+                                const run = runDetails.testcase_runs.find((r: any) => String(r.testcase_id) === tc.id);
 
                                 if (!run) return tc;
 
                                 let status: TestCase['status'] = 'running';
-                                if (run.status === 'PASSED' || run.status === 'EXECUTED' || run.status === 'SUCCESS') status = 'success';
-                                else if (['FAILED', 'ERROR', 'ABORTED', 'FAILURE'].includes(run.status)) status = 'failure';
-                                else if (['QUEUED', 'PENDING'].includes(run.status)) status = 'idle';
+                                const s = (run.status || '').toUpperCase();
+                                if (['PASSED', 'EXECUTED', 'SUCCESS', 'COMPLETED', 'FINISHED'].includes(s)) status = 'passed';
+                                else if (['FAILED', 'FAILURE', 'STOPPED'].includes(s)) status = 'failed';
+                                else if (s === 'ABORTED') status = 'aborted';
+                                else if (s === 'ERROR') status = 'error';
+                                else if (['QUEUED', 'PENDING', 'IDLE'].includes(s)) status = 'idle';
 
                                 const apiSteps = run.teststep_runs?.map((stepRun: any, idx: number) =>
                                     mapActiveStepToActionStep(stepRun, idx)
                                 ) || [];
-                                const currentSteps = tc.steps || [];
+                                let finalSteps = (tc.steps || []);
+                                if (apiSteps.length > 0) {
+                                    finalSteps = apiSteps;
+                                } else if (status === 'running') {
+                                    finalSteps = [];
+                                }
 
                                 return {
                                     ...tc,
                                     status,
+                                    terminationReason: run.termination_reason || tc.terminationReason,
                                     runId: run.id,
-                                    steps: apiSteps.length >= currentSteps.length ? apiSteps : currentSteps
+                                    steps: finalSteps
                                 };
                             }));
 
                             if (['PASSED', 'FAILED', 'ABORTED', 'ERROR', 'SUCCESS', 'FAILURE'].includes(runDetails.status)) {
                                 setIsRunning(false);
-                            }
-
-                            if (caseId) {
-                                const runForActive = (activeCaseRunDetails && String(activeCaseRunDetails.testcase_id) === caseId)
-                                    ? activeCaseRunDetails
-                                    : runDetails.testcase_runs.find((r: any) => String(r.testcase_id) === caseId);
-
-                                if (runForActive && runForActive.teststep_runs && runForActive.teststep_runs.length > 0) {
-                                    const lastStepData = runForActive.teststep_runs[runForActive.teststep_runs.length - 1];
-                                    const lastStep = mapActiveStepToActionStep(lastStepData, runForActive.teststep_runs.length - 1);
-                                    if (lastStep.screenshot) setCurrentScreenshot(lastStep.screenshot);
-                                    const activeTC = initialTestCases.find(tc => tc.id === caseId);
-                                    setCurrentUrl(activeTC?.url || '');
-                                    setSelectedStep(lastStep);
-                                }
                             }
                         }
                     } catch (runErr) {
@@ -250,8 +300,47 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
             }
         };
         fetchContextData();
-        return () => { if (eventSourceRef.current) eventSourceRef.current.close(); };
-    }, [projectId, suiteId, caseId, location.state?.runId, location.state?.scope, subscribeToRun]);
+    }, [projectId, suiteId, location.state?.runId, location.state?.scope, subscribeToRun]);
+
+    const lastInitializedCaseId = useRef<string | null>(null);
+
+    // Lightweight effect to fetch steps for the active testcase if they haven't been loaded via SSE or initial fetch
+    useEffect(() => {
+        if (!activeCaseId) return;
+        if (lastInitializedCaseId.current === activeCaseId) return;
+
+        const tc = testCases.find(t => String(t.id) === String(activeCaseId));
+        if (!tc || !tc.runId) return;
+
+        lastInitializedCaseId.current = activeCaseId;
+
+        // If we already have execution steps loaded (e.g. from SSE), just update the UI
+        if (tc.steps && tc.steps.length > 0 && ('status' in tc.steps[0])) {
+            const lastStep = tc.steps[tc.steps.length - 1] as ActionStep;
+            if (lastStep.screenshot) setCurrentScreenshot(lastStep.screenshot);
+            setCurrentUrl(tc.url || '');
+            setSelectedStep(lastStep);
+            return;
+        }
+
+        // Otherwise, fetch them from backend
+        runService.getTestCaseRunDetails(Number(tc.runId)).then(details => {
+            if (details.teststep_runs && details.teststep_runs.length > 0) {
+                const apiSteps = details.teststep_runs.map((stepRun: any, idx: number) =>
+                    mapActiveStepToActionStep(stepRun, idx)
+                );
+
+                setTestCases(current => current.map(t => String(t.id) === String(activeCaseId) ? { ...t, steps: apiSteps } : t));
+
+                const lastStep = apiSteps[apiSteps.length - 1];
+                if (lastStep.screenshot) setCurrentScreenshot(lastStep.screenshot);
+                setCurrentUrl(tc.url || '');
+                setSelectedStep(lastStep);
+            }
+        }).catch(err => {
+            console.warn("Failed to fetch active case steps:", err);
+        });
+    }, [activeCaseId, testCases]);
 
     const handleSaveTestCase = useCallback(async (data: any) => {
         if (!projectId || !suiteId) return;
@@ -259,7 +348,10 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
         setModalError(null);
         try {
             if (editingTestCase) {
-                const updated = await testCaseService.updateTestCase(projectId, suiteId, editingTestCase.id, data);
+                const updated = await testCaseService.updateTestCase(projectId, suiteId, editingTestCase.id, {
+                    ...editingTestCase,
+                    ...data
+                });
                 setTestCases(prev => prev.map(tc => tc.id === editingTestCase.id ? { ...tc, ...updated } : tc));
             } else {
                 const newCase = await testCaseService.createTestCase(projectId, suiteId, data);
@@ -274,58 +366,35 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
         }
     }, [projectId, suiteId, editingTestCase]);
 
-    const [isAborting, setIsAborting] = useState(false);
-    const [runScope, setRunScope] = useState<Scope | null>(location.state?.scope || null);
-
     const handleRunAllTests = useCallback(async (model: string = 'gemini-1.5-pro') => {
-        if (!projectId) return;
+        if (!projectId || !suiteId || isStartingRef.current) return;
+        isStartingRef.current = true;
         setIsRunning(true);
         try {
-            if (suiteId) {
-                const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL', model);
-                const details = await runService.getTestSuiteRunDetails(run.run_id);
+            const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL', model);
+            const details = await runService.getTestSuiteRunDetails(run.run_id);
 
-                setActiveRunId(run.run_id);
-                setRunScope('TESTSUITE');
-                setTestCases(prev => prev.map(tc => {
-                    const caseRun = details.testcase_runs?.find((r: any) => String(r.testcase_id) === String(tc.id));
-                    return {
-                        ...tc,
-                        status: 'running',
-                        runId: caseRun?.id || null,
-                        steps: []
-                    };
-                }));
-                subscribeToRun(run.run_id, 'TESTSUITE');
-            } else if (projectId) {
-                const run = await runService.startProjectRun(parseInt(projectId), 'NATURAL', model);
-                const details = await runService.getProjectRunDetails(run.run_id);
-
-                setActiveRunId(run.run_id);
-                setRunScope('PROJECT');
-                setTestCases(prev => prev.map(tc => {
-                    let caseRun: any = null;
-                    (details as any).testsuite_runs?.forEach((sr: any) => {
-                        const found = sr.testcase_runs?.find((r: any) => String(r.testcase_id) === String(tc.id));
-                        if (found) caseRun = found;
-                    });
-
-                    return {
-                        ...tc,
-                        status: 'running',
-                        runId: caseRun?.id || null,
-                        steps: []
-                    };
-                }));
-                subscribeToRun(run.run_id, 'PROJECT');
-            }
+            setActiveRunId(run.run_id);
+            setRunScope('TESTSUITE');
+            setTestCases(prev => prev.map(tc => {
+                const caseRun = details.testcase_runs?.find((r: any) => String(r.testcase_id) === String(tc.id));
+                return {
+                    ...tc,
+                    status: 'running',
+                    runId: caseRun?.id || undefined,
+                    steps: []
+                };
+            }));
         } catch (err: any) {
             setIsRunning(false);
+            isStartingRef.current = false;
             setError(err.response?.data?.detail || 'Failed to start the run.');
         }
     }, [projectId, suiteId, subscribeToRun]);
 
     const handleRunSingleTest = useCallback(async (testId: string, model: string = 'gemini-1.5-pro') => {
+        if (isStartingRef.current) return;
+        isStartingRef.current = true;
         setIsRunning(true);
         try {
             const run = await runService.startTestCaseRun(parseInt(testId), 'NATURAL', model);
@@ -338,10 +407,9 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
                 }
                 return tc;
             }));
-
-            subscribeToRun(run.run_id, 'TESTCASE');
         } catch (err: any) {
             setIsRunning(false);
+            isStartingRef.current = false;
             setError(err.response?.data?.detail || 'Failed to start test case run.');
         }
     }, [subscribeToRun]);
@@ -354,8 +422,6 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
                 await runService.abortTestCaseRun(activeRunId);
             } else if (runScope === 'TESTSUITE') {
                 await runService.abortTestSuiteRun(activeRunId);
-            } else if (runScope === 'PROJECT') {
-                await runService.abortProjectRun(activeRunId);
             }
         } catch (err: any) {
             console.error("Failed to abort run:", err);
@@ -367,11 +433,24 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
         if (!projectId) return;
         try {
             const tc = testCases.find(t => t.id === testId);
-            const sId = suiteId || tc?.suiteId;
+            if (!tc) return;
+            const sId = suiteId || tc.suiteId;
             if (!sId) return;
-            await testCaseService.updateTestCase(projectId, sId, testId, { prompt: newInstruction });
-            setTestCases(prev => prev.map(tc => (tc.id === testId ? { ...tc, prompt: newInstruction } : tc)));
-        } catch (err) { }
+
+            // Pass full test case data to avoid clearing other fields
+            await testCaseService.updateTestCase(projectId, sId, testId, {
+                ...tc,
+                prompt: newInstruction,
+                plainText: newInstruction
+            });
+
+            setTestCases(prev => prev.map(tc =>
+                tc.id === testId ? { ...tc, prompt: newInstruction, plainText: newInstruction } : tc
+            ));
+        } catch (err) {
+            console.error("Failed to update instruction:", err);
+            setError("Failed to update instruction.");
+        }
     }, [projectId, suiteId, testCases]);
 
     const handleStepTextChange = useCallback(async (testId: string, stepId: string, newText: string) => {
@@ -381,13 +460,24 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
             if (!testCase) return;
             const sId = suiteId || testCase.suiteId;
             if (!sId) return;
+
             const updatedSteps = (testCase.steps || []).map(s => s.id === stepId ? { ...s, text: newText } : s);
-            await testCaseService.updateTestCase(projectId, sId, testId, { steps: updatedSteps });
+
+            // Pass full test case data to avoid clearing other fields
+            await testCaseService.updateTestCase(projectId, sId, testId, {
+                ...testCase,
+                steps: updatedSteps
+            });
+
             setTestCases(prev => prev.map(tc => tc.id === testId ? { ...tc, steps: updatedSteps as ActionStep[] } : tc));
-        } catch (err) { }
+        } catch (err) {
+            console.error("Failed to update step text:", err);
+            setError("Failed to update step text.");
+        }
     }, [projectId, suiteId, testCases]);
 
     const handleStepClick = useCallback((step: any, tc: TestCase) => {
+        setActiveCaseId(tc.id);
         setCurrentScreenshot(step.screenshot || '');
         setCurrentUrl(tc.url || '');
         setSelectedStep(step as ActionStep);
@@ -410,6 +500,7 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
         modalError, setModalError,
         editingTestCase, setEditingTestCase,
         selectedStep,
+        activeCaseId, setActiveCaseId,
         isRunning,
         isAborting,
         handleSaveTestCase,
