@@ -21,9 +21,8 @@ export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeView, onViewChan
                 <button
                     key={id}
                     onClick={() => onViewChange(id)}
-                    className={`flex items-center gap-2 px-6 py-4 text-sm font-bold transition-all relative ${
-                        activeView === id ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
-                    }`}
+                    className={`flex items-center gap-2 px-6 py-4 text-sm font-bold transition-all relative ${activeView === id ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
+                        }`}
                 >
                     <Icon className="w-4 h-4" />
                     {label}
