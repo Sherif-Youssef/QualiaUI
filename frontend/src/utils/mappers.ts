@@ -16,7 +16,7 @@ export const mapTestStepRunToActionStep = (sr: TestStepRun, index: number): Acti
         number: index + 1,
         text: actionText,
         screenshot: screenshot ? (screenshot.startsWith('data:') ? screenshot : `data:image/png;base64,${screenshot}`) : '',
-        status: sr.status === 'PASSED' ? 'success' : 'failure' as any,
+        status: sr.status === 'PASSED' ? 'success' : (sr.status === 'ABORTED' ? 'aborted' : (sr.status === 'ERROR' ? 'error' : 'failure')) as any,
         description: sr.error_message || undefined
     };
 };
@@ -25,8 +25,8 @@ export const mapTestCaseRunToViewModel = (cr: TestCaseRun, steps: TestStepRun[] 
     const statusMapping: Record<string, TestCase['status']> = {
         'PASSED': 'success',
         'FAILED': 'failure',
-        'ABORTED': 'failure',
-        'ERROR': 'failure'
+        'ABORTED': 'aborted',
+        'ERROR': 'error'
     };
 
     return {
@@ -43,7 +43,7 @@ export const mapTestCaseRunToViewModel = (cr: TestCaseRun, steps: TestStepRun[] 
 
 export const mapActiveStepToActionStep = (stepRun: any, currentStepCount: number): ActionStep => {
     const screenshot = stepRun.screenshot_after || stepRun.screenshot_before || (stepRun.snapshot_after ? stepRun.snapshot_after.screenshot : '') || (stepRun.snapshot_before ? stepRun.snapshot_before.screenshot : '');
-    
+
     let formattedScreenshot = '';
     if (screenshot) {
         if (screenshot.startsWith('http') || screenshot.startsWith('data:')) {
@@ -59,7 +59,9 @@ export const mapActiveStepToActionStep = (stepRun: any, currentStepCount: number
         text: stepRun.llm_action || stepRun.action_description || 'Executing Action...',
         screenshot: formattedScreenshot,
         status: (stepRun.status?.toLowerCase() === 'passed' || stepRun.status?.toLowerCase() === 'executed') ? 'success' : 
-                (stepRun.status?.toLowerCase() === 'failed' || stepRun.status?.toLowerCase() === 'error') ? 'failure' : 'running',
+                (stepRun.status?.toLowerCase() === 'failed') ? 'failure' : 
+                (stepRun.status?.toLowerCase() === 'error') ? 'error' : 
+                (stepRun.status?.toLowerCase() === 'aborted') ? 'aborted' : 'running',
         type: 'do',
     };
 };
