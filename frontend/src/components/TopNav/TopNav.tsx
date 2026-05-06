@@ -25,7 +25,7 @@ export const TopNav: React.FC = () => {
       try {
         const user = await authService.getCurrentUser();
         setUserName(`${user.first_name || ''} ${user.last_name || ''}`);
-        
+
         const isUserAdmin = user.is_admin || user.role === 'admin';
         const userRole = user.role || 'viewer';
 
@@ -60,6 +60,7 @@ export const TopNav: React.FC = () => {
   };
 
   const navLinks = [
+    { name: 'Landing Page', path: '/' },
     { name: 'Projects Portal', path: '/projects' },
   ];
   if (isAdmin) {
