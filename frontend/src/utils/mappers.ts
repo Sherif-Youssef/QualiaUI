@@ -15,7 +15,7 @@ export const mapTestStepRunToActionStep = (sr: TestStepRun, index: number): Acti
         id: sr.id.toString(),
         number: index + 1,
         text: actionText,
-        screenshot: screenshot ? (screenshot.startsWith('data:') ? screenshot : `data:image/png;base64,${screenshot}`) : '',
+        screenshot: screenshot || '',
         status: sr.status === 'PASSED' ? 'success' : 'failure' as any,
         description: sr.error_message || undefined
     };
@@ -44,14 +44,7 @@ export const mapTestCaseRunToViewModel = (cr: TestCaseRun, steps: TestStepRun[] 
 export const mapActiveStepToActionStep = (stepRun: any, currentStepCount: number): ActionStep => {
     const screenshot = stepRun.screenshot_after || stepRun.screenshot_before || (stepRun.snapshot_after ? stepRun.snapshot_after.screenshot : '') || (stepRun.snapshot_before ? stepRun.snapshot_before.screenshot : '');
     
-    let formattedScreenshot = '';
-    if (screenshot) {
-        if (screenshot.startsWith('http') || screenshot.startsWith('data:')) {
-            formattedScreenshot = screenshot;
-        } else {
-            formattedScreenshot = `data:image/png;base64,${screenshot}`;
-        }
-    }
+    const formattedScreenshot = screenshot || '';
 
     return {
         id: stepRun.id ? String(stepRun.id) : crypto.randomUUID(),
