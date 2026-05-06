@@ -107,6 +107,9 @@ class ActionCompiler:
 
         for name, field in exec_action_cls.model_fields.items():
             value = getattr(exec_action, name)
+            if value is None:
+                processed_attrs[name] = None
+                continue
             for marker in field.metadata:
                 if isinstance(marker, TextResolvable):
                     value = self._resolve_text(value)

@@ -66,9 +66,7 @@ class ResolveVariablesStep:
 
         for compiled in ctx.compiled_actions:
             try:
-                compiled.resolved_executable = compiler.resolve_vars(
-                    compiled.raw_executable
-                )
+                compiled.resolved_executable = compiler.resolve_vars(compiled.raw_executable)
             except Exception as e:
                 logger.error(f"Failed to resolve variables: {e}", exc_info=True)
                 step = TestStep(action=compiled.action)
