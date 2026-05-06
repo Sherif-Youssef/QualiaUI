@@ -60,7 +60,6 @@ export const TopNav: React.FC = () => {
   };
 
   const navLinks = [
-    { name: 'Landing Page', path: '/' },
     { name: 'Projects Portal', path: '/projects' },
   ];
   if (isAdmin) {

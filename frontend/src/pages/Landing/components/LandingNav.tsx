@@ -7,9 +7,9 @@ interface LandingNavProps {
 export const LandingNav: React.FC<LandingNavProps> = () => {
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 bg-white/80 backdrop-blur-md border-b border-gray-100/80">
-            <div className="flex items-center gap-2">
+            <NavLink to="/" className="flex items-center gap-2">
                 <span className="font-sans font-bold text-gray-900 text-lg tracking-tight">QUALIA</span>
-            </div>
+            </NavLink>
             <div className="hidden md:flex items-center gap-8">
                 <a href="#features" className="nav-link text-sm text-gray-500 font-medium">Features</a>
                 <a href="#demo" className="nav-link text-sm text-gray-500 font-medium">Demo</a>

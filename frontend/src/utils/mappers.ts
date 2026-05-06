@@ -7,7 +7,7 @@ import { DashboardDTO, DashboardData } from "@/types/dashboard";
 import { TestCaseRun, TestStepRun } from "@/types/run";
 
 export const mapTestStepRunToActionStep = (sr: TestStepRun, index: number): ActionStep => {
-    const actionText = sr.llm_action || 'Action Step';
+    const actionText = sr.recreation_prompt || 'Action Step';
 
     const screenshot = sr.screenshot_after || sr.screenshot_before;
 
@@ -43,25 +43,28 @@ export const mapTestCaseRunToViewModel = (cr: TestCaseRun, steps: TestStepRun[] 
 
 export const mapActiveStepToActionStep = (stepRun: any, currentStepCount: number): ActionStep => {
     const screenshot = stepRun.screenshot_after || stepRun.screenshot_before || (stepRun.snapshot_after ? stepRun.snapshot_after.screenshot : '') || (stepRun.snapshot_before ? stepRun.snapshot_before.screenshot : '');
-
     let formattedScreenshot = '';
     if (screenshot) {
-        if (screenshot.startsWith('http') || screenshot.startsWith('data:')) {
-            formattedScreenshot = screenshot;
-        } else {
-            formattedScreenshot = `data:image/png;base64,${screenshot}`;
-        }
+        formattedScreenshot = (screenshot.startsWith('http') || screenshot.startsWith('data:')) 
+            ? screenshot 
+            : `data:image/png;base64,${screenshot}`;
     }
+
+    const rawStatus = (stepRun.status || 'running').toLowerCase();
+    const statusMap: Record<string, ActionStep['status']> = {
+        passed: 'success',
+        executed: 'success',
+        failed: 'failure',
+        error: 'error',
+        aborted: 'aborted'
+    };
 
     return {
         id: stepRun.id ? String(stepRun.id) : crypto.randomUUID(),
         number: currentStepCount + 1,
-        text: stepRun.llm_action || stepRun.action_description || 'Executing Action...',
+        text: stepRun.recreation_prompt || stepRun.action_description || 'Executing Action...',
         screenshot: formattedScreenshot,
-        status: (stepRun.status?.toLowerCase() === 'passed' || stepRun.status?.toLowerCase() === 'executed') ? 'success' : 
-                (stepRun.status?.toLowerCase() === 'failed') ? 'failure' : 
-                (stepRun.status?.toLowerCase() === 'error') ? 'error' : 
-                (stepRun.status?.toLowerCase() === 'aborted') ? 'aborted' : 'running',
+        status: statusMap[rawStatus] || 'running',
         type: 'do',
     };
 };

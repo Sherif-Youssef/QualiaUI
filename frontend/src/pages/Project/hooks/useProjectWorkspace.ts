@@ -2,8 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { TestSuite } from '@/types/test-suit';
 import { testSuiteService } from '@/services/testSuit/testSuiteService';
 import { projectService } from '@/services/project/projectService';
-import { runService } from '@/services/runService';
-import { ProjectRun } from '@/types/run';
 import { useProjectPermissions } from '@/hooks/useProjectPermissions';
 import { ProjectView } from '../ProjectTabs';
 
@@ -19,7 +17,6 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
     // Data State
     const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
     const [projectMembers, setProjectMembers] = useState<any[]>([]);
-    const [history, setHistory] = useState<ProjectRun[]>([]);
     const [totalItems, setTotalItems] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -65,10 +62,6 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
                 );
                 setProjectMembers(filtered);
                 setTotalItems(filtered.length);
-            } else {
-                const res = await runService.getProjectRuns(projectId, offset, itemsPerPage);
-                setHistory(res.runs);
-                setTotalItems(res.total);
             }
         } catch (err: any) {
             setError(err.response?.data?.detail || `Failed to load ${activeView}.`);
@@ -158,7 +151,6 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
         activeView, setActiveView,
         testSuites,
         projectMembers,
-        history,
         totalItems,
         isLoading,
         error, setError,

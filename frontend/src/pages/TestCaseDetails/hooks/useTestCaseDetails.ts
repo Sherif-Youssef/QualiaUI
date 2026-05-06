@@ -3,7 +3,6 @@ import { useRunStreaming } from '@/hooks/useRunStreaming';
 import { testCaseService } from '@/services/testCase/testCaseService';
 import { runService } from '@/services/runService';
 import { TestCase } from '@/types/test-case';
-import { TestCaseRun } from '@/types/run';
 
 interface UseTestCaseDetailsProps {
     projectId?: string;
@@ -13,8 +12,6 @@ interface UseTestCaseDetailsProps {
 
 export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDetailsProps) => {
     const [testCase, setTestCase] = useState<TestCase | null>(null);
-    const [history, setHistory] = useState<TestCaseRun[]>([]);
-    const [activeView, setActiveView] = useState<'steps' | 'history'>('steps');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedStepId, setSelectedStepId] = useState<string>('');
@@ -24,9 +21,6 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
     const [currentScreenshot, setCurrentScreenshot] = useState<string | null>(null);
     const [terminationReason, setTerminationReason] = useState<string | null>(null);
     const [finalStatus, setFinalStatus] = useState<'passed' | 'failed' | 'error' | 'aborted' | 'executed' | null>(null);
-    const [page, setPage] = useState(1);
-    const limit = 6;
-    const [totalRuns, setTotalRuns] = useState(0);
 
     const isStartingRef = useRef(false);
     const [isAborting, setIsAborting] = useState(false);
@@ -122,33 +116,8 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
             } else if (data.steps && data.steps.length > 0) {
                 setSelectedStepId(String(data.steps[0].id));
             }
-
-            const result = await runService.getTestCaseRuns(projectId, suiteId, caseId, 0, 1);
-            const latestRun = result.runs[0];
-            if (latestRun) {
-                const details = await runService.getTestCaseRunDetails(latestRun.id, true);
-                const steps = (details.teststep_runs || []).map((stepRun: any, idx: number) => ({
-                    id: stepRun.id || crypto.randomUUID(),
-                    number: idx + 1,
-                    text: JSON.stringify(stepRun),
-                    screenshot: stepRun.screenshot_after || stepRun.screenshot_before || '',
-                    status: stepRun.status?.toLowerCase() || 'pending'
-                }));
-
-                if (latestRun.status === 'RUNNING' || latestRun.status === 'QUEUED') {
-                    if (steps.length > 0) {
-                        setActiveSteps(steps);
-                        setSelectedStepId(String(steps[steps.length - 1].id));
-                        if (steps[steps.length - 1].screenshot) setCurrentScreenshot(steps[steps.length - 1].screenshot);
-                    }
-                    setIsRunning(true);
-                    setActiveRunId(latestRun.id);
-                } else {
-                    setIsRunning(false);
-                    setActiveRunId(null);
-                }
-            }
         } catch (err: any) {
+            console.error('Error in fetchTestCase:', err);
             setError(err.response?.data?.detail || 'Failed to load test case details.');
         } finally {
             setIsLoading(false);
@@ -159,19 +128,6 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
         fetchTestCase();
     }, [fetchTestCase]);
 
-    useEffect(() => {
-        const fetchHistory = async () => {
-            if (!caseId || !projectId || !suiteId || activeView !== 'history') return;
-            try {
-                const result = await runService.getTestCaseRuns(projectId, suiteId, caseId, (page - 1) * limit, limit);
-                setHistory(result.runs);
-                setTotalRuns(result.total);
-            } catch (err: any) {
-                console.error('Failed to load test case history:', err);
-            }
-        };
-        fetchHistory();
-    }, [caseId, projectId, suiteId, activeView, page]);
 
     const updateTestCase = async (data: any) => {
         if (!projectId || !suiteId || !caseId) throw new Error("Missing parameters");
@@ -199,8 +155,6 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
         }
     };
 
-
-
     const abortTestCase = async () => {
         if (!activeRunId) return;
         setIsAborting(true);
@@ -214,9 +168,6 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
 
     return {
         testCase,
-        history,
-        activeView,
-        setActiveView,
         isLoading,
         error,
         selectedStepId,
@@ -224,10 +175,6 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
         isRunning,
         activeSteps,
         currentScreenshot,
-        page,
-        setPage,
-        limit,
-        totalRuns,
         runTestCase,
         abortTestCase,
         updateTestCase,

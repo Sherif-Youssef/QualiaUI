@@ -9,7 +9,6 @@ import { ProjectHeader } from './ProjectHeader';
 import { ProjectTabs } from './ProjectTabs';
 import { ProjectTestSuiteView } from './ProjectTestSuiteView';
 import { ProjectTeamView } from './ProjectTeamView';
-import { ProjectHistoryView } from './ProjectHistoryView';
 import { ProjectModals } from './ProjectModals';
 import { useProjectWorkspace } from './hooks/useProjectWorkspace';
 
@@ -23,7 +22,6 @@ export const ProjectPage: React.FC = () => {
         activeView, setActiveView,
         testSuites,
         projectMembers,
-        history,
         totalItems,
         isLoading,
         error, setError,
@@ -54,13 +52,11 @@ export const ProjectPage: React.FC = () => {
             searchBar={
                 <div className="space-y-4">
                     <ProjectTabs activeView={activeView} onViewChange={(v) => { setActiveView(v); setCurrentPage(1); }} />
-                    {activeView !== 'history' && (
-                        <SearchBar
-                            value={searchQuery}
-                            onChange={setSearchQuery}
-                            placeholder={activeView === 'suites' ? "Search Test Suite..." : "Search Team Members..."}
-                        />
-                    )}
+                    <SearchBar
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder={activeView === 'suites' ? "Search Test Suite..." : "Search Team Members..."}
+                    />
                 </div>
             }
             content={
@@ -88,14 +84,6 @@ export const ProjectPage: React.FC = () => {
                             canManageProject={canManageProject}
                             onInvite={() => setIsAddMemberModalOpen(true)}
                             onRemoveMember={handleMemberRemove}
-                        />
-                    )}
-
-                    {activeView === 'history' && (
-                        <ProjectHistoryView
-                            history={history}
-                            isLoading={isLoading}
-                            onView={(id) => navigate(`/project/${projectId}/history/${id}`)}
                         />
                     )}
                 </>

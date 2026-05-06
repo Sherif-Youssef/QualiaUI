@@ -3,14 +3,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { TestSuiteLayout } from './TestSuiteLayout';
 import { TestSuiteHeader } from './TestSuiteHeader';
 import { TestCaseTable } from './TestCaseTable';
-import { RunHistoryTable } from '@/components/RunHistory/RunHistoryTable';
 import { SearchBar } from '@/components/SearchBar';
 import { Pagination } from '@/components/Pagination';
 import { AddTestCaseModal } from '@/components/Modal/AddTestCaseModal';
 import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { useTestSuite } from './hooks/useTestSuite';
-import { LayoutGrid, Clock } from 'lucide-react';
 
 export const TestSuitePage: React.FC = () => {
     const { projectId, suiteId } = useParams<{ projectId: string; suiteId: string }>();
@@ -24,9 +22,7 @@ export const TestSuitePage: React.FC = () => {
         editingTestCase, setEditingTestCase,
         deleteConfirmation, setDeleteConfirmation,
         testCases,
-        history,
-        activeView, setActiveView,
-        isLoading, setError,
+        setError,
         modalLoading,
         modalError, setModalError,
         canManageCases,
@@ -69,43 +65,21 @@ export const TestSuitePage: React.FC = () => {
             }
             searchBar={(
                 <div className="space-y-4">
-                    <div className="flex border-b border-gray-200">
-                        <button
-                            onClick={() => { setActiveView('cases'); setCurrentPage(1); }}
-                            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors relative ${activeView === 'cases' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
-                                }`}
-                        >
-                            <LayoutGrid className="w-4 h-4" />
-                            Test Cases
-                            {activeView === 'cases' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />}
-                        </button>
-                        <button
-                            onClick={() => { setActiveView('history'); setCurrentPage(1); }}
-                            className={`flex items-center gap-2 px-6 py-3 text-sm font-medium transition-colors relative ${activeView === 'history' ? 'text-primary' : 'text-gray-500 hover:text-gray-700'
-                                }`}
-                        >
-                            <Clock className="w-4 h-4" />
-                            Runs History
-                            {activeView === 'history' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />}
-                        </button>
-                    </div>
-                    {activeView === 'cases' && (
-                        <SearchBar
-                            value={searchQuery}
-                            onChange={setSearchQuery}
-                            placeholder="Search Test Case..."
-                        />
-                    )}
+                    <SearchBar
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder="Search Test Case..."
+                    />
                 </div>
             )}
             content={
                 <>
-                    {isPageLoading && (activeView === 'cases' ? testCases.length === 0 : history.length === 0) ? (
+                    {isPageLoading && testCases.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
                             <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin mb-4"></div>
-                            <p className="text-gray-500 font-medium font-sans">Loading {activeView === 'cases' ? 'test cases' : 'history'}...</p>
+                            <p className="text-gray-500 font-medium font-sans">Loading test cases...</p>
                         </div>
-                    ) : activeView === 'cases' ? (
+                    ) : (
                         isTrulyEmpty ? (
                             <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
                                 <p className="text-gray-500 font-medium text-lg mb-2">Workspace is currently empty</p>
@@ -127,15 +101,6 @@ export const TestSuitePage: React.FC = () => {
                                 )}
                             </>
                         )
-                    ) : (
-                        <RunHistoryTable
-                            runs={history}
-                            isLoading={isLoading}
-                            onViewDetails={(run) => {
-                                const rId = run.project_run_id || 'standalone';
-                                navigate(`/project/${projectId}/history/${rId}/suite/${run.id}`);
-                            }}
-                        />
                     )}
                 </>
             }
