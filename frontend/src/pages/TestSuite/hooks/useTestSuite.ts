@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { testCaseService } from '@/services/testCase/testCaseService';
 import { runService } from '@/services/runService';
 import { TestCase } from '@/types/test-case';
@@ -34,6 +34,7 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
     const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
     const [isRunningSuite, setIsRunningSuite] = useState(false);
     const [activeRunId, setActiveRunId] = useState<number | null>(null);
+    const isStartingRef = useRef(false);
 
     const itemsPerPage = 6;
 
@@ -121,8 +122,9 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
     };
 
     const handleRunAll = async (model: string = 'gemini-1.5-pro') => {
-        if (!projectId || !suiteId) return;
+        if (!projectId || !suiteId || isStartingRef.current) return;
 
+        isStartingRef.current = true;
         setIsRunningSuite(true);
         setError(null);
         try {
@@ -132,6 +134,7 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
         } catch (err: any) {
             setError(err.response?.data?.detail || 'Failed to start test run.');
             setIsRunningSuite(false);
+            isStartingRef.current = false;
         }
     };
 

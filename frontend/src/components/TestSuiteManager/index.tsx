@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Plus, Play, Layers, ChevronDown } from 'lucide-react';
+import { Layers, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TestCaseCard } from './TestCaseCard';
+import { TestCaseCard } from '../TestCaseCard';
 import { TestCase, ActionStep } from '@/types/test-case';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -14,41 +14,25 @@ export interface SuiteWithCases {
 interface TestSuiteManagerProps {
   testCases?: TestCase[];
   suites?: SuiteWithCases[];
-  onAddTestCase: () => void;
-  onRunAllTests: () => void;
-  onAbortRun?: () => void;
-  isRunning?: boolean;
-  isAborting?: boolean;
-  onRunSingleTest: (testId: string) => void;
-  onEditTestCase: (testCase: TestCase) => void;
   onStepClick: (step: ActionStep, testCase: TestCase) => void;
-  onStepDetailsClick?: (step: ActionStep) => void;
-  onInstructionChange: (testId: string, newInstruction: string) => void;
   onStepTextChange: (testId: string, stepId: string, newText: string) => void;
+  selectedStepId?: string;
   isReadOnly?: boolean;
   header?: React.ReactNode;
 }
 
 const TestSuiteCard: React.FC<{
   suite: SuiteWithCases;
-  onRunSingleTest: (testId: string) => void;
-  onEditTestCase: (testCase: TestCase) => void;
   onStepClick: (step: ActionStep, testCase: TestCase) => void;
-  onStepDetailsClick?: (step: ActionStep) => void;
-  onInstructionChange: (testId: string, newInstruction: string) => void;
   onStepTextChange: (testId: string, stepId: string, newText: string) => void;
+  selectedStepId?: string;
   isReadOnly?: boolean;
-  isRunning?: boolean;
 }> = ({
   suite,
-  onRunSingleTest,
-  onEditTestCase,
   onStepClick,
-  onStepDetailsClick,
-  onInstructionChange,
   onStepTextChange,
+  selectedStepId,
   isReadOnly,
-  isRunning
 }) => {
     const [isExpanded, setIsExpanded] = useState(true);
 
@@ -93,14 +77,10 @@ const TestSuiteCard: React.FC<{
                   <TestCaseCard
                     key={testCase.id}
                     testCase={testCase}
-                    onRunTest={onRunSingleTest}
-                    onEditTest={onEditTestCase}
                     onStepClick={onStepClick}
-                    onStepDetailsClick={onStepDetailsClick}
-                    onInstructionChange={onInstructionChange}
                     onStepTextChange={onStepTextChange}
+                    selectedStepId={selectedStepId}
                     isReadOnly={isReadOnly}
-                    isRunning={isRunning}
                   />
                 ))}
               </div>
@@ -114,21 +94,14 @@ const TestSuiteCard: React.FC<{
 export const TestSuiteManager: React.FC<TestSuiteManagerProps> = ({
   testCases = [],
   suites,
-  onAddTestCase,
-  onRunAllTests,
-  isRunning,
-  isAborting,
-  onRunSingleTest,
-  onEditTestCase,
   onStepClick,
-  onStepDetailsClick,
-  onInstructionChange,
   onStepTextChange,
+  selectedStepId,
   isReadOnly,
   header,
 }) => {
   return (
-    <aside className="w-full lg:w-[400px] xl:w-[450px] bg-white border-r border-border flex flex-col h-full overflow-hidden shadow-sm z-10">
+    <aside className="w-full lg:w-[400px] xl:w-[450px] bg-white border-r border-border flex flex-col h-full overflow-hidden shadow-sm z-10 text-left">
       <div className="px-6 py-6 flex flex-col gap-4 border-b border-border bg-white">
         <div className="flex flex-col gap-4">
           {header ? header : (
@@ -136,16 +109,6 @@ export const TestSuiteManager: React.FC<TestSuiteManagerProps> = ({
               <h2 className="text-xl font-sans font-bold text-foreground truncate">
                 {isReadOnly ? 'Run Details' : 'Suite Manager'}
               </h2>
-            </div>
-          )}
-
-          {(!isReadOnly || isRunning || isAborting) && (
-            <div className="flex items-center flex-wrap gap-2">
-              {!isReadOnly && (
-                <>
-
-                </>
-              )}
             </div>
           )}
         </div>
@@ -157,12 +120,9 @@ export const TestSuiteManager: React.FC<TestSuiteManagerProps> = ({
             <TestSuiteCard
               key={suite.id}
               suite={suite}
-              onRunSingleTest={onRunSingleTest}
-              onEditTestCase={onEditTestCase}
               onStepClick={onStepClick}
-              onStepDetailsClick={onStepDetailsClick}
-              onInstructionChange={onInstructionChange}
               onStepTextChange={onStepTextChange}
+              selectedStepId={selectedStepId}
               isReadOnly={isReadOnly}
             />
           ))
@@ -172,15 +132,10 @@ export const TestSuiteManager: React.FC<TestSuiteManagerProps> = ({
               <TestCaseCard
                 key={testCase.id}
                 testCase={testCase}
-                onRunTest={onRunSingleTest}
-                onEditTest={onEditTestCase}
                 onStepClick={onStepClick}
-                onStepDetailsClick={onStepDetailsClick}
-                onInstructionChange={onInstructionChange}
                 onStepTextChange={onStepTextChange}
-                isReadOnly={isReadOnly}
-                isRunning={isRunning}
-              />
+                selectedStepId={selectedStepId}
+                isReadOnly={isReadOnly} />
             ))}
           </div>
         )}

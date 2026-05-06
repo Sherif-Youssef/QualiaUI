@@ -1,31 +1,38 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useRunStreaming } from '@/hooks/useRunStreaming';
 import { runService } from '@/services/runService';
 import { TestSuiteRun, TestCaseRun } from '@/types/run';
 import { parseUTCDate } from '@/utils/formatters';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
 import { CheckCircle2, XCircle, AlertCircle, ChevronLeft, ArrowRight, Clock, FileText, StopCircle, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { TopNav } from '@/components/TopNav';
 import { projectService } from '@/services/project/projectService';
 import { Project } from '@/types/project';
 
 export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
-    const { projectId, runId, suiteRunId } = useParams<{ projectId: string; runId: string; suiteRunId: string }>();
+    const { projectId, suiteRunId } = useParams<{ projectId: string; suiteRunId: string }>();
     const navigate = useNavigate();
     const [suiteRun, setSuiteRun] = useState<(TestSuiteRun & { testcase_runs: TestCaseRun[] }) | null>(null);
     const [project, setProject] = useState<Project | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isAborting, setIsAborting] = useState(false);
 
-    const fetchSuiteDetails = useCallback(async () => {
+    const lastFetchTimeRef = useRef<number>(0);
+
+    const fetchSuiteDetails = useCallback(async (force = false) => {
         if (!suiteRunId) return;
+
+        const now = Date.now();
+        if (!force && now - lastFetchTimeRef.current < 2000) {
+            console.log('[SuiteHistory] Skipping redundant fetch (throttled)');
+            return;
+        }
+
         try {
+            lastFetchTimeRef.current = now;
             const id = parseInt(suiteRunId);
-            const data = await runService.getTestSuiteRunDetails(id);
+            const data = await runService.getTestSuiteRunDetails(id, force);
             setSuiteRun(data);
         } catch (err: any) {
             console.error('Suite history details error:', err);
@@ -39,7 +46,7 @@ export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
         const loadData = async () => {
             setIsLoading(true);
             await Promise.all([
-                fetchSuiteDetails(),
+                fetchSuiteDetails(true),
                 projectId ? projectService.getProjectById(projectId).then(setProject).catch(console.error) : Promise.resolve()
             ]);
             setIsLoading(false);
@@ -47,30 +54,7 @@ export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
         loadData();
     }, [suiteRunId, projectId]);
 
-    const handleStatusChange = useCallback(() => {
-        setTimeout(() => {
-            fetchSuiteDetails();
-        }, 500);
-    }, [fetchSuiteDetails]);
 
-    useRunStreaming({
-        scope: runId === 'standalone' ? 'TESTSUITE' : 'PROJECT',
-        runId: runId === 'standalone' ? suiteRunId! : runId!,
-        onStatusChange: handleStatusChange,
-        onStepUpdate: handleStatusChange
-    });
-
-    const handleAbortSuite = async () => {
-        if (!suiteRunId) return;
-        setIsAborting(true);
-        try {
-            await runService.abortTestSuiteRun(parseInt(suiteRunId));
-        } catch (err: any) {
-            console.error('Abort suite error:', err);
-            setError(err.response?.data?.detail || 'Failed to abort suite run.');
-            setIsAborting(false);
-        }
-    };
 
     const getStatusIcon = (status: string) => {
         const s = status.toUpperCase();
@@ -79,6 +63,7 @@ export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
             case 'EXECUTED': return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
             case 'FAILED': return <XCircle className="w-5 h-5 text-rose-500" />;
             case 'ERROR': return <AlertCircle className="w-5 h-5 text-amber-500" />;
+            case 'ABORTED': return <StopCircle className="w-5 h-5 text-slate-500" />;
             case 'RUNNING': return <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />;
             default: return <Clock className="w-5 h-5 text-gray-400" />;
         }
@@ -162,17 +147,7 @@ export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
                                 </div>
                             </div>
                         </div>
-                        {suiteRun.status?.toUpperCase() === 'RUNNING' && (
-                            <Button
-                                onClick={handleAbortSuite}
-                                disabled={isAborting}
-                                variant="destructive"
-                                className="h-11 px-6 rounded-xl font-bold shadow-lg shadow-red-200 flex items-center gap-2 transition-all active:scale-95"
-                            >
-                                <StopCircle className="w-5 h-5" />
-                                {isAborting ? 'Aborting...' : 'Abort Run'}
-                            </Button>
-                        )}
+
                     </div>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between px-2">
@@ -258,3 +233,5 @@ export const ProjectSuiteHistoryDetailsPage: React.FC = () => {
         </div>
     );
 };
+
+
