@@ -47,7 +47,7 @@ class TestCaseOutcomePayload(BaseModel):
     testcase_run_id: int
     testcase_id: int
     status: RunStatus
-    finished_at: datetime | None = None
+    finished_at: datetime
     started_at: datetime
     termination_reason: str | None = None
 
@@ -57,7 +57,7 @@ class TestCaseOutcomePayload(BaseModel):
             testcase_run_id=cast(int, testcase_run.id),
             testcase_id=testcase_run.testcase_id,
             status=testcase_run.status,
-            finished_at=testcase_run.finished_at,
+            finished_at=testcase_run.finished_at, # type: ignore
             started_at=cast(datetime, testcase_run.started_at),
             termination_reason=testcase_run.termination_reason,
         )
@@ -96,7 +96,7 @@ async def upload_screenshot(image: bytes, key: str | None = None) -> str:
     if not key:
         key = generate_uuid()
     logger.debug("Uploading screenshot to S3: key=%s size=%d", key, len(image))
-    screenshots_bucket = settings.AWS_SCREENSHOTS_BUCKET
+    screenshots_bucket = settings.S3_SCREENSHOTS_BUCKET
     s3_storage = get_s3_storage()
     identifier = FileIdentifier(bucket=screenshots_bucket, key=key)
     result = await s3_storage.upload_image(
@@ -118,8 +118,9 @@ async def stream_step(
         data = step.model_dump(mode="json", exclude={"snapshot_before", "snapshot_after"})
         if step.executable:
             data["executable"] = step.executable.model_dump(mode="json")
+        
         if step.action:
-            data["action_description"] = getattr(step.action, "recreation_prompt", "") or getattr(step.action, "intent", "")
+            data["action_description"] = step.action.recreation_prompt
         
         if step.snapshot_before:
             url = snapshot_before_url or await upload_screenshot(step.snapshot_before.screenshot)
@@ -236,19 +237,6 @@ class TestCaseJob:
 
         return screenshot_before, screenshot_after
 
-    @staticmethod
-    def _extract_description(action) -> str | None:
-        if action is None:
-            return None
-        try:
-            data = action.model_dump(include={"recreation_prompt", "intent"})
-            desc = data.get("recreation_prompt") or data.get("intent")
-            if desc:
-                return desc
-        except Exception:
-            pass
-        # fallback to getattr
-        return getattr(action, "recreation_prompt", None) or getattr(action, "intent", None)
 
     async def _persist_step(
         self,
@@ -260,13 +248,20 @@ class TestCaseJob:
         if step.status is None:
             return
 
+        try:
+            llm_action = step.action.model_dump() if step.action else None
+        except:
+            llm_action = None
+
         step_run = TestStepRun(
             testcase_run_id=self.testcase_run.id, # type: ignore[arg-type]
             executable=step.executable.model_dump(mode="json") if step.executable else None,
             screenshot_before=screenshot_before,
             screenshot_after=screenshot_after,
             error_message=step.error_message,
-            llm_action=self._extract_description(step.action),
+            llm_action=llm_action,
+            intent=step.action.intent if step.action else None,
+            recreation_prompt=step.action.recreation_prompt if step.action else None,
             status=to_test_step_run_status(step.status),
         )
         
@@ -330,7 +325,7 @@ class TestCaseJob:
                 # status: running -> passed/failed
                 self.testcase_run.status = status
                 self.testcase_run.finished_at = run.finished_at or datetime.now(timezone.utc)
-                self.testcase_run.termination_reason = run.current_group.abort_reason if run.current_group else None
+                self.testcase_run.termination_reason = run.termination_reason
                 self.db_session.add(self.testcase_run)
                 self.db_session.commit()
                 self._stream_status(status)

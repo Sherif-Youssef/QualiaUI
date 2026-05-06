@@ -24,29 +24,8 @@ def get_s3_client():
     )
     client = session.client(
         "s3",
-        endpoint_url=settings.S3_ENDPOINT,
-        config=boto3.session.Config(signature_version='s3v4')
+        endpoint_url=settings.S3_ENDPOINT_URL,
     )
-    
-    bucket = settings.AWS_SCREENSHOTS_BUCKET
-    # Ensure bucket exists
-    try:
-        client.head_bucket(Bucket=bucket)
-    except Exception:
-        client.create_bucket(Bucket=bucket)
-
-    # Set public-read policy so browser can load screenshots
-    policy = {
-        "Version": "2012-10-17",
-        "Statement": [{
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": ["s3:GetObject"],
-            "Resource": [f"arn:aws:s3:::{bucket}/*"]
-        }]
-    }
-    client.put_bucket_policy(Bucket=bucket, Policy=_json.dumps(policy))
-        
     return client
 
 @lru_cache()
