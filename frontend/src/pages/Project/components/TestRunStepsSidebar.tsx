@@ -22,19 +22,6 @@ export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
     status,
     onBack
 }) => {
-    const getFullDescription = (llmAction: string | null): string | null => {
-        if (!llmAction) return null;
-        try {
-            const parsed = JSON.parse(llmAction);
-            if (typeof parsed === 'object' && parsed !== null) {
-                return parsed?.recreation_prompt || parsed?.intent || parsed?.action_description || llmAction;
-            }
-            return llmAction;
-        } catch {
-            return llmAction;
-        }
-    };
-
     return (
         <aside className="w-[400px] md:w-[450px] bg-white border-r border-gray-100 flex flex-col shadow-xl z-10">
             {onBack && (
@@ -80,7 +67,7 @@ export const TestRunStepsSidebar: React.FC<TestRunStepsSidebarProps> = ({
 
             <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
                 {steps.map((step, index) => {
-                    const fullDesc = getFullDescription(step.llm_action);
+                    const fullDesc = step.recreation_prompt;
                     const isActive = selectedStepId === step.id;
 
                     return (

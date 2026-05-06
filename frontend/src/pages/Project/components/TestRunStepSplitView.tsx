@@ -52,7 +52,7 @@ export const TestRunStepSplitView: React.FC<TestRunStepSplitViewProps> = ({ step
                                     <p className={`text-sm font-bold leading-relaxed transition-all ${
                                         selectedStepId === step.id ? 'text-gray-900' : 'text-gray-500 group-hover:text-gray-700'
                                     }`}>
-                                        {step.llm_action || 'Action performed'}
+                                        {step.recreation_prompt || 'Action performed'}
                                     </p>
                                     <div className="flex items-center gap-2">
                                         {getStatusIcon(step.status)}
@@ -117,7 +117,7 @@ export const TestRunStepSplitView: React.FC<TestRunStepSplitViewProps> = ({ step
                                 <h4 className="text-sm font-black text-gray-900 tracking-tight capitalize">Action Details</h4>
                             </div>
                             <pre className="text-xs font-mono font-bold text-gray-700 bg-gray-50 p-4 rounded-2xl border border-gray-100 whitespace-pre-wrap leading-relaxed shadow-inner">
-                                {selectedStep.llm_action || 'No action data available'}
+                                {selectedStep.recreation_prompt || 'No action data available'}
                             </pre>
                             
                             {selectedStep.error_message && (
