@@ -28,6 +28,7 @@ export const ProjectCaseHistoryDetailsPage: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [selectedStepId, setSelectedStepId] = useState<number | null>(null);
     const [zoomLevel, setZoomLevel] = useState(100);
+    const [viewMode, setViewMode] = useState<'before' | 'after'>('after');
 
     const fetchCaseDetails = useCallback(async () => {
         if (!caseRunId) return;
@@ -145,6 +146,30 @@ export const ProjectCaseHistoryDetailsPage: React.FC = () => {
                         {caseRun.base_url || 'No URL specified'}
                     </span>
                 </div>
+
+                <div className="flex items-center gap-2 bg-white p-1 rounded-xl border border-gray-100 shadow-sm">
+                    <button
+                        onClick={() => setViewMode('before')}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                            viewMode === 'before' 
+                                ? 'bg-primary text-white shadow-md' 
+                                : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                    >
+                        Before
+                    </button>
+                    <button
+                        onClick={() => setViewMode('after')}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all ${
+                            viewMode === 'after' 
+                                ? 'bg-primary text-white shadow-md' 
+                                : 'text-gray-400 hover:text-gray-600'
+                        }`}
+                    >
+                        After
+                    </button>
+                </div>
+
                 {caseRun.base_url && (
                     <a
                         href={caseRun.base_url}
@@ -160,9 +185,9 @@ export const ProjectCaseHistoryDetailsPage: React.FC = () => {
 
 
             <ScreenshotViewer
-                screenshot={selectedStep ? (selectedStep.screenshot_after || selectedStep.screenshot_before) : null}
+                screenshot={selectedStep ? (viewMode === 'after' ? (selectedStep.screenshot_after || selectedStep.screenshot_before) : (selectedStep.screenshot_before || selectedStep.screenshot_after)) : null}
                 number={caseRun.teststep_runs.indexOf(selectedStep!) + 1}
-                description={selectedStep ? formatAction(selectedStep.llm_action) : undefined}
+                description={selectedStep ? formatAction(selectedStep.recreation_prompt) : undefined}
                 zoomLevel={zoomLevel}
                 onZoomIn={() => setZoomLevel(prev => Math.min(prev + 25, 200))}
                 onZoomOut={() => setZoomLevel(prev => Math.max(prev - 25, 50))}

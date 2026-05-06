@@ -94,11 +94,12 @@ class TestingSession:
         self._planning_agent: PlanningAgent | None = None
         self._record_video_dir = record_video_dir
 
+        execution_steps = [ExecuteActionsStep()]
+        if len(self._variable_store) > 0:
+            execution_steps = [ResolveVariablesStep()] + execution_steps
+
         self._exec_pipeline = IterationPipeline(
-            steps=[
-                ResolveVariablesStep(),
-                ExecuteActionsStep(),
-            ],
+            steps=execution_steps,
             name="Execution Pipeline",
         )
 

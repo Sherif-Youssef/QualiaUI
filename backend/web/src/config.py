@@ -16,11 +16,11 @@ class Settings(BaseSettings):
     CELERY_BACKEND: str = "redis://redis:6379/2" 
     LOGFIRE_TOKEN: Optional[str] = None
 
-    AWS_ACCESS_KEY_ID: str = "admin"
-    AWS_SECRET_ACCESS_KEY: str = "password123"
-    AWS_REGION: str = "us-east-1"
-    S3_ENDPOINT: str = "http://minio:9000"
-    AWS_SCREENSHOTS_BUCKET: str = "qualia-screenshots"
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_REGION: str
+    S3_ENDPOINT_URL: str = "http://minio:9000"
+    S3_SCREENSHOTS_BUCKET: str = "qualia-screenshots"
     S3_PROVIDER: str = 'minio'
 
 settings = Settings() # pyright: ignore[reportCallIssue]

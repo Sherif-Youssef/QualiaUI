@@ -45,23 +45,27 @@ async def is_aborted_async(abort_id: str | int) -> bool:
     abort_key = _get_abort_key(abort_id)
     return bool( await get_aredis_client().exists(abort_key) )
 
-def stream_event(key: str, *, event: str, event_type: str, **kwargs):
-    get_redis_client().xadd(key, 
+def stream_event(key: str, *, event: str, event_type: str, ttl: int = 3600, **kwargs):
+    client = get_redis_client()
+    client.xadd(key, 
         {
             'event': event, 
             'type': event_type, 
             **{k: str(v) for k, v in kwargs.items()}
         }
     )
+    client.expire(key, ttl)
 
-async def stream_event_async(key: str, *, event: str, event_type: str, **kwargs):
-    await get_aredis_client().xadd(key, 
+async def stream_event_async(key: str, *, event: str, event_type: str, ttl: int = 3600, **kwargs):
+    client = get_aredis_client()
+    await client.xadd(key, 
         {
             'event': event, 
             'type': event_type, 
             **{k: str(v) for k, v in kwargs.items()}
         }
     )
+    await client.expire(key, ttl)
 
 def cleanup_stream(key: str) -> None:
     get_redis_client().delete(key)

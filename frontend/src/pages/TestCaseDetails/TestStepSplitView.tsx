@@ -90,7 +90,7 @@ export const TestStepSplitView: React.FC<TestStepSplitViewProps> = ({ testCase, 
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 0.95 }}
                                     transition={{ duration: 0.4, ease: "easeOut" }}
-                                    src={selectedStep.screenshot.startsWith('data:') ? selectedStep.screenshot : `data:image/png;base64,${selectedStep.screenshot}`}
+                                    src={selectedStep.screenshot}
                                     alt="Step Screenshot"
                                     className="w-full h-full object-contain"
                                 />

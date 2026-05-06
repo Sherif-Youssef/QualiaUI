@@ -50,10 +50,6 @@ class ProjectRun(SQLModel, table=True):
     project_id: int = Field(foreign_key="project.id", ondelete="CASCADE")
     project: "Project" = Relationship(back_populates="runs")
 
-    @property
-    def name(self) -> str | None:
-        return self.project.name if getattr(self, "project", None) else None
-
     # lower
     testsuite_runs: list["TestSuiteRun"] = Relationship(back_populates="project_run")
 
@@ -78,10 +74,6 @@ class TestSuiteRun(SQLModel, table=True):
     # entity
     testsuite_id: int = Field(foreign_key="testsuite.id", ondelete="CASCADE")
     testsuite: "TestSuite" = Relationship(back_populates="runs")
-
-    @property
-    def name(self) -> str | None:
-        return self.testsuite.name if getattr(self, "testsuite", None) else None
 
     # upper
     project_run_id: int | None = Field(foreign_key="project_run.id", ondelete="CASCADE", nullable=True)
@@ -116,10 +108,6 @@ class TestCaseRun(SQLModel, table=True):
     testcase_id: int = Field(foreign_key="testcase.id", ondelete="CASCADE")
     testcase: "TestCase" = Relationship(back_populates="runs")
 
-    @property
-    def name(self) -> str | None:
-        return self.testcase.name if getattr(self, "testcase", None) else None
-
     # upper
     testsuite_run_id: int | None = Field(foreign_key="testsuite_run.id", ondelete="CASCADE", nullable=True)
     testsuite_run: Optional["TestSuiteRun"] = Relationship(back_populates="testcase_runs")
@@ -139,7 +127,11 @@ class TestStepRun(SQLModel, table=True):
     screenshot_before: str | None = Field(default=None, nullable=True)
     screenshot_after: str | None = Field(default=None, nullable=True)
     error_message: str | None = Field(default=None, nullable=True)
-    llm_action: str | None = Field(default=None, nullable=True)
+    llm_action: dict | None = Field(default=None, sa_column=Column(JSON))
+    
+    intent: str | None = Field(default=None, nullable=True)
+    recreation_prompt: str | None = Field(default=None, nullable=True)
+
     status: TestCaseStepRunStatus = Field(nullable=False)
 
 
