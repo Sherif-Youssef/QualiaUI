@@ -5,7 +5,7 @@ from sqlmodel import Session
 from src.auth.models import Role
 from src.auth.schemas import UserCreate
 from src.auth.service import create_user
-from src.database import create_all, engine
+from src.database import engine
 
 
 @click.command(name="create_admin")
@@ -22,7 +22,6 @@ from src.database import create_all, engine
 )
 def command(first_name: str, last_name: str, username: str, email: str, password: str) -> None:
     try:
-        create_all()
         with Session(engine) as session:
             user = create_user(
                 session=session,
