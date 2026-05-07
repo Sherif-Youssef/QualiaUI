@@ -64,6 +64,7 @@ export const TopNav: React.FC = () => {
   ];
   if (isAdmin) {
     navLinks.push({ name: 'User Management', path: '/admin/users' });
+    navLinks.push({ name: 'Site Settings', path: '/admin/settings' });
   }
 
   return (
