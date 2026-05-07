@@ -78,12 +78,11 @@ class ProviderBase(BaseModel):
     display_name: str
     provider_type: ProviderType
     base_url: str | None = None
-    api_key: str | None = None
     additional_config: dict = Field(default_factory=dict)
 
 
 class ProviderCreate(ProviderBase):
-    pass
+    api_key: str | None = None
 
 
 class ProviderUpdate(BaseModel):
@@ -97,4 +96,13 @@ class ProviderUpdate(BaseModel):
 class ProviderRead(ProviderBase):
     id: int
     llm_models: list[LLMModelRead] = Field(default_factory=list)
+    has_api_key: bool = False
     model_config = ConfigDict(from_attributes=True)
+
+
+class ProviderApiKeyRead(BaseModel):
+    api_key: str | None = None
+
+
+class ProviderApiKeyUpdate(BaseModel):
+    api_key: str | None = None

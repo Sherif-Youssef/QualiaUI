@@ -6,11 +6,12 @@ from .dependencies import ProviderDep, LLMModelDep
 from .schemas import (
     ProviderCreate, ProviderRead, ProviderUpdate,
     LLMModelCreate, LLMModelRead, LLMModelUpdate,
-    ProviderType
+    ProviderType, ProviderApiKeyRead, ProviderApiKeyUpdate
 )
 from .service import (
     create_provider, update_provider, delete_provider, list_providers,
-    create_model, update_model, delete_model, list_models
+    create_model, update_model, delete_model, list_models,
+    get_provider_api_key, update_provider_api_key
 )
 
 router = APIRouter(prefix="/llms", tags=["llms"])
@@ -39,7 +40,9 @@ async def get_provider_route(
     user: UserDep,
     provider: ProviderDep,
 ):
-    return provider
+    p_read = ProviderRead.model_validate(provider)
+    p_read.has_api_key = bool(provider.api_key)
+    return p_read
 
 
 @router.post("/providers", status_code=status.HTTP_201_CREATED, response_model=ProviderRead)
@@ -63,6 +66,24 @@ async def update_provider_route(
         provider=provider,
         provider_update=provider_update
     )
+
+
+@router.get("/providers/{provider_id}/api-key", response_model=ProviderApiKeyRead)
+async def get_provider_api_key_route(
+    user: AdminUserDep,
+    provider: ProviderDep,
+):
+    return ProviderApiKeyRead(api_key=get_provider_api_key(provider))
+
+
+@router.put("/providers/{provider_id}/api-key", status_code=status.HTTP_204_NO_CONTENT)
+async def update_provider_api_key_route(
+    session: SessionDep,
+    user: AdminUserDep,
+    provider: ProviderDep,
+    api_key_update: ProviderApiKeyUpdate,
+):
+    update_provider_api_key(session=session, provider=provider, api_key=api_key_update.api_key)
 
 
 @router.delete("/providers/{provider_id}", status_code=status.HTTP_204_NO_CONTENT)
