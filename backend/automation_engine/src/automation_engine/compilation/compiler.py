@@ -35,7 +35,7 @@ class CompileContext(BaseModel):
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
     dom_index: Optional[DOMIndex] = None
-    variables: VariableStore
+    variables: Optional[VariableStore] = None
 
 
 class ActionCompiler:

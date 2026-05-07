@@ -4,6 +4,8 @@ from automation_engine.pipeline.context import IterationContext, IterationStatus
 from automation_engine.planning import ModelState
 from automation_engine.actions import TerminationSignal
 from automation_engine.history import TestTermination
+from automation_engine.serialization import PageRenderer, HistoryRenderer
+
 
 logger = logging.getLogger(__name__)
 
@@ -11,15 +13,19 @@ logger = logging.getLogger(__name__)
 class BuildModelStateStep:
     name = "build_model_state"
 
+    def __init__(self):
+        self._page_renderer = PageRenderer()
+        self._history_renderer = HistoryRenderer()
+
     async def run(self, ctx: IterationContext) -> IterationContext:
         snapshot = ctx.snapshot
 
         ctx.model_state = ModelState(
             instruction=ctx.instruction,
-            page=ctx.page_renderer.render(snapshot.state),
-            history=ctx.history_renderer.render_history(ctx.test_run),
+            page=self._page_renderer.render(snapshot.state),
+            history=self._history_renderer.render_history(ctx.test_run),
             screenshot=(
-                snapshot.state.screenshot if ctx.use_screenshot else None
+                snapshot.state.screenshot if snapshot.state else None
             ),
         )
         return ctx

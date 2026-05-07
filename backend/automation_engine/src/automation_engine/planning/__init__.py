@@ -11,3 +11,4 @@ from .action_set.base import ActionSet
 from .action_set import presets as action_set_presets
 
 from .misc_agents import *
+from .model import create_model

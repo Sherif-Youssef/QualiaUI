@@ -10,6 +10,9 @@ logger = logging.getLogger(__name__)
 class ObserveStep:
     name = "observe"
 
+    def __init__(self, use_screenshot: bool = False):
+        self.use_screenshot = use_screenshot
+
     async def run(self, ctx: IterationContext) -> IterationContext:
         browser = ctx.browser
 
@@ -26,7 +29,7 @@ class ObserveStep:
             viewport_height=browser.viewport_height,
             root=root,
             screenshot=(
-                await browser.screenshot() if ctx.use_screenshot else None
+                await browser.screenshot() if self.use_screenshot else None
             ),
         )
 
