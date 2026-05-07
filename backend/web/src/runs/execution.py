@@ -85,7 +85,7 @@ def aggregate_parent_status(statuses: Iterable[RunStatus]) -> RunStatus:
     statuses = list(statuses)
     if any(status == RunStatus.ABORTED for status in statuses):
         return RunStatus.ABORTED
-    if any(status == RunStatus.FAILED for status in statuses):
+    if any(status in [RunStatus.FAILED, RunStatus.ERROR] for status in statuses):
         return RunStatus.FAILED
     return RunStatus.PASSED
 
