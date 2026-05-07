@@ -97,6 +97,7 @@ export const TestCaseDetailsPage: React.FC = () => {
                         selectedModel={selectedModel}
                         onModelChange={(val) => setSelectedModel(val)}
                         isRunning={isRunning}
+                        status={finalStatus || testCase.status}
                     />
                     <main className="flex-1 flex flex-col overflow-hidden bg-gray-50/30 min-h-0">
                         <ScreenshotViewer

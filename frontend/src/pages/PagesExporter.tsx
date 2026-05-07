@@ -12,6 +12,7 @@ import { SiteSettingsPage } from './Admin/SiteSettings/SiteSettingsPage';
 import { ProjectMembersPage } from './Project/ProjectMembersPage';
 import { TestSuiteRunDashboardPage } from './TestSuite/TestSuiteRunDashboardPage';
 import { LandingPage } from './Landing';
+import { TestCaseRunPage } from './TestCaseRun/TestCaseRunPage';
 
 export {
     LoginPage,
@@ -27,5 +28,6 @@ export {
     SiteSettingsPage,
     ProjectMembersPage,
     TestSuiteRunDashboardPage,
-    LandingPage
+    LandingPage,
+    TestCaseRunPage
 }

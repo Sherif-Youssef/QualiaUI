@@ -89,7 +89,7 @@ export const TestSuitePage: React.FC = () => {
                             <>
                                 <TestCaseTable
                                     testCases={testCases}
-                                    onNavigate={(caseId) => navigate(`/project/${projectId}/suite/${suiteId}/case/${caseId}`)}
+                                    onNavigate={(caseId) => navigate(`/project/${projectId}/suite/${suiteId}/case/${caseId}/run`)}
                                     onEdit={handleEditClick}
                                     onDelete={handleDeleteClick}
                                     canManageCases={canManageCases}

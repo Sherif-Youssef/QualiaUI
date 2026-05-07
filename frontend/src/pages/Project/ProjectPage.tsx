@@ -9,6 +9,7 @@ import { ProjectHeader } from './ProjectHeader';
 import { ProjectTabs } from './ProjectTabs';
 import { ProjectTestSuiteView } from './ProjectTestSuiteView';
 import { ProjectTeamView } from './ProjectTeamView';
+import { ProjectHistoryView } from './ProjectHistoryView';
 import { ProjectModals } from './ProjectModals';
 import { useProjectWorkspace } from './hooks/useProjectWorkspace';
 
@@ -52,11 +53,13 @@ export const ProjectPage: React.FC = () => {
             searchBar={
                 <div className="space-y-4">
                     <ProjectTabs activeView={activeView} onViewChange={(v) => { setActiveView(v); setCurrentPage(1); }} />
-                    <SearchBar
-                        value={searchQuery}
-                        onChange={setSearchQuery}
-                        placeholder={activeView === 'suites' ? "Search Test Suite..." : "Search Team Members..."}
-                    />
+                    {activeView !== 'history' && (
+                        <SearchBar
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            placeholder={activeView === 'suites' ? "Search Test Suite..." : "Search Team Members..."}
+                        />
+                    )}
                 </div>
             }
             content={
@@ -86,9 +89,15 @@ export const ProjectPage: React.FC = () => {
                             onRemoveMember={handleMemberRemove}
                         />
                     )}
+                    {activeView === 'history' && projectId && (
+                        <ProjectHistoryView
+                            projectId={projectId}
+                            isLoading={isLoading}
+                        />
+                    )}
                 </>
             }
-            pagination={totalItems > 0 && (
+            pagination={totalItems > 0 && activeView !== 'history' && (
                 <Pagination
                     currentPage={currentPage}
                     totalPages={Math.ceil(totalItems / itemsPerPage)}

@@ -15,6 +15,7 @@ interface ExecutionStepsSidebarProps {
     selectedModel?: string;
     onModelChange?: (model: string) => void;
     isRunning?: boolean;
+    status?: string | null;
 }
 
 export const ExecutionStepsSidebar: React.FC<ExecutionStepsSidebarProps> = ({
@@ -24,8 +25,10 @@ export const ExecutionStepsSidebar: React.FC<ExecutionStepsSidebarProps> = ({
     terminationReason,
     selectedModel,
     onModelChange,
-    isRunning
+    isRunning,
+    status
 }) => {
+    const isPassed = ['passed', 'success', 'executed'].includes(status?.toLowerCase() || '');
 
     return (
         <aside className="w-[400px] bg-white border-r border-gray-100 flex flex-col shadow-sm">
@@ -74,7 +77,7 @@ export const ExecutionStepsSidebar: React.FC<ExecutionStepsSidebarProps> = ({
                                                 }`}>
                                                 {index + 1}
                                             </div>
-                                            {(index < displaySteps.length - 1 || terminationReason) && (
+                                            {(index < displaySteps.length - 1 || (terminationReason && !isPassed)) && (
                                                 <div className="w-0.5 flex-1 bg-gray-50 rounded-full" />
                                             )}
                                         </div>
@@ -85,7 +88,6 @@ export const ExecutionStepsSidebar: React.FC<ExecutionStepsSidebarProps> = ({
                                                 <div className="flex-1 pt-1">
                                                     <ExpandableStepText
                                                         text={formatAction(step.text)}
-                                                        maxLength={70}
                                                     />
                                                 </div>
                                             </div>
@@ -125,8 +127,10 @@ export const ExecutionStepsSidebar: React.FC<ExecutionStepsSidebarProps> = ({
                             );
                         })}
 
-                        {terminationReason && (() => {
-                            const isAborted = terminationReason.toLowerCase().includes('abort');
+                        {(terminationReason && !isPassed) && (() => {
+                            const reason = terminationReason.toLowerCase();
+                            const isAborted = reason.includes('abort');
+                            const isError = reason.includes('error');
                             const colors = isAborted ? {
                                 bg: 'bg-slate-50/50',
                                 border: 'border-slate-200',
@@ -140,19 +144,32 @@ export const ExecutionStepsSidebar: React.FC<ExecutionStepsSidebarProps> = ({
                                 accent: 'bg-slate-500',
                                 label: 'Execution Aborted',
                                 statusLabel: 'Aborted'
+                            } : isError ? {
+                                bg: 'bg-amber-50/50',
+                                border: 'border-amber-200',
+                                text: 'text-amber-600',
+                                darkText: 'text-amber-700',
+                                iconBg: 'bg-amber-500',
+                                iconShadow: 'shadow-amber-200',
+                                badgeBg: 'bg-amber-100',
+                                badgeText: 'text-amber-700',
+                                badgeBorder: 'border-amber-200',
+                                accent: 'bg-amber-500',
+                                label: 'Unexpected Error',
+                                statusLabel: 'Error'
                             } : {
-                                bg: 'bg-red-50/30',
-                                border: 'border-red-200',
-                                text: 'text-red-600',
-                                darkText: 'text-red-700',
-                                iconBg: 'bg-red-500',
-                                iconShadow: 'shadow-red-200',
-                                badgeBg: 'bg-red-100',
-                                badgeText: 'text-red-700',
-                                badgeBorder: 'border-red-200',
-                                accent: 'bg-red-500',
-                                label: 'Execution Terminated',
-                                statusLabel: 'Terminated'
+                                bg: 'bg-rose-50/50',
+                                border: 'border-rose-200',
+                                text: 'text-rose-600',
+                                darkText: 'text-rose-700',
+                                iconBg: 'bg-rose-500',
+                                iconShadow: 'shadow-rose-200',
+                                badgeBg: 'bg-rose-100',
+                                badgeText: 'text-rose-700',
+                                badgeBorder: 'border-rose-200',
+                                accent: 'bg-rose-500',
+                                label: 'Execution Failed',
+                                statusLabel: 'Failed'
                             };
 
                             return (
@@ -168,9 +185,7 @@ export const ExecutionStepsSidebar: React.FC<ExecutionStepsSidebarProps> = ({
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex-1 pt-1">
                                                     <h4 className={`text-[10px] font-black ${colors.text} uppercase tracking-widest mb-1`}>{colors.label}</h4>
-                                                    <p className={`text-xs font-bold ${colors.darkText} leading-relaxed italic`}>
-                                                        {terminationReason}
-                                                    </p>
+                                                    <ExpandableStepText text={terminationReason || ''} />
                                                 </div>
                                             </div>
 

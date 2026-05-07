@@ -60,7 +60,7 @@ export const mapActiveStepToActionStep = (stepRun: any, currentStepCount: number
     };
 
     return {
-        id: stepRun.id ? String(stepRun.id) : crypto.randomUUID(),
+        id: stepRun.id ? String(stepRun.id) : (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(7)),
         number: currentStepCount + 1,
         text: stepRun.recreation_prompt || stepRun.action_description || 'Executing Action...',
         screenshot: formattedScreenshot,
