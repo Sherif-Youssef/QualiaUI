@@ -176,7 +176,7 @@ class PlaywrightBrowser:
     async def execute(self, action: ExecAction) -> None:
         handler = self._dispatch.get(type(action))
         if handler is None:
-            raise NotImplementedError(f"No compiler for {type(action).__name__}")
+            raise NotImplementedError(f"Unrecognized action: {type(action).__name__}")
         await handler(self, **action.to_exec_kwargs())
 
     # Interactions

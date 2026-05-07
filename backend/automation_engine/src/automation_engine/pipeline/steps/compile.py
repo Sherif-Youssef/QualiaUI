@@ -60,9 +60,13 @@ class ResolveVariablesStep:
         if ctx.status != IterationStatus.CONTINUE:
             return ctx
 
-        compiler = ActionCompiler(
-            CompileContext(variables=ctx.variable_store)
-        )
+        if len(ctx.variable_store) == 0:
+            for compiled in ctx.compiled_actions:
+                compiled.resolved_executable = compiled.raw_executable
+            logger.debug("No variables to resolve, skipping variable resolution step")
+            return ctx
+
+        compiler = ActionCompiler(CompileContext(variables=ctx.variable_store))
 
         for compiled in ctx.compiled_actions:
             try:
@@ -80,7 +84,5 @@ class ResolveVariablesStep:
                 ctx.error = e
                 return ctx
 
-        logger.debug(
-            f"Resolved variables for {len(ctx.compiled_actions)} action(s)"
-        )
+        logger.debug(f"Resolved variables for {len(ctx.compiled_actions)} action(s)")
         return ctx
