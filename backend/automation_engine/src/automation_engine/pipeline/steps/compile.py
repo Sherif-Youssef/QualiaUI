@@ -9,6 +9,7 @@ from automation_engine.pipeline.context import (
 )
 from automation_engine.history import TestStep, TestStatus
 from automation_engine.actions import InteractionAction
+from automation_engine.compilation.variables import VariableStore
 
 logger = logging.getLogger(__name__)
 
@@ -20,12 +21,7 @@ class CompileActionsStep:
         if ctx.status != IterationStatus.CONTINUE:
             return ctx
 
-        compiler = ActionCompiler(
-            CompileContext(
-                dom_index=ctx.snapshot.index,
-                variables=ctx.variable_store,
-            )
-        )
+        compiler = ActionCompiler(CompileContext(dom_index=ctx.snapshot.index))
 
         compiled: list[CompiledAction] = []
 
@@ -56,17 +52,20 @@ class CompileActionsStep:
 class ResolveVariablesStep:
     name = "resolve_variables"
 
+    def __init__(self, variable_store: VariableStore):
+        self.variable_store = variable_store
+
     async def run(self, ctx: IterationContext) -> IterationContext:
         if ctx.status != IterationStatus.CONTINUE:
             return ctx
 
-        if len(ctx.variable_store) == 0:
+        if len(self.variable_store) == 0:
             for compiled in ctx.compiled_actions:
                 compiled.resolved_executable = compiled.raw_executable
             logger.debug("No variables to resolve, skipping variable resolution step")
             return ctx
 
-        compiler = ActionCompiler(CompileContext(variables=ctx.variable_store))
+        compiler = ActionCompiler(CompileContext(variables=self.variable_store))
 
         for compiled in ctx.compiled_actions:
             try:

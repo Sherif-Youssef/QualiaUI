@@ -5,6 +5,7 @@ import logging
 from typing import Callable
 
 from pydantic_ai import Agent, PromptedOutput
+from pydantic_ai.models import Model
 
 from .tools.base import BaseTool
 
@@ -15,7 +16,7 @@ class GenericAgent:
 
     def __init__(
         self,
-        default_model: str,
+        model: Model,
         tool: BaseTool,
         *,
         use_tool_calling: bool = True,
@@ -25,7 +26,7 @@ class GenericAgent:
         output_type = tool.output_type()
 
         self._agent = Agent(
-            model=default_model,
+            model=model,
             system_prompt=tool.system_prompt(),
             output_type=(
                 output_type
@@ -45,12 +46,10 @@ class GenericAgent:
         self,
         page_repr: str,
         task: str,
-        *,
-        model: str | None = None,
     ) -> object:
         user_message = (
             f"## Page\n```\n{page_repr}\n```\n\n"
             f"## Task\n{task}"
         )
-        result = await self._agent.run(user_message, model=model)
+        result = await self._agent.run(user_message)
         return result.output

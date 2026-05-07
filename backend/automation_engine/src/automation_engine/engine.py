@@ -7,7 +7,7 @@ from pathlib import Path
 from automation_engine.compilation import ExecAction, ValidateExec
 from automation_engine.compilation.variables import Variable, VariableStore
 from automation_engine.execution.browser import PlaywrightBrowser
-from automation_engine.planning import PlanningAgent, MiscAgent, ExtractSchemaSpec
+from automation_engine.planning import PlanningAgent, MiscAgent, ExtractSchemaSpec, create_model
 from automation_engine.serialization import (
     PageRenderer,
     HistoryRenderer,
@@ -50,15 +50,18 @@ class TestingEngine:
     
     def __init__(
         self,
-        model: str,
         variables: list[Variable] | None = None,
         config: EngineConfig | None = None,
     ) -> None:
-        self._model = model
         self._config = config or EngineConfig()
+        self._model = create_model(
+            provider=self._config.llm.provider,
+            model=self._config.llm.model,
+            api_key=self._config.llm.api_key,
+            base_url=self._config.llm.base_url,
+            **self._config.llm.additional_kwargs
+        )
         self._variables = variables or []
-        self._page_renderer = PageRenderer()
-        self._history_renderer = HistoryRenderer()
 
     @property
     def config(self) -> EngineConfig:
@@ -68,10 +71,9 @@ class TestingEngine:
         self,
         url: str,
         variables: list[Variable] | None = None,
-        record_video_dir: str | Path | None = None,
     ) -> TestingSession:
         session_variables = (variables or []) + self._variables
-        return TestingSession(self, url=url, variables=session_variables, record_video_dir=record_video_dir)
+        return TestingSession(self, url=url, variables=session_variables)
 
 
 class TestingSession:
@@ -84,19 +86,16 @@ class TestingSession:
         engine: TestingEngine,
         url: str,
         variables: list[Variable] | None = None,
-        record_video_dir: str | Path | None = None,
     ) -> None:
         self._engine = engine
         self._url = url
-        self._variable_store = VariableStore(variables)
         self._test_run: TestRun | None = None
         self._browser: PlaywrightBrowser | None = None
         self._planning_agent: PlanningAgent | None = None
-        self._record_video_dir = record_video_dir
 
         self._exec_pipeline = IterationPipeline(
             steps=[
-                ResolveVariablesStep(),
+                ResolveVariablesStep(variable_store=VariableStore(variables or [])),
                 ExecuteActionsStep(),
             ],
             name="Execution Pipeline",
@@ -105,7 +104,7 @@ class TestingSession:
         # Full LLM loop iteration
         self._loop_pipeline = IterationPipeline(
             steps=[
-                ObserveStep(),
+                ObserveStep(use_screenshot=self._engine.config.llm.use_screenshot),
                 BuildModelStateStep(),
                 CallAgentStep(),
                 CompileActionsStep(),
@@ -126,17 +125,17 @@ class TestingSession:
         await self._browser.start(
             self._url,
             init_scripts=[get_js_serializer_path()],
-            record_video_dir=self._record_video_dir,
+            record_video_dir=cfg.browser.record_video_dir,
         )
 
         self._test_run = TestRun(base_url=self._url)
         self._planning_agent = PlanningAgent(
             mode=cfg.llm.planning_mode,
-            default_model=self._engine._model,
+            model=self._engine._model,
             use_tool_calling=cfg.llm.use_tool_calling,
         )
         self._misc_agents = MiscAgent(
-            default_model=self._engine._model,
+            model=self._engine._model,
             use_tool_calling=cfg.llm.use_tool_calling,
         )
 
@@ -186,7 +185,7 @@ class TestingSession:
         return self._test_run
 
     async def get_video_path(self) -> Path | None:
-        if not self._record_video_dir:
+        if not self._engine.config.browser.record_video_dir:
             raise ValueError("Video recording not enabled for this session")
         if not self._test_run.is_finalized:
             raise ValueError("Test run must be finalized to get video path")
@@ -327,9 +326,5 @@ class TestingSession:
             browser=self._browser,
             planning_agent=self._planning_agent,
             misc_agent=self._misc_agents,
-            page_renderer=self._engine._page_renderer,
-            history_renderer=self._engine._history_renderer,
-            variable_store=self._variable_store,
             test_run=self._test_run,
-            use_screenshot=self._engine.config.llm.use_screenshot,
         )

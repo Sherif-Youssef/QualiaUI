@@ -45,11 +45,7 @@ class IterationContext:
     browser: PlaywrightBrowser | None = None
     planning_agent: PlanningAgent | None = None
     misc_agent: MiscAgent | None = None
-    page_renderer: PageRenderer | None = None
-    history_renderer: HistoryRenderer | None = None
-    variable_store: VariableStore | None = None
     test_run: TestRun | None = None
-    use_screenshot: bool = False
 
     # Per-iteration state
     snapshot: PageSnapshot | None = None

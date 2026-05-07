@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
 
 from automation_engine.planning import PlanningMode, mode_presets
@@ -12,15 +13,22 @@ class BrowserConfig(BaseModel):
     headless: bool = False
     viewport_width: int = 1920
     viewport_height: int = 1080
+    record_video_dir: str | Path | None = None
 
 
 class LLMConfig(BaseModel):
     """Controls how the LLM is prompted and how its output is parsed."""
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
+    provider: str = Field(default="openai", description="LLM provider to use (e.g. 'openai', 'azure', 'anthropic').")
+    model: str = Field(default="gpt-5.4-mini", description="Model name (e.g. 'gpt-4-0613'). If None, a provider-specific default will be used.")
+    api_key: str | None = Field(default=None, description="API key for the LLM provider. If None, will look for environment variable.")
+    base_url: str | None = Field(default=None, description="Base URL for the LLM provider API (for custom endpoints).")
+    additional_kwargs: dict = Field(default_factory=dict, description="Additional kwargs to pass to the LLM provider.")
+
     planning_mode: PlanningMode = mode_presets.GROUP_FULL
     use_tool_calling: bool = Field(default=True, description="True = structured output / tool calling, False = raw JSON in prompt.")
-    use_screenshot: bool = Field(default=True, description="Attach a page screenshot to every LLM call.")
+    use_screenshot: bool = Field(default=False, description="Attach a page screenshot to every LLM call.")
 
 
 class ExecutionConfig(BaseModel):

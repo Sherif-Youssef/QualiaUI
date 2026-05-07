@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 
 from pydantic_ai import Agent, BinaryContent, PromptedOutput
+from pydantic_ai.models import Model, infer_model
 
 from automation_engine.actions import BaseAction, TerminationSignal
 
@@ -24,17 +25,16 @@ class PlanningAgent:
 
     def __init__(
         self,
+        model: Model,
         mode: PlanningMode,
-        *,
-        default_model: str | None = None,
         use_tool_calling: bool = True,
         extra_prompt_sections: list[str] | None = None,
     ) -> None:
         self._mode = mode
-        self._default_model = default_model
+        self._model = model
         self._use_tool_calling = use_tool_calling
 
-        self._agent = self._build_agent(mode, default_model, extra_prompt_sections)
+        self._agent = self._build_agent(mode, model, extra_prompt_sections)
 
         logger.info(
             "PlanningAgent initialized: mode=%s, tool_calling=%s, "
@@ -42,7 +42,7 @@ class PlanningAgent:
             mode.name,
             use_tool_calling,
             len(mode.action_set.actions),
-            default_model,
+            model,
         )
 
     @property
@@ -53,25 +53,19 @@ class PlanningAgent:
     def use_tool_calling(self) -> bool:
         return self._use_tool_calling
 
-    async def run(
-        self,
-        state: ModelState,
-        *,
-        model: str | None = None,
-    ) -> PlanningOutput:
+    async def run(self, state: ModelState) -> PlanningOutput:
         """
         Run a single planning turn.
 
         Args:
             state: Current page state, instruction, and history.
-            model: Override the default model for this call.
 
         Returns:
             A list of actions to execute, or a termination signal.
         """
         user_message = self._build_user_message(state)
 
-        result = await self._agent.run(user_message, model=model)
+        result = await self._agent.run(user_message)
         output = self._mode.unpack(result.output)
 
         if isinstance(output, TerminationSignal):
@@ -83,25 +77,25 @@ class PlanningAgent:
     def _build_agent(
         self,
         mode: PlanningMode,
-        default_model: str | None,
+        model: Model,
         extra_sections: list[str] | None,
     ) -> Agent:
         prompt_builder = PromptBuilder(mode)
         for section in extra_sections or []:
             prompt_builder.append(section)
-        
+
         output_type = mode.build_output_type()
         system_prompt = prompt_builder.build()
 
         if self._use_tool_calling:
             return Agent(
-                model=default_model,
+                model=model,
                 output_type=output_type,
                 system_prompt=system_prompt,
             )
 
         return Agent(
-            model=default_model,
+            model=model,
             output_type=PromptedOutput(output_type),
             system_prompt=system_prompt,
         )
