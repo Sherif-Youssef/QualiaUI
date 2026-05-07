@@ -18,7 +18,6 @@ def list_providers(
     providers = get_all_providers(session, pagination_params, display_name=display_name, provider_type=provider_type)
     total_items = count_providers(session, display_name=display_name, provider_type=provider_type)
 
-    # Compute has_api_key for each provider
     provider_reads = []
     for p in providers:
         p_read = ProviderRead.model_validate(p)

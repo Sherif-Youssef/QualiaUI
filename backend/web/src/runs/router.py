@@ -3,28 +3,24 @@ from fastapi.responses import StreamingResponse
 
 from src.auth.dependencies import UserDep
 from src.database import SessionDep
+
+
 from src.runs.dependencies import (
-	EditorProjectRunDep,
 	EditorTestCaseRunDep,
 	EditorTestSuiteRunDep,
 	ViewerTestCaseRunDep,
-	ViewerProjectRunDep,
 	ViewerTestSuiteRunDep,
 )
 from src.runs.schemas import (
 	StartRunResponse,
-	ProjectRunWithSuitesRead,
-	ProjectStartRunRequest,
 	TestCaseRunWithStepsRead,
 	TestsuiteStartRunRequest,
 	TestSuiteRunWithCasesRead,
 	TestcaseStartRunRequest
 )
 from src.runs.service import (
-    abort_project_run,
     abort_testcase_run,
     abort_testsuite_run,
-    launch_project_run,
     launch_testcase_run,
     launch_testsuite_run,
     stop_predicate_factory,
@@ -58,6 +54,7 @@ async def start_testcase_run_route(
 		session=session,
 		testcase=testcase,
 		mode=payload.mode,
+		llm_model_id=payload.llm_model_id,
 	)
 
 @router.post(
@@ -79,27 +76,7 @@ async def start_testsuite_run_route(
 		session=session,
 		testsuite=testsuite,
 		mode=payload.mode,
-	)
-
-@router.post(
-	"/runs/projects", 
-	response_model=StartRunResponse
-)
-async def start_project_run_route(
-	session: SessionDep,
-	user: UserDep,
-    payload: ProjectStartRunRequest,
-):
-	project = get_editor_project(
-		session=session,
-		user=user,
-		project_id=payload.project_id
-	)
-
-	return launch_project_run(
-		session=session,
-		project=project,
-		mode=payload.mode,
+		llm_model_id=payload.llm_model_id,
 	)
 
 
@@ -123,17 +100,6 @@ def get_testsuite_run_route(
 ):
 	_ = testsuite_run.testcase_runs
 	return TestSuiteRunWithCasesRead.model_validate(testsuite_run, from_attributes=True)
-
-
-@router.get(
-	"/runs/projects/{project_run_id}",
-	response_model=ProjectRunWithSuitesRead,
-)
-def get_project_run_route(
-	project_run: ViewerProjectRunDep,
-):
-	_ = project_run.testsuite_runs
-	return ProjectRunWithSuitesRead.model_validate(project_run, from_attributes=True)
 
 
 @router.get(
@@ -189,33 +155,6 @@ def stream_testsuite_run_events(
     )
 
 
-@router.get(
-	"/runs/projects/{project_run_id}/stream", 
-)
-def stream_project_run_events(
-	request: Request,
-	project_run: ViewerProjectRunDep,
-    last_event_id: str = Header(default="0-0"),
-):
-
-    event_generator = lambda : sse_read_stream(
-		stream_key=get_stream_key(project_run.scope, project_run.id), # type: ignore[arg-type]
-		last_event_id=last_event_id,
-		is_disconnected=request.is_disconnected,
-		stop_predicate=stop_predicate_factory(Scope.PROJECT)
-	)
-
-    return StreamingResponse(
-        event_generator(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-            "Connection": "keep-alive",
-        },
-    )
-
-
 @router.post(
 	"/runs/testcases/{testcase_run_id}/abort", 
 )
@@ -235,15 +174,4 @@ async def abort_testsuite_run_route(
 ):
 	await abort_testsuite_run(
 		testsuite_run=testsuite_run
-	)
-
-
-@router.post(
-	"/runs/projects/{project_run_id}/abort", 
-)
-async def abort_project_run_route(
-	project_run: EditorProjectRunDep,
-):
-	await abort_project_run(
-		project_run=project_run
 	)
