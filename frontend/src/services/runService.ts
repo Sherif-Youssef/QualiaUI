@@ -119,7 +119,7 @@ export const runService = {
 
     subscribeToRunProgress: (scope: Scope, runId: number, onMessage: (data: any) => void): EventSource => {
         const token = localStorage.getItem('token');
-        const url = `/api/v1/runs/${scope.toLowerCase()}s/${runId}/stream${token ? `?token=${token}` : ''}`;
+        const url = `/api/v1/runs/${scope.toLowerCase()}s/${runId}/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`;
         const eventSource = new EventSource(url);
 
         eventSource.onopen = () => {
@@ -137,7 +137,7 @@ export const runService = {
 
         eventSource.onerror = (err) => {
             console.error("SSE Connection Error:", err);
-            eventSource.close();
+            // Don't close manually; let the browser attempt reconnection
         };
 
         return eventSource;

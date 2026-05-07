@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { TestSuite } from '@/types/test-suit';
 import { testSuiteService } from '@/services/testSuit/testSuiteService';
 import { projectService } from '@/services/project/projectService';
@@ -10,9 +11,15 @@ interface UseProjectWorkspaceProps {
 }
 
 export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => {
+    const [searchParams, setSearchParams] = useSearchParams();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [activeView, setActiveView] = useState<ProjectView>('suites');
+    
+    // Initialize activeView from URL search params
+    const activeView = (searchParams.get('tab') as ProjectView) || 'suites';
+    const setActiveView = (view: ProjectView) => {
+        setSearchParams({ tab: view }, { replace: true });
+    };
 
     // Data State
     const [testSuites, setTestSuites] = useState<TestSuite[]>([]);

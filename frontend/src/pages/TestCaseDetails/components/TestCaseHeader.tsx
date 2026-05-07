@@ -1,4 +1,4 @@
-import { ArrowLeft, Play, Pencil, FileText, Loader2 } from 'lucide-react';
+import { ArrowLeft, Play, Pencil, FileText, Loader2, CheckCircle2, XCircle, AlertCircle, StopCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ModelSelector } from '@/components/ModelSelector';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
@@ -44,24 +44,32 @@ export const TestCaseHeader: React.FC<TestCaseHeaderProps> = ({
                         <h1 className="text-xl font-black text-gray-900 tracking-tight">
                             {title}
                         </h1>
-                        {status && (
-                            <div className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm border ${status === 'passed' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                status === 'executed' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                    status === 'failed' ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                        status === 'error' ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                            status === 'aborted' ? 'bg-slate-100 text-slate-600 border-slate-200' :
-                                                'bg-gray-50 text-gray-600 border-gray-100'
-                                }`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${status === 'passed' ? 'bg-emerald-500' :
-                                    status === 'executed' ? 'bg-blue-500' :
-                                        status === 'failed' ? 'bg-rose-500' :
-                                            status === 'error' ? 'bg-amber-500' :
-                                                status === 'aborted' ? 'bg-slate-500' :
-                                                    'bg-gray-400'
-                                    }`} />
-                                {status}
-                            </div>
-                        )}
+                        {status && (() => {
+                            const s = status.toUpperCase();
+                            const isSuccess = ['PASSED', 'SUCCESS', 'EXECUTED'].includes(s);
+                            const isFailure = ['FAILED', 'FAILURE'].includes(s);
+                            const isAborted = s === 'ABORTED';
+                            const isError = s === 'ERROR';
+                            const isRunningStatus = isRunning;
+
+                            const colors = isSuccess ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-50' :
+                                isFailure ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-rose-50' :
+                                    isAborted ? 'bg-slate-100 text-slate-600 border-slate-200 shadow-slate-50' :
+                                        isError ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-amber-50' :
+                                            isRunningStatus ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-blue-50' :
+                                                'bg-gray-50 text-gray-400 border-gray-100 shadow-gray-50';
+
+                            return (
+                                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm text-[10px] font-black uppercase tracking-widest ${colors}`}>
+                                    {isSuccess && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                    {isFailure && <XCircle className="w-3.5 h-3.5" />}
+                                    {isAborted && <StopCircle className="w-3.5 h-3.5" />}
+                                    {isError && <AlertCircle className="w-3.5 h-3.5" />}
+                                    {isRunningStatus && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                    {s}
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             </div>

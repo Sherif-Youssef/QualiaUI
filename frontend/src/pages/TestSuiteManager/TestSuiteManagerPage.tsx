@@ -1,6 +1,6 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, XCircle, AlertCircle, StopCircle, Loader2 } from 'lucide-react';
 import { TestSuiteManager } from '@/components/TestSuiteManager';
 import { ScreenshotViewer } from '@/components/ScreenshotViewer';
 import { AddTestCaseModal } from '@/components/Modal/AddTestCaseModal';
@@ -68,26 +68,32 @@ export const TestSuiteManagerPage: React.FC = () => {
                                     </h2>
                                     {activeTestCase && (
                                         <div className="flex items-center gap-2">
-                                            <div className="flex items-center gap-2">
-                                                <div className={`shrink-0 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-[0.1em] border shadow-sm flex items-center gap-1.5 ${(activeTestCase.status === 'success' || activeTestCase.status === 'passed') ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                                    (activeTestCase.status === 'failure' || activeTestCase.status === 'failed') ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                                        activeTestCase.status === 'error' ? 'bg-red-50 text-red-600 border-red-100' :
-                                                            activeTestCase.status === 'aborted' ? 'bg-slate-100 text-slate-600 border-slate-200' :
-                                                                activeTestCase.status === 'running' ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                                    'bg-gray-50 text-gray-500 border-gray-100'
-                                                    }`}>
-                                                    <div className={`w-1 h-1 rounded-full ${(activeTestCase.status === 'success' || activeTestCase.status === 'passed') ? 'bg-emerald-500' :
-                                                        (activeTestCase.status === 'failure' || activeTestCase.status === 'failed') ? 'bg-rose-500' :
-                                                            activeTestCase.status === 'error' ? 'bg-red-500' :
-                                                                activeTestCase.status === 'aborted' ? 'bg-slate-500' :
-                                                                    activeTestCase.status === 'running' ? 'bg-blue-500 animate-pulse' :
-                                                                        'bg-gray-400'
-                                                        }`} />
-                                                    {(activeTestCase.status === 'success' || activeTestCase.status === 'passed') ? 'Passed' :
-                                                        (activeTestCase.status === 'failure' || activeTestCase.status === 'failed') ? 'Failed' :
-                                                            activeTestCase.status || 'Idle'}
-                                                </div>
-                                            </div>
+                                            {(() => {
+                                                const s = (activeTestCase.status || '').toUpperCase();
+                                                const isSuccess = ['PASSED', 'SUCCESS', 'EXECUTED'].includes(s);
+                                                const isFailure = ['FAILED', 'FAILURE'].includes(s);
+                                                const isError = s === 'ERROR';
+                                                const isAborted = s === 'ABORTED';
+                                                const isRunning = s === 'RUNNING';
+
+                                                const colors = isSuccess ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-50' :
+                                                    isFailure ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-rose-50' :
+                                                        isError ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-amber-50' :
+                                                            isAborted ? 'bg-slate-100 text-slate-600 border-slate-200 shadow-slate-50' :
+                                                                isRunning ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-blue-50' :
+                                                                    'bg-gray-50 text-gray-400 border-gray-100 shadow-gray-50';
+
+                                                return (
+                                                    <div className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border shadow-sm flex items-center gap-1.5 ${colors}`}>
+                                                        {isSuccess && <CheckCircle2 className="w-3.5 h-3.5" />}
+                                                        {isFailure && <XCircle className="w-3.5 h-3.5" />}
+                                                        {isError && <AlertCircle className="w-3.5 h-3.5" />}
+                                                        {isAborted && <StopCircle className="w-3.5 h-3.5" />}
+                                                        {isRunning && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                                        {s || 'Idle'}
+                                                    </div>
+                                                );
+                                            })()}
                                         </div>
                                     )}
                                 </div>

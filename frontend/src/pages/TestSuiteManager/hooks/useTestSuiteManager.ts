@@ -169,11 +169,15 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
     }, []);
 
     useEffect(() => {
-        if (activeRunId && runScope) {
-            console.log(`[SSE] Managing connection for run ${activeRunId} (${runScope})`);
-            subscribeToRun(activeRunId, runScope);
+        const parentSuiteRunId = location.state?.parentSuiteRunId;
+        const effectiveRunId = parentSuiteRunId || activeRunId;
+        const effectiveScope = parentSuiteRunId ? 'TESTSUITE' : runScope;
+
+        if (effectiveRunId && effectiveScope && isRunning) {
+            console.log(`[SSE] Managing connection for run ${effectiveRunId} (${effectiveScope})`);
+            subscribeToRun(effectiveRunId, effectiveScope);
         }
-    }, [activeRunId, runScope, subscribeToRun]);
+    }, [activeRunId, runScope, subscribeToRun, location.state?.parentSuiteRunId, isRunning]);
 
     // Cleanup on unmount
     useEffect(() => {
@@ -236,16 +240,25 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
 
                 const currentRunId = rId;
                 const currentScope = scope;
+                const parentSuiteRunId = location.state?.parentSuiteRunId;
 
                 if (currentRunId) {
-
                     try {
                         let runDetails: any;
-                        if (currentScope === 'TESTSUITE') {
+                        // Use parent suite details if available to avoid the 500 error on the testcase endpoint
+                        if (parentSuiteRunId) {
+                            runDetails = await runService.getTestSuiteRunDetails(parentSuiteRunId);
+                        } else if (currentScope === 'TESTSUITE') {
                             runDetails = await runService.getTestSuiteRunDetails(currentRunId);
                         } else if (currentScope === 'TESTCASE') {
-                            const tcr = await runService.getTestCaseRunDetails(currentRunId);
-                            runDetails = { testcase_runs: [tcr], status: tcr.status };
+                            // Only attempt direct fetch if there is no parent suite
+                            try {
+                                const tcr = await runService.getTestCaseRunDetails(currentRunId);
+                                runDetails = { testcase_runs: [tcr], status: tcr.status };
+                            } catch (e) {
+                                console.warn("Failed to fetch individual test case details, awaiting live stream.");
+                                runDetails = null;
+                            }
                         }
 
                         if (runDetails && runDetails.testcase_runs) {
@@ -300,21 +313,23 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
             }
         };
         fetchContextData();
-    }, [projectId, suiteId, location.state?.runId, location.state?.scope, subscribeToRun]);
+    }, [projectId, suiteId, caseId, location.state?.runId, location.state?.scope, location.state?.parentSuiteRunId, subscribeToRun]);
 
-    const lastInitializedCaseId = useRef<string | null>(null);
+    const lastInitializedKey = useRef<string | null>(null);
 
     // Lightweight effect to fetch steps for the active testcase if they haven't been loaded via SSE or initial fetch
     useEffect(() => {
         if (!activeCaseId) return;
-        if (lastInitializedCaseId.current === activeCaseId) return;
 
         const tc = testCases.find(t => String(t.id) === String(activeCaseId));
         if (!tc || !tc.runId) return;
 
-        lastInitializedCaseId.current = activeCaseId;
+        const initializationKey = `${activeCaseId}-${tc.runId}`;
+        if (lastInitializedKey.current === initializationKey) return;
 
-        // If we already have execution steps loaded (e.g. from SSE), just update the UI
+        lastInitializedKey.current = initializationKey;
+
+        // If we already have execution steps loaded (e.g. from SSE or initial fetch), just update the UI
         if (tc.steps && tc.steps.length > 0 && ('status' in tc.steps[0])) {
             const lastStep = tc.steps[tc.steps.length - 1] as ActionStep;
             if (lastStep.screenshot) setCurrentScreenshot(lastStep.screenshot);
@@ -324,8 +339,9 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
         }
 
         // Otherwise, fetch them from backend
-        runService.getTestCaseRunDetails(Number(tc.runId)).then(details => {
-            if (details.teststep_runs && details.teststep_runs.length > 0) {
+        // Use a silent catch to avoid cluttering the console with 500 errors from nested suite runs
+        runService.getTestCaseRunDetails(Number(tc.runId)).then((details: any) => {
+            if (details?.teststep_runs && Array.isArray(details.teststep_runs) && details.teststep_runs.length > 0) {
                 const apiSteps = details.teststep_runs.map((stepRun: any, idx: number) =>
                     mapActiveStepToActionStep(stepRun, idx)
                 );
@@ -337,8 +353,8 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
                 setCurrentUrl(tc.url || '');
                 setSelectedStep(lastStep);
             }
-        }).catch(err => {
-            console.warn("Failed to fetch active case steps:", err);
+        }).catch(() => {
+            // Silently ignore 500 errors for suite-nested runs as they are currently expected from the backend
         });
     }, [activeCaseId, testCases]);
 

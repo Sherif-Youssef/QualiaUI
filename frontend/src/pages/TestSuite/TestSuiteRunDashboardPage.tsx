@@ -6,10 +6,9 @@ import { TestSuiteRun, TestCaseRun } from '@/types/run';
 import { parseUTCDate } from '@/utils/formatters';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
-import { CheckCircle2, XCircle, AlertCircle, ChevronLeft, ArrowRight, Clock, FileText, StopCircle, Loader2, Play } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, ChevronLeft, ArrowRight, Clock, FileText, StopCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TopNav } from '@/components/TopNav';
-import { ModelSelector } from '@/components/ModelSelector';
 
 export const TestSuiteRunDashboardPage: React.FC = () => {
     const { projectId, suiteId, runId } = useParams<{ projectId: string; suiteId: string; runId: string }>();
@@ -18,10 +17,6 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isAborting, setIsAborting] = useState(false);
-    const [isStartingRun, setIsStartingRun] = useState(false);
-    const [selectedModel, setSelectedModel] = useState('gemini-1.5-pro');
-    const isStartingRef = useRef(false);
-
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
     const isFetchingRef = useRef(false);
 
@@ -86,32 +81,22 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
         }
     };
 
-    const handleRunAll = async () => {
-        if (!projectId || !suiteId || isStartingRef.current) return;
-        isStartingRef.current = true;
-        setIsStartingRun(true);
-        try {
-            const newRun = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL', selectedModel);
-            navigate(`/project/${projectId}/suite/${suiteId}/run/${newRun.run_id}`);
-        } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to start run.');
-            isStartingRef.current = false;
-        } finally {
-            setIsStartingRun(false);
-        }
-    };
+
 
     const getStatusIcon = (status: string) => {
         const s = status.toUpperCase();
         switch (s) {
             case 'PASSED':
             case 'SUCCESS':
-            case 'EXECUTED': return <CheckCircle2 className="w-5 h-5 text-emerald-500" />;
+            case 'EXECUTED': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
             case 'FAILED':
-            case 'FAILURE': return <XCircle className="w-5 h-5 text-rose-500" />;
-            case 'ERROR': return <AlertCircle className="w-5 h-5 text-amber-500" />;
-            case 'RUNNING': return <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />;
-            default: return <Clock className="w-5 h-5 text-gray-400" />;
+            case 'FAILURE': return <XCircle className="w-4 h-4 text-rose-500" />;
+            case 'ERROR': return <AlertCircle className="w-4 h-4 text-amber-500" />;
+            case 'ABORTED': return <StopCircle className="w-4 h-4 text-slate-500" />;
+            case 'RUNNING': return <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />;
+            case 'QUEUED':
+            case 'PENDING': return <Clock className="w-4 h-4 text-gray-400" />;
+            default: return <div className="w-4 h-4" />;
         }
     };
 
@@ -157,29 +142,22 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
                                         const isAnyCaseRunning = suiteRun.testcase_runs.some(tr => tr.status.toUpperCase() === 'RUNNING');
                                         const s = (suiteRun.status.toUpperCase() === 'QUEUED' && isAnyCaseRunning) ? 'RUNNING' : suiteRun.status.toUpperCase();
 
-                                        const isSuccess = s === 'PASSED' || s === 'SUCCESS' || s === 'EXECUTED';
-                                        const isFailure = s === 'FAILED' || s === 'FAILURE';
+                                        const isSuccess = ['PASSED', 'SUCCESS', 'EXECUTED'].includes(s);
+                                        const isFailure = ['FAILED', 'FAILURE'].includes(s);
                                         const isAborted = s === 'ABORTED';
                                         const isError = s === 'ERROR';
                                         const isRunningStatus = s === 'RUNNING';
-                                        const isQueued = s === 'QUEUED' || s === 'PENDING';
-
-                                        const colors = isSuccess ? 'bg-emerald-50 text-emerald-600 border-emerald-100' :
-                                            isFailure ? 'bg-rose-50 text-rose-600 border-rose-100' :
-                                                isAborted ? 'bg-slate-100 text-slate-600 border-slate-200' :
-                                                    isError ? 'bg-amber-50 text-amber-600 border-amber-100' :
-                                                        isRunningStatus ? 'bg-blue-50 text-blue-600 border-blue-100' :
-                                                            'bg-gray-50 text-gray-500 border-gray-100';
+                                        const colors = isSuccess ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-50' :
+                                            isFailure ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-rose-50' :
+                                                isAborted ? 'bg-slate-100 text-slate-600 border-slate-200 shadow-slate-50' :
+                                                    isError ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-amber-50' :
+                                                        isRunningStatus ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-blue-50' :
+                                                            'bg-gray-50 text-gray-400 border-gray-100 shadow-gray-50';
 
                                         return (
-                                            <div className={`shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full border shadow-sm ${colors} text-[9px] normal-case tracking-wider`}>
-                                                {isSuccess && <CheckCircle2 className="w-4 h-4" />}
-                                                {isFailure && <XCircle className="w-4 h-4" />}
-                                                {isAborted && <StopCircle className="w-4 h-4" />}
-                                                {isError && <AlertCircle className="w-4 h-4" />}
-                                                {isRunningStatus && <Loader2 className="w-4 h-4 animate-spin" />}
-                                                {isQueued && <Clock className="w-3.5 h-3.5" />}
-                                                <span className="font-black uppercase">
+                                            <div className={`shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-sm ${colors} text-[10px] font-black uppercase tracking-wider`}>
+                                                {getStatusIcon(s)}
+                                                <span className="font-black">
                                                     {s}
                                                 </span>
                                             </div>
@@ -190,13 +168,7 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
                         </div>
 
                         <div className="flex items-center gap-3 self-end md:self-center">
-                            <ModelSelector
-                                value={selectedModel}
-                                onChange={setSelectedModel}
-                                disabled={isRunning || isStartingRun}
-                            />
-
-                            {isRunning && !suiteRun.project_run_id && (
+                            {isRunning && (
                                 <Button
                                     onClick={handleAbort}
                                     disabled={isAborting}
@@ -205,16 +177,6 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
                                 >
                                     <StopCircle className="w-5 h-5" />
                                     {isAborting ? 'Aborting...' : 'Abort Run'}
-                                </Button>
-                            )}
-                            {!isRunning && (
-                                <Button
-                                    onClick={handleRunAll}
-                                    disabled={isStartingRun}
-                                    className="h-11 px-6 rounded-xl bg-primary text-white font-bold shadow-lg shadow-primary/20 flex items-center gap-2 transition-all hover:bg-primary/90 active:scale-95"
-                                >
-                                    {isStartingRun ? <Loader2 className="w-5 h-5 animate-spin" /> : <Play className="w-5 h-5" />}
-                                    Run All
                                 </Button>
                             )}
                         </div>
@@ -249,8 +211,12 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
                                     {suiteRun.testcase_runs.map((caseRun) => (
                                         <tr
                                             key={caseRun.id}
-                                            onClick={() => navigate(`/project/${projectId}/suite/${suiteId}/case/${caseRun.testcase_id}/manager`, {
-                                                state: { runId: parseInt(runId!), scope: 'TESTSUITE' }
+                                            onClick={() => navigate(`/project/${projectId}/suite/${suiteId}/case/${caseRun.testcase_id}/run`, {
+                                                state: {
+                                                    runId: caseRun.id,
+                                                    scope: 'TESTCASE',
+                                                    parentSuiteRunId: parseInt(runId!)
+                                                }
                                             })}
                                             className="hover:bg-gray-50/50 cursor-pointer transition-all group"
                                         >
@@ -267,12 +233,30 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
                                                 </div>
                                             </td>
                                             <td className="px-8 py-6 text-center">
-                                                <div className="flex items-center justify-center gap-2 px-3 py-1 bg-white rounded-full border border-gray-100 shadow-sm mx-auto w-fit transition-all group-hover:border-primary/20">
-                                                    {getStatusIcon(caseRun.status)}
-                                                    <span className="text-[10px] font-black text-gray-500 capitalize tracking-widest">
-                                                        {caseRun.status}
-                                                    </span>
-                                                </div>
+                                                {(() => {
+                                                    const s = (caseRun.status || '').toUpperCase();
+                                                    const isSuccess = ['PASSED', 'SUCCESS', 'EXECUTED'].includes(s);
+                                                    const isFailure = ['FAILED', 'FAILURE'].includes(s);
+                                                    const isError = s === 'ERROR';
+                                                    const isRunningStatus = s === 'RUNNING';
+                                                    const isAborted = s === 'ABORTED';
+
+                                                    const colors = isSuccess ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-50' :
+                                                        isFailure ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-rose-50' :
+                                                            isError ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-amber-50' :
+                                                                isRunningStatus ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-blue-50' :
+                                                                    isAborted ? 'bg-slate-100 text-slate-600 border-slate-200 shadow-slate-50' :
+                                                                        'bg-gray-50 text-gray-400 border-gray-100 shadow-gray-50';
+
+                                                    return (
+                                                        <div className={`flex items-center justify-center gap-1.5 px-3 py-1 rounded-full border shadow-sm mx-auto w-fit transition-all group-hover:scale-105 ${colors}`}>
+                                                            {getStatusIcon(s)}
+                                                            <span className="text-[10px] font-black uppercase tracking-widest">
+                                                                {s}
+                                                            </span>
+                                                        </div>
+                                                    );
+                                                })()}
                                             </td>
                                             <td className="px-8 py-6 text-center text-[11px] font-black text-gray-400 capitalize tracking-widest">
                                                 <div className="flex items-center justify-center gap-2">
