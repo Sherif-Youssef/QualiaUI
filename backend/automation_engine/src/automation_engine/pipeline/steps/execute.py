@@ -31,14 +31,10 @@ class ExecuteActionsStep:
                 else:
                     await self._interact(ctx, action)
 
-                logger.debug(
-                    f"Step passed: type={type(compiled.resolved_executable).__name__}"
-                )
+                logger.debug(f"Step passed: type={type(action).__name__}")
             except (AssertionError, TimeoutError) as e:
                 step.finalize(status=TestStatus.FAILED, error_message=str(e))
-                logger.warning(
-                    f"Step failed: type={type(compiled.resolved_executable).__name__}"
-                )
+                logger.warning(f"Step failed: type={type(action).__name__}")
                 ctx.results.append(IterationResult(step=step))
                 ctx.status = IterationStatus.FAILED
                 return ctx
