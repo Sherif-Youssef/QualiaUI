@@ -8,6 +8,7 @@ import { ProfilePage } from './Profile/Profile';
 import { AuthCallbackPage } from './Auth/AuthCallbackPage';
 import { ForgotPasswordPage } from './Auth/ForgotPasswordPage';
 import { AdminUsersPage } from './Admin/AdminUsersPage';
+import { SiteSettingsPage } from './Admin/SiteSettings/SiteSettingsPage';
 import { ProjectMembersPage } from './Project/ProjectMembersPage';
 import { TestSuiteRunDashboardPage } from './TestSuite/TestSuiteRunDashboardPage';
 import { LandingPage } from './Landing';
@@ -23,6 +24,7 @@ export {
     ForgotPasswordPage,
     TestSuiteManagerPage,
     AdminUsersPage,
+    SiteSettingsPage,
     ProjectMembersPage,
     TestSuiteRunDashboardPage,
     LandingPage

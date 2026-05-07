@@ -20,13 +20,7 @@ from src.runs.execution import (
     aggregate_parent_status,
     stream_status,
 )
-from src.runs.models import ProjectRun, RunStatus, Scope, TestSuiteRun
-from src.runs.stream import cleanup_stream
-from src.auth.models import User
-from src.projects.models import Project, UserProjectLink
-from src.testsuites.models import TestSuite
-from src.testcases.models import TestCase
-from src.runs.models import ProjectRun, TestSuiteRun, TestCaseRun, TestStepRun
+from src.models import *
 
 logger = logging.getLogger(__name__)
 

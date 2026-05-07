@@ -5,7 +5,7 @@ from .queries import (
     get_all_providers, count_providers, delete_provider as delete_provider_query,
     get_all_models, count_models, delete_model as delete_model_query
 )
-from .schemas import ProviderCreate, ProviderUpdate, LLMModelCreate, LLMModelUpdate, ProviderType
+from .schemas import ProviderCreate, ProviderUpdate, LLMModelCreate, LLMModelUpdate, ProviderType, ProviderRead
 
 # Providers
 
@@ -14,27 +14,37 @@ def list_providers(
     pagination_params: PaginationParams,
     display_name: str | None = None,
     provider_type: ProviderType | None = None,
-) -> Page[Provider]:
+) -> Page[ProviderRead]:
     providers = get_all_providers(session, pagination_params, display_name=display_name, provider_type=provider_type)
     total_items = count_providers(session, display_name=display_name, provider_type=provider_type)
 
+    # Compute has_api_key for each provider
+    provider_reads = []
+    for p in providers:
+        p_read = ProviderRead.model_validate(p)
+        p_read.has_api_key = bool(p.api_key)
+        provider_reads.append(p_read)
+
     return Page(
-        items=providers,
+        items=provider_reads,
         offset=pagination_params.offset,
         limit=pagination_params.limit,
         total_items=total_items,
     )
 
 
-def create_provider(session: Session, provider_create: ProviderCreate) -> Provider:
+def create_provider(session: Session, provider_create: ProviderCreate) -> ProviderRead:
     provider = Provider.model_validate(provider_create)
     session.add(provider)
     session.commit()
     session.refresh(provider)
-    return provider
+    
+    p_read = ProviderRead.model_validate(provider)
+    p_read.has_api_key = bool(provider.api_key)
+    return p_read
 
 
-def update_provider(session: Session, provider: Provider, provider_update: ProviderUpdate) -> Provider:
+def update_provider(session: Session, provider: Provider, provider_update: ProviderUpdate) -> ProviderRead:
     update_data = provider_update.model_dump(exclude_unset=True)
     for key, value in update_data.items():
         setattr(provider, key, value)
@@ -42,7 +52,20 @@ def update_provider(session: Session, provider: Provider, provider_update: Provi
     session.add(provider)
     session.commit()
     session.refresh(provider)
-    return provider
+    
+    p_read = ProviderRead.model_validate(provider)
+    p_read.has_api_key = bool(provider.api_key)
+    return p_read
+
+
+def get_provider_api_key(provider: Provider) -> str | None:
+    return provider.api_key
+
+
+def update_provider_api_key(session: Session, provider: Provider, api_key: str | None) -> None:
+    provider.api_key = api_key
+    session.add(provider)
+    session.commit()
 
 
 def delete_provider(session: Session, provider: Provider) -> None:
