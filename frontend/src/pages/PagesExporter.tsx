@@ -9,11 +9,8 @@ import { AuthCallbackPage } from './Auth/AuthCallbackPage';
 import { ForgotPasswordPage } from './Auth/ForgotPasswordPage';
 import { AdminUsersPage } from './Admin/AdminUsersPage';
 import { ProjectMembersPage } from './Project/ProjectMembersPage';
-import { ProjectHistoryPage } from './Project/ProjectHistoryPage';
-import { ProjectHistoryDetailsPage } from './Project/ProjectHistoryDetailsPage';
-import { ProjectSuiteHistoryDetailsPage } from './Project/ProjectSuiteHistoryDetailsPage';
-import { ProjectCaseHistoryDetailsPage } from './Project/ProjectCaseHistoryDetailsPage';
 import { TestSuiteRunDashboardPage } from './TestSuite/TestSuiteRunDashboardPage';
+import { LandingPage } from './Landing';
 
 export {
     LoginPage,
@@ -27,9 +24,6 @@ export {
     TestSuiteManagerPage,
     AdminUsersPage,
     ProjectMembersPage,
-    ProjectHistoryPage,
-    ProjectHistoryDetailsPage,
-    ProjectSuiteHistoryDetailsPage,
-    ProjectCaseHistoryDetailsPage,
-    TestSuiteRunDashboardPage
+    TestSuiteRunDashboardPage,
+    LandingPage
 }

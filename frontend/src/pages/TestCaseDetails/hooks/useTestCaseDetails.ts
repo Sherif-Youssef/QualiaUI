@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRunStreaming } from '@/hooks/useRunStreaming';
 import { testCaseService } from '@/services/testCase/testCaseService';
 import { runService } from '@/services/runService';
 import { TestCase } from '@/types/test-case';
-import { TestCaseRun } from '@/types/run';
 
 interface UseTestCaseDetailsProps {
     projectId?: string;
@@ -12,8 +12,6 @@ interface UseTestCaseDetailsProps {
 
 export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDetailsProps) => {
     const [testCase, setTestCase] = useState<TestCase | null>(null);
-    const [history, setHistory] = useState<TestCaseRun[]>([]);
-    const [activeView, setActiveView] = useState<'steps' | 'history'>('steps');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedStepId, setSelectedStepId] = useState<string>('');
@@ -22,12 +20,10 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
     const [activeSteps, setActiveSteps] = useState<any[]>([]);
     const [currentScreenshot, setCurrentScreenshot] = useState<string | null>(null);
     const [terminationReason, setTerminationReason] = useState<string | null>(null);
-    const [finalStatus, setFinalStatus] = useState<'passed' | 'failed' | 'error' | null>(null);
-    const [page, setPage] = useState(1);
-    const limit = 6;
-    const [totalRuns, setTotalRuns] = useState(0);
+    const [finalStatus, setFinalStatus] = useState<'passed' | 'failed' | 'error' | 'aborted' | 'executed' | null>(null);
 
-    const eventSourceRef = useRef<EventSource | null>(null);
+    const isStartingRef = useRef(false);
+    const [isAborting, setIsAborting] = useState(false);
 
     const syncStatus = useCallback((data: TestCase) => {
         const status = data.status?.toUpperCase();
@@ -40,6 +36,71 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
             }
         }
     }, []);
+
+    const refreshTestCaseSilent = useCallback(async () => {
+        if (!caseId || !projectId || !suiteId) return;
+        try {
+            const data = await testCaseService.getTestCaseById(projectId, suiteId, caseId);
+            setTestCase(data);
+            syncStatus(data);
+        } catch { }
+    }, [caseId, projectId, suiteId, syncStatus]);
+
+    const handleStatusChange = useCallback((eventPayload: any) => {
+        if (eventPayload.element === 'TESTCASE' && String(eventPayload.id) === String(caseId)) {
+            const status = eventPayload.status?.toUpperCase();
+            if (status === 'PASSED' || status === 'SUCCESS') setFinalStatus('passed');
+            else if (status === 'EXECUTED') setFinalStatus('executed');
+            else if (status === 'ERROR') setFinalStatus('error');
+            else if (status === 'ABORTED') setFinalStatus('aborted');
+            else if (status === 'FAILED' || status === 'FAILURE') setFinalStatus('failed');
+
+            if (['FAILED', 'ERROR', 'ABORTED', 'FAILURE'].includes(status)) {
+                setTerminationReason(eventPayload.termination_reason || (status === 'ABORTED' ? 'Execution was aborted by the user.' : `Execution stopped with status: ${status}`));
+            }
+
+            if (['PASSED', 'FAILED', 'ERROR', 'ABORTED'].includes(status)) {
+                setIsRunning(false);
+                isStartingRef.current = false;
+                setIsAborting(false);
+                setActiveRunId(null);
+                refreshTestCaseSilent();
+            }
+        }
+    }, [caseId, refreshTestCaseSilent]);
+
+    const handleStepUpdate = useCallback((stepData: any) => {
+        const stepId = stepData.id || crypto.randomUUID();
+        const screenshotUrl = stepData.snapshot_after?.screenshot || stepData.snapshot_before?.screenshot || '';
+        const mappedStep = {
+            id: stepId,
+            number: 0,
+            text: JSON.stringify(stepData),
+            screenshot: screenshotUrl,
+            status: stepData.status?.toLowerCase() || 'pending'
+        };
+
+        setActiveSteps(prev => {
+            const existIdx = prev.findIndex(s => s.id === stepId);
+            const newSteps = [...prev];
+            if (existIdx >= 0) {
+                newSteps[existIdx] = { ...newSteps[existIdx], ...mappedStep };
+            } else {
+                const step = { ...mappedStep, number: prev.length + 1 };
+                newSteps.push(step);
+                if (prev.length === 0) setSelectedStepId(String(step.id));
+                if (step.screenshot) setCurrentScreenshot(step.screenshot);
+            }
+            return newSteps;
+        });
+    }, []);
+
+    useRunStreaming({
+        scope: 'TESTCASE',
+        runId: activeRunId,
+        onStatusChange: handleStatusChange,
+        onStepUpdate: handleStepUpdate
+    });
 
     const fetchTestCase = useCallback(async () => {
         if (!caseId || !projectId || !suiteId) return;
@@ -56,52 +117,17 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
                 setSelectedStepId(String(data.steps[0].id));
             }
         } catch (err: any) {
+            console.error('Error in fetchTestCase:', err);
             setError(err.response?.data?.detail || 'Failed to load test case details.');
         } finally {
             setIsLoading(false);
         }
     }, [caseId, projectId, suiteId, syncStatus]);
 
-    const refreshTestCaseSilent = useCallback(async () => {
-        if (!caseId || !projectId || !suiteId) return;
-        try {
-            const data = await testCaseService.getTestCaseById(projectId, suiteId, caseId);
-            setTestCase(data);
-            syncStatus(data);
-        } catch { }
-    }, [caseId, projectId, suiteId, syncStatus]);
-
     useEffect(() => {
         fetchTestCase();
-        return () => {
-            if (eventSourceRef.current) eventSourceRef.current.close();
-        };
     }, [fetchTestCase]);
-    useEffect(() => {
-        let interval: any;
-        if (isRunning && !activeRunId) {
-            interval = setInterval(() => {
-                refreshTestCaseSilent();
-            }, 3000);
-        }
-        return () => {
-            if (interval) clearInterval(interval);
-        };
-    }, [isRunning, activeRunId, refreshTestCaseSilent]);
 
-    useEffect(() => {
-        const fetchHistory = async () => {
-            if (!caseId || !projectId || !suiteId || activeView !== 'history') return;
-            try {
-                const result = await runService.getTestCaseRuns(projectId, suiteId, caseId, (page - 1) * limit, limit);
-                setHistory(result.runs);
-                setTotalRuns(result.total);
-            } catch (err: any) {
-                console.error('Failed to load test case history:', err);
-            }
-        };
-        fetchHistory();
-    }, [caseId, projectId, suiteId, activeView, page]);
 
     const updateTestCase = async (data: any) => {
         if (!projectId || !suiteId || !caseId) throw new Error("Missing parameters");
@@ -110,7 +136,8 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
     };
 
     const runTestCase = async (model: string = 'gemini-1.5-pro') => {
-        if (!projectId || !suiteId || !caseId) return;
+        if (!projectId || !suiteId || !caseId || isStartingRef.current) return;
+        isStartingRef.current = true;
         setIsRunning(true);
         setFinalStatus(null);
         setTerminationReason(null);
@@ -118,77 +145,15 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
         setCurrentScreenshot(null);
 
         try {
-            if (eventSourceRef.current) {
-                eventSourceRef.current.close();
-                eventSourceRef.current = null;
-            }
             const run = await runService.startTestCaseRun(parseInt(caseId), 'NATURAL', model);
             setActiveRunId(run.run_id);
-            const eventSource = runService.subscribeToRunProgress('TESTCASE', run.run_id, (data: any) => {
-                const msgType: string = data.type || '';
-                const eventPayload = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
-
-                if (msgType === 'STATUS_CHANGE' && eventPayload) {
-                    if (eventPayload.element === 'TESTCASE' && eventPayload.id === parseInt(caseId)) {
-                        if (eventPayload.status === 'PASSED') setFinalStatus('passed');
-                        else if (eventPayload.status === 'ERROR') setFinalStatus('error');
-                        else if (['FAILED', 'ABORTED'].includes(eventPayload.status)) {
-                            setFinalStatus('failed');
-                        }
-
-                        if (['FAILED', 'ERROR', 'ABORTED'].includes(eventPayload.status) && eventPayload.termination_reason) {
-                            setTerminationReason(eventPayload.termination_reason);
-                        }
-
-                        if (['PASSED', 'FAILED', 'ERROR', 'ABORTED'].includes(eventPayload.status)) {
-                            eventSource.close();
-                            setIsRunning(false);
-                            setIsAborting(false);
-                            setActiveRunId(null);
-                            refreshTestCaseSilent();
-                        }
-                    }
-                }
-
-                if (msgType === 'TEST_STEP' && eventPayload) {
-                    const stepData = eventPayload;
-                    const stepId = stepData.id || crypto.randomUUID();
-                    const screenshotUrl = stepData.snapshot_after?.screenshot || stepData.snapshot_before?.screenshot || '';
-
-                    const mappedStep = {
-                        id: stepId,
-                        number: 0,
-                        text: JSON.stringify(stepData),
-                        screenshot: screenshotUrl,
-                        status: stepData.status?.toLowerCase() || 'pending'
-                    };
-
-                    setActiveSteps(prev => {
-                        const stepExistsIndex = prev.findIndex(s => s.id === stepId);
-                        let newSteps = [...prev];
-
-                        if (stepExistsIndex >= 0) {
-                            newSteps[stepExistsIndex] = { ...newSteps[stepExistsIndex], ...mappedStep };
-                        } else {
-                            const stepWithNumber = { ...mappedStep, number: prev.length + 1 };
-                            newSteps.push(stepWithNumber);
-                            if (prev.length === 0) setSelectedStepId(String(stepWithNumber.id));
-                            if (stepWithNumber.screenshot) setCurrentScreenshot(stepWithNumber.screenshot);
-                        }
-
-                        return newSteps;
-                    });
-                }
-            });
-            eventSourceRef.current = eventSource;
         } catch (err: any) {
             setError(err.response?.data?.detail || 'Failed to start test run.');
             setIsRunning(false);
+            isStartingRef.current = false;
             setActiveRunId(null);
         }
     };
-
-    const [isAborting, setIsAborting] = useState(false);
 
     const abortTestCase = async () => {
         if (!activeRunId) return;
@@ -203,9 +168,6 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
 
     return {
         testCase,
-        history,
-        activeView,
-        setActiveView,
         isLoading,
         error,
         selectedStepId,
@@ -213,10 +175,6 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
         isRunning,
         activeSteps,
         currentScreenshot,
-        page,
-        setPage,
-        limit,
-        totalRuns,
         runTestCase,
         abortTestCase,
         updateTestCase,

@@ -1,2 +1,3 @@
-export * from './TestSuiteManagerPage';
-export * from './TestSuiteManagerLayout';
+export { TestSuiteManagerPage } from './TestSuiteManagerPage';
+export { TestSuiteManagerLayout } from './TestSuiteManagerLayout';
+export { TestSuiteManagerLoading } from './TestSuiteManagerLoading';

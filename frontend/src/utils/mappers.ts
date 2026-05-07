@@ -15,8 +15,8 @@ export const mapTestStepRunToActionStep = (sr: TestStepRun, index: number): Acti
         id: sr.id.toString(),
         number: index + 1,
         text: actionText,
-        screenshot: screenshot || '',
-        status: sr.status === 'PASSED' ? 'success' : 'failure' as any,
+        screenshot: screenshot ? (screenshot.startsWith('data:') ? screenshot : `data:image/png;base64,${screenshot}`) : '',
+        status: sr.status === 'PASSED' ? 'success' : (sr.status === 'ABORTED' ? 'aborted' : (sr.status === 'ERROR' ? 'error' : 'failure')) as any,
         description: sr.error_message || undefined
     };
 };
@@ -25,8 +25,8 @@ export const mapTestCaseRunToViewModel = (cr: TestCaseRun, steps: TestStepRun[] 
     const statusMapping: Record<string, TestCase['status']> = {
         'PASSED': 'success',
         'FAILED': 'failure',
-        'ABORTED': 'failure',
-        'ERROR': 'failure'
+        'ABORTED': 'aborted',
+        'ERROR': 'error'
     };
 
     return {
@@ -43,16 +43,28 @@ export const mapTestCaseRunToViewModel = (cr: TestCaseRun, steps: TestStepRun[] 
 
 export const mapActiveStepToActionStep = (stepRun: any, currentStepCount: number): ActionStep => {
     const screenshot = stepRun.screenshot_after || stepRun.screenshot_before || (stepRun.snapshot_after ? stepRun.snapshot_after.screenshot : '') || (stepRun.snapshot_before ? stepRun.snapshot_before.screenshot : '');
-    
-    const formattedScreenshot = screenshot || '';
+    let formattedScreenshot = '';
+    if (screenshot) {
+        formattedScreenshot = (screenshot.startsWith('http') || screenshot.startsWith('data:')) 
+            ? screenshot 
+            : `data:image/png;base64,${screenshot}`;
+    }
+
+    const rawStatus = (stepRun.status || 'running').toLowerCase();
+    const statusMap: Record<string, ActionStep['status']> = {
+        passed: 'success',
+        executed: 'success',
+        failed: 'failure',
+        error: 'error',
+        aborted: 'aborted'
+    };
 
     return {
         id: stepRun.id ? String(stepRun.id) : crypto.randomUUID(),
         number: currentStepCount + 1,
         text: stepRun.recreation_prompt || stepRun.action_description || 'Executing Action...',
         screenshot: formattedScreenshot,
-        status: (stepRun.status?.toLowerCase() === 'passed' || stepRun.status?.toLowerCase() === 'executed') ? 'success' : 
-                (stepRun.status?.toLowerCase() === 'failed' || stepRun.status?.toLowerCase() === 'error') ? 'failure' : 'running',
+        status: statusMap[rawStatus] || 'running',
         type: 'do',
     };
 };

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { testCaseService } from '@/services/testCase/testCaseService';
 import { runService } from '@/services/runService';
 import { TestCase } from '@/types/test-case';
-import { TestSuiteRun } from '@/types/run';
 import { useProjectPermissions } from '@/hooks/useProjectPermissions';
 import { useNavigate } from 'react-router-dom';
 import { useRunStreaming } from '@/hooks/useRunStreaming';
@@ -21,19 +20,18 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
     const [editingTestCase, setEditingTestCase] = useState<TestCase | null>(null);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
     const [testCases, setTestCases] = useState<TestCase[]>([]);
-    const [history, setHistory] = useState<TestSuiteRun[]>([]);
-    const [activeView, setActiveView] = useState<'cases' | 'history'>('cases');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [modalLoading, setModalLoading] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
-    
+
     const { canManageCases, isLoading: permissionsLoading, error: permissionsError } = useProjectPermissions(projectId);
 
     const [totalItems, setTotalItems] = useState(0);
     const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
     const [isRunningSuite, setIsRunningSuite] = useState(false);
     const [activeRunId, setActiveRunId] = useState<number | null>(null);
+    const isStartingRef = useRef(false);
 
     const itemsPerPage = 6;
 
@@ -51,37 +49,24 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
         setError(null);
         try {
             const offset = (currentPage - 1) * itemsPerPage;
+            const result = await testCaseService.getTestCases(projectId, suiteId, offset, itemsPerPage, debouncedSearch);
 
-            if (activeView === 'cases') {
-                const result = await testCaseService.getTestCases(projectId, suiteId, offset, itemsPerPage, debouncedSearch);
-
-                if (result.testCases.length === 0 && currentPage > 1 && result.total > 0) {
-                    setCurrentPage(prev => {
-                        const next = prev - 1;
-                        return next > 0 ? next : 1;
-                    });
-                    return;
-                }
-
-                setTestCases(result.testCases);
-                setTotalItems(result.total);
-            } else {
-                const historyResult = await runService.getTestSuiteRuns(projectId, suiteId, offset, itemsPerPage);
-
-                if (historyResult.runs.length === 0 && currentPage > 1 && historyResult.total > 0) {
-                    setCurrentPage(prev => prev - 1);
-                    return;
-                }
-
-                setHistory(historyResult.runs);
-                setTotalItems(historyResult.total);
+            if (result.testCases.length === 0 && currentPage > 1 && result.total > 0) {
+                setCurrentPage(prev => {
+                    const next = prev - 1;
+                    return next > 0 ? next : 1;
+                });
+                return;
             }
+
+            setTestCases(result.testCases);
+            setTotalItems(result.total);
         } catch (err: any) {
-            setError(err.response?.data?.detail || `Failed to load ${activeView === 'cases' ? 'test cases' : 'history'}.`);
+            setError(err.response?.data?.detail || 'Failed to load test cases.');
         } finally {
             setIsLoading(false);
         }
-    }, [suiteId, projectId, currentPage, debouncedSearch, activeView, itemsPerPage]);
+    }, [suiteId, projectId, currentPage, debouncedSearch, itemsPerPage]);
 
     useEffect(() => {
         fetchData();
@@ -121,8 +106,9 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
     };
 
     const handleRunAll = async (model: string = 'gemini-1.5-pro') => {
-        if (!projectId || !suiteId) return;
+        if (!projectId || !suiteId || isStartingRef.current) return;
 
+        isStartingRef.current = true;
         setIsRunningSuite(true);
         setError(null);
         try {
@@ -132,6 +118,7 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
         } catch (err: any) {
             setError(err.response?.data?.detail || 'Failed to start test run.');
             setIsRunningSuite(false);
+            isStartingRef.current = false;
         }
     };
 
@@ -161,7 +148,7 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
 
         setTestCases(prev => prev.map(tc => {
             if (tc.id !== String(event.id)) return tc;
-            
+
             let duration = tc.lastRunDuration;
             if (event.started_at && event.finished_at) {
                 try {
@@ -222,8 +209,6 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
         editingTestCase, setEditingTestCase,
         deleteConfirmation, setDeleteConfirmation,
         testCases,
-        history,
-        activeView, setActiveView,
         isLoading,
         error, setError,
         modalLoading,

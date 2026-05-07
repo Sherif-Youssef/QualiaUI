@@ -1,15 +1,12 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ErrorMessage } from '@/components/GeneralComponents';
-import { Pagination } from '@/components/Pagination';
 import { AddTestCaseModal } from '@/components/Modal/AddTestCaseModal';
 
-import { TestRunHistoryTable } from './components/TestRunHistoryTable';
 import { TestCaseDetailsLayout } from './TestCaseDetailsLayout';
 import { ScreenshotViewer } from './ScreenshotViewer';
 import { useTestCaseDetails } from './hooks/useTestCaseDetails';
 import { TestCaseHeader } from './components/TestCaseHeader';
-import { TestCaseTabs } from './components/TestCaseTabs';
 import { ExecutionStepsSidebar } from './components/ExecutionStepsSidebar';
 import { ViewPromptModal } from '@/components/Modal/ViewPromptModal';
 
@@ -19,9 +16,6 @@ export const TestCaseDetailsPage: React.FC = () => {
 
     const {
         testCase,
-        history,
-        activeView,
-        setActiveView,
         isLoading,
         error,
         selectedStepId,
@@ -30,10 +24,6 @@ export const TestCaseDetailsPage: React.FC = () => {
         activeSteps,
         currentScreenshot,
         isAborting,
-        page,
-        setPage,
-        limit,
-        totalRuns,
         runTestCase,
         abortTestCase,
         updateTestCase,
@@ -93,62 +83,31 @@ export const TestCaseDetailsPage: React.FC = () => {
                             onRun={() => runTestCase(selectedModel)}
                             onAbort={abortTestCase}
                         />
-                        <TestCaseTabs
-                            activeView={activeView}
-                            setActiveView={setActiveView}
-                        />
                     </div>
                 </div>
                 <div className="flex-1 flex overflow-hidden min-h-0">
-                    {activeView === 'steps' ? (
-                        <>
-                            <ExecutionStepsSidebar
-                                testCaseMode={testCase.mode || 'plain'}
-                                plainText={testCase.plainText}
-                                displaySteps={displaySteps}
-                                selectedStepId={selectedStepId}
-                                onSelectStep={setSelectedStepId}
-                                onEditPrompt={() => setIsEditModalOpen(true)}
-                                terminationReason={terminationReason || testCase.terminationReason}
-                                selectedModel={selectedModel}
-                                onModelChange={(val) => setSelectedModel(val)}
-                                isRunning={isRunning}
-                            />
-                            <main className="flex-1 flex flex-col overflow-hidden bg-gray-50/30 min-h-0">
-                                <ScreenshotViewer
-                                    screenshot={displaySteps.find(s => String(s.id) === selectedStepId)?.screenshot || currentScreenshot || null}
-                                    number={displaySteps.findIndex(s => String(s.id) === selectedStepId) + 1}
-                                    zoomLevel={zoomLevel}
-                                    onZoomIn={() => setZoomLevel(prev => Math.min(prev + 25, 200))}
-                                    onZoomOut={() => setZoomLevel(prev => Math.max(prev - 25, 50))}
-                                    onResetZoom={() => setZoomLevel(100)}
-                                />
-                            </main>
-                        </>
-                    ) : (
-                        <main className="flex-1 overflow-auto p-8 bg-gray-50/30 min-h-0">
-                            <div className="max-w-6xl mx-auto space-y-6">
-                                <TestRunHistoryTable
-                                    history={history}
-                                    projectId={projectId || ''}
-                                    onRunClick={(run) => {
-                                        const sId = run.testsuite_run_id || 'standalone';
-                                        const rId = (run as any).project_run_id || 'standalone';
-                                        navigate(`/project/${projectId}/history/${rId}/suite/${sId}/case/${run.id}`);
-                                    }}
-                                />
-                                {totalRuns > limit && (
-                                    <Pagination
-                                        currentPage={page}
-                                        totalPages={Math.ceil(totalRuns / limit)}
-                                        itemsPerPage={limit}
-                                        totalItems={totalRuns}
-                                        onPageChange={setPage}
-                                    />
-                                )}
-                            </div>
-                        </main>
-                    )}
+                    <ExecutionStepsSidebar
+                        testCaseMode={testCase.mode || 'plain'}
+                        plainText={testCase.plainText}
+                        displaySteps={displaySteps}
+                        selectedStepId={selectedStepId}
+                        onSelectStep={setSelectedStepId}
+                        onEditPrompt={() => setIsEditModalOpen(true)}
+                        terminationReason={terminationReason || testCase.terminationReason}
+                        selectedModel={selectedModel}
+                        onModelChange={(val) => setSelectedModel(val)}
+                        isRunning={isRunning}
+                    />
+                    <main className="flex-1 flex flex-col overflow-hidden bg-gray-50/30 min-h-0">
+                        <ScreenshotViewer
+                            screenshot={displaySteps.find(s => String(s.id) === selectedStepId)?.screenshot || currentScreenshot || null}
+                            number={displaySteps.findIndex(s => String(s.id) === selectedStepId) + 1}
+                            zoomLevel={zoomLevel}
+                            onZoomIn={() => setZoomLevel(prev => Math.min(prev + 25, 200))}
+                            onZoomOut={() => setZoomLevel(prev => Math.max(prev - 25, 50))}
+                            onResetZoom={() => setZoomLevel(100)}
+                        />
+                    </main>
                 </div>
             </div>
 

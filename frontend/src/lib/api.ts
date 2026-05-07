@@ -1,5 +1,40 @@
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
+const pendingRequests = new Map<string, Promise<AxiosResponse<any>>>();
+
+/**
+ * Executes a GET request with deduplication. 
+ * If a request to the same URL+params is already in flight, it returns the existing promise.
+ */
+export async function getDeduplicated<T>(url: string, params?: any, force = false): Promise<AxiosResponse<T>> {
+    const key = `${url}${params ? JSON.stringify(params) : ''}`;
+    
+    if (force) {
+        pendingRequests.delete(key);
+    }
+    
+    if (pendingRequests.has(key)) {
+        return pendingRequests.get(key)!;
+    }
+
+    const promise = api.get<T>(url, { params });
+    pendingRequests.set(key, promise);
+
+    try {
+        const response = await promise;
+        // Keep in map briefly to handle rapid sequential calls
+        setTimeout(() => {
+            if (pendingRequests.get(key) === promise) {
+                pendingRequests.delete(key);
+            }
+        }, 1000);
+        return response;
+    } catch (error) {
+        pendingRequests.delete(key);
+        throw error;
+    }
+}
+
 export interface ApiResponse<T> {
     items: T[];
     total_items: number;

@@ -42,7 +42,7 @@ export interface TestStepRun {
     intent: string | null;
     recreation_prompt: string | null;
     error_message: string | null;
-    status: 'PASSED' | 'FAILED' | 'ERROR' | 'EXECUTED';
+    status: 'PASSED' | 'FAILED' | 'ERROR' | 'EXECUTED' | 'ABORTED';
 }
 
 export interface StartRunResponse {
