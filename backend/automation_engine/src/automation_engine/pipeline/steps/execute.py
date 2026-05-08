@@ -57,6 +57,9 @@ class ExecuteActionsStep:
 
     @staticmethod
     async def _capture(ctx: IterationContext) -> StateSnapshot:
+        await ctx.browser.page.wait_for_load_state("domcontentloaded")
+        await ctx.browser.page.wait_for_load_state("load")
+        await ctx.browser.page.wait_for_timeout(500)
         screenshot = await ctx.browser.screenshot()
         return StateSnapshot(screenshot=screenshot)
 

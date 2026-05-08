@@ -99,6 +99,7 @@ class TestCaseRun(SQLModel, table=True):
     job_uid: str = Field(unique=True, index=True, nullable=False)
     mode: RunMode
 
+    name: str
     base_url: str
     instruction: str | None = Field(default=None)
     status: RunStatus = Field(default=RunStatus.QUEUED)

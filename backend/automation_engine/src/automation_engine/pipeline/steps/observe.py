@@ -16,7 +16,9 @@ class ObserveStep:
     async def run(self, ctx: IterationContext) -> IterationContext:
         browser = ctx.browser
 
-        await browser.wait_for_page_load()
+        await ctx.browser.page.wait_for_load_state("domcontentloaded")
+        await ctx.browser.page.wait_for_load_state("load")
+        await ctx.browser.page.wait_for_timeout(500)
 
         raw: dict = await browser.evaluate_js(code=get_js_serializer_api_code())
         root = DOMElement(**raw)

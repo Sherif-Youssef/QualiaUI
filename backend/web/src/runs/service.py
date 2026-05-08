@@ -95,6 +95,7 @@ def launch_testcase_run(
         job_uid=job_uid,
         testcase_id=testcase.id,  # type: ignore[arg-type]
         base_url=testcase.base_url,
+        name=testcase.name,
         instruction=testcase.instruction,
         testsuite_run_id = None
     )
@@ -162,6 +163,7 @@ def launch_testsuite_run(
             job_uid=job_uid,
             testcase_id=testcase.id,  # type: ignore[arg-type]
             testsuite_run_id=testsuite_run.id,
+            name=testcase.name,
             base_url=testcase.base_url,
             instruction=testcase.instruction,
         )
@@ -253,6 +255,7 @@ def launch_project_run(
                 job_uid=job_uid,
                 testcase_id=testcase.id,  # type: ignore[arg-type]
                 testsuite_run_id=None,  # filled after suite flush below
+                name=testcase.name,
                 base_url=testcase.base_url,
                 instruction=testcase.instruction,
             ))

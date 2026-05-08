@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Header, Request
+from fastapi import APIRouter, Query, Header, Request, Response
 from fastapi.responses import StreamingResponse
 
 from src.auth.dependencies import UserDep
@@ -29,6 +29,7 @@ from src.runs.service import (
     launch_testsuite_run,
     stop_predicate_factory,
 )
+from src.runs.report import generate_test_suite_report
 from src.runs.stream import get_stream_key, sse_read_stream
 from src.base.schemas import Scope
 from src.projects.dependencies import get_editor_project
@@ -123,6 +124,22 @@ def get_testsuite_run_route(
 ):
 	_ = testsuite_run.testcase_runs
 	return TestSuiteRunWithCasesRead.model_validate(testsuite_run, from_attributes=True)
+
+
+@router.get(
+	"/runs/testsuites/{testsuite_run_id}/report",
+)
+def get_testsuite_run_report_route(
+	testsuite_run: ViewerTestSuiteRunDep,
+):
+	pdf_bytes = generate_test_suite_report(testsuite_run)
+	return Response(
+		content=pdf_bytes,
+		media_type="application/pdf",
+		headers={
+			"Content-Disposition": f'attachment; filename="testsuite_run_{testsuite_run.id}_report.pdf"'
+		}
+	)
 
 
 @router.get(

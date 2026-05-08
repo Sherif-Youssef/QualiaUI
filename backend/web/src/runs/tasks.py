@@ -21,12 +21,12 @@ from src.runs.execution import (
     stream_status,
 )
 from src.models import *
+from src.runs.models import RunStatus, Scope
 
 logger = logging.getLogger(__name__)
 
 def _build_testing_engine() -> TestingEngine:
     return TestingEngine(
-        model=settings.LLM_MODEL,
         config=EngineConfig(
             browser=BrowserConfig(headless=True),
         ),

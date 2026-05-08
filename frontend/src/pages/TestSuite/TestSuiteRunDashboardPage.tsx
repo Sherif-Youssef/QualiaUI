@@ -6,7 +6,7 @@ import { TestSuiteRun, TestCaseRun } from '@/types/run';
 import { parseUTCDate } from '@/utils/formatters';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
-import { CheckCircle2, XCircle, AlertCircle, ChevronLeft, ArrowRight, Clock, FileText, StopCircle, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, AlertCircle, ChevronLeft, ArrowRight, Clock, FileText, StopCircle, Loader2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TopNav } from '@/components/TopNav';
 
@@ -19,6 +19,20 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
     const [isAborting, setIsAborting] = useState(false);
     const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
     const isFetchingRef = useRef(false);
+    const [isDownloadingReport, setIsDownloadingReport] = useState(false);
+
+    const handleDownloadReport = async () => {
+        if (!runId) return;
+        setIsDownloadingReport(true);
+        try {
+            await runService.downloadTestSuiteReport(parseInt(runId));
+        } catch (err: any) {
+            console.error('Download report error:', err);
+            setError('Failed to download report.');
+        } finally {
+            setIsDownloadingReport(false);
+        }
+    };
 
     const fetchRunDetails = useCallback(async () => {
         if (!runId) return;
@@ -168,6 +182,17 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
                         </div>
 
                         <div className="flex items-center gap-3 self-end md:self-center">
+                            {!isRunning && (
+                                <Button
+                                    onClick={handleDownloadReport}
+                                    disabled={isDownloadingReport}
+                                    variant="outline"
+                                    className="h-11 px-6 rounded-xl font-bold shadow-sm flex items-center gap-2 transition-all active:scale-95"
+                                >
+                                    {isDownloadingReport ? <Loader2 className="w-5 h-5 animate-spin" /> : <Download className="w-5 h-5" />}
+                                    {isDownloadingReport ? 'Exporting...' : 'Export'}
+                                </Button>
+                            )}
                             {isRunning && (
                                 <Button
                                     onClick={handleAbort}

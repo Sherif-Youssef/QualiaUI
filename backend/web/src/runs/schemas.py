@@ -56,6 +56,7 @@ class TestCaseRunRead(BaseModel):
     mode: RunMode
 
     base_url: str
+    name: str
     instruction: str | None = None
     status: RunStatus
     termination_reason: str | None = None

@@ -10,3 +10,4 @@ click>=8.3.1,<9.0
 celery==5.6.3
 redis==7.4.0
 alembic>=1.18.4,<2.0
+reportlab>=4.0.0,<5.0.0
