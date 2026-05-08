@@ -45,8 +45,8 @@ export const mapActiveStepToActionStep = (stepRun: any, currentStepCount: number
     const screenshot = stepRun.screenshot_after || stepRun.screenshot_before || (stepRun.snapshot_after ? stepRun.snapshot_after.screenshot : '') || (stepRun.snapshot_before ? stepRun.snapshot_before.screenshot : '');
     let formattedScreenshot = '';
     if (screenshot) {
-        formattedScreenshot = (screenshot.startsWith('http') || screenshot.startsWith('data:')) 
-            ? screenshot 
+        formattedScreenshot = (screenshot.startsWith('http') || screenshot.startsWith('data:'))
+            ? screenshot
             : `data:image/png;base64,${screenshot}`;
     }
 

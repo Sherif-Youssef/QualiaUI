@@ -113,7 +113,10 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
     if (error) return <div className="p-8"><ErrorMessage message={error} onClose={() => setError(null)} /></div>;
     if (!suiteRun) return <div className="p-8 text-center text-gray-500 font-bold">Run not found</div>;
 
-    const isRunning = ['RUNNING', 'QUEUED', 'PENDING'].includes(suiteRun.status?.toUpperCase() || '');
+    const isAnyCaseActive = suiteRun.testcase_runs.some(tr => 
+        ['RUNNING', 'QUEUED', 'PENDING'].includes(tr.status?.toUpperCase() || '')
+    );
+    const isRunning = ['RUNNING', 'QUEUED', 'PENDING'].includes(suiteRun.status?.toUpperCase() || '') && isAnyCaseActive;
 
     return (
         <div className="min-h-screen bg-gray-50 text-left font-sans">
@@ -139,8 +142,7 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
                                         {suiteRun.name || 'Test Suite Run'}
                                     </div>
                                     {suiteRun.status && (() => {
-                                        const isAnyCaseRunning = suiteRun.testcase_runs.some(tr => tr.status.toUpperCase() === 'RUNNING');
-                                        const s = (suiteRun.status.toUpperCase() === 'QUEUED' && isAnyCaseRunning) ? 'RUNNING' : suiteRun.status.toUpperCase();
+                                        const s = (suiteRun.status.toUpperCase() === 'QUEUED' && isAnyCaseActive) ? 'RUNNING' : suiteRun.status.toUpperCase();
 
                                         const isSuccess = ['PASSED', 'SUCCESS', 'EXECUTED'].includes(s);
                                         const isFailure = ['FAILED', 'FAILURE'].includes(s);

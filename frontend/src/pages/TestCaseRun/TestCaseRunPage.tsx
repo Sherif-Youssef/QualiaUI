@@ -36,7 +36,8 @@ export const TestCaseRunPage: React.FC = () => {
         setSelectedStep,
         handleRunTest,
         handleAbort,
-        handleBack
+        handleBack,
+        refreshTestCase
     } = useTestCaseRun({ projectId, suiteId, caseId });
 
     const handleSaveTestCase = async (data: any) => {
@@ -44,12 +45,13 @@ export const TestCaseRunPage: React.FC = () => {
         setIsSaving(true);
         setModalError(null);
         try {
-            await testCaseService.updateTestCase(projectId, suiteId || '0', caseId, {
+            const finalSuiteId = suiteId || (testCase as any).suiteId || (testCase as any).testsuite_id || '0';
+            await testCaseService.updateTestCase(projectId, String(finalSuiteId), caseId, {
                 ...testCase,
                 ...data
             });
+            await refreshTestCase();
             setIsEditModalOpen(false);
-            window.location.reload(); // Refresh to get updated data
         } catch (err: any) {
             setModalError(err.response?.data?.detail || 'Failed to update test case');
         } finally {
@@ -93,10 +95,10 @@ export const TestCaseRunPage: React.FC = () => {
                                             </Button>
                                         ) : (
                                             <div className="flex items-center gap-2">
-                                                <ModelSelector 
-                                                    value={selectedModel} 
+                                                <ModelSelector
+                                                    value={selectedModel}
                                                     onChange={setSelectedModel}
-                                                    className="w-[140px] h-9 text-[10px] font-black" 
+                                                    className="w-[140px] h-9 text-[10px] font-black"
                                                 />
                                                 <Button
                                                     onClick={() => handleRunTest(selectedModel)}
@@ -136,7 +138,7 @@ export const TestCaseRunPage: React.FC = () => {
                                     </div>
                                 )}
                             </div>
-                            
+
                             {testCase && (
                                 <div className="flex items-center gap-2">
                                     {(() => {
@@ -174,11 +176,11 @@ export const TestCaseRunPage: React.FC = () => {
                         {testCase && (
                             <TestCaseCard
                                 testCase={testCase}
-                                onStepClick={(step, tc) => {
+                                onStepClick={(step) => {
                                     setSelectedStep(step);
                                     if (step.screenshot) setCurrentScreenshot(step.screenshot);
                                 }}
-                                onStepTextChange={(testId, stepId, newText) => {}}
+                                onStepTextChange={(testId, stepId, newText) => { }}
                                 isReadOnly={true}
                                 selectedStepId={selectedStep ? String(selectedStep.id) : undefined}
                             />

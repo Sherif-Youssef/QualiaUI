@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Server, Cpu, Edit2, Trash2, ShieldCheck, ChevronRight, Filter } from 'lucide-react';
+import { Plus, Server, Cpu, Edit2, Trash2, ShieldCheck, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SearchBar } from '@/components/SearchBar';
 import { Pagination } from '@/components/Pagination';
 import { llmService } from '@/services/llmService';
-import { Provider, LLMModel, ProviderType, ProviderDisplayNames } from '@/types/llm';
+import { Provider, LLMModel, ProviderDisplayNames } from '@/types/llm';
 import { ProviderFormModal } from './ProviderFormModal';
 import { ModelFormModal } from './ModelFormModal';
 import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
@@ -15,7 +15,7 @@ export const LLMManagement: React.FC = () => {
     const [providers, setProviders] = useState<Provider[]>([]);
     const [totalProviders, setTotalProviders] = useState(0);
     const [providerPage, setProviderPage] = useState(1);
-    
+
     const [selectedProviderId, setSelectedProviderId] = useState<number | null>(null);
     const [models, setModels] = useState<LLMModel[]>([]);
     const [totalModels, setTotalModels] = useState(0);
@@ -24,7 +24,6 @@ export const LLMManagement: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isModelsLoading, setIsModelsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
-    const [typeFilter, setTypeFilter] = useState<string>('all');
 
     // Modals state
     const [isProviderModalOpen, setIsProviderModalOpen] = useState(false);
@@ -40,10 +39,9 @@ export const LLMManagement: React.FC = () => {
         try {
             const offset = (providerPage - 1) * ITEMS_PER_PAGE;
             const res = await llmService.listProviders(
-                offset, 
-                ITEMS_PER_PAGE, 
-                searchQuery || undefined, 
-                typeFilter === 'all' ? undefined : (typeFilter as ProviderType)
+                offset,
+                ITEMS_PER_PAGE,
+                searchQuery || undefined
             );
             setProviders(res.items);
             setTotalProviders(res.total_items);
@@ -52,7 +50,7 @@ export const LLMManagement: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [providerPage, searchQuery, typeFilter]);
+    }, [providerPage, searchQuery]);
 
     const fetchModels = useCallback(async () => {
         if (!selectedProviderId) return;
@@ -80,7 +78,7 @@ export const LLMManagement: React.FC = () => {
     // Reset page when filters change
     useEffect(() => {
         setProviderPage(1);
-    }, [searchQuery, typeFilter]);
+    }, [searchQuery]);
 
     useEffect(() => {
         setModelPage(1);
@@ -172,11 +170,10 @@ export const LLMManagement: React.FC = () => {
 
     return (
         <div className="flex flex-col lg:flex-row gap-8 min-h-[700px]">
-            {/* Left Sidebar: Provider List */}
             <div className="w-full lg:w-96 flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                     <h3 className="text-xl font-black text-gray-900">Providers</h3>
-                    <Button 
+                    <Button
                         size="sm"
                         onClick={() => { setEditingProvider(undefined); setIsProviderModalOpen(true); }}
                         className="bg-primary hover:bg-primary/90 rounded-xl h-9 px-3"
@@ -187,26 +184,11 @@ export const LLMManagement: React.FC = () => {
                 </div>
 
                 <div className="space-y-3 flex-shrink-0">
-                    <SearchBar 
-                        value={searchQuery} 
-                        onChange={setSearchQuery} 
-                        placeholder="Search providers..." 
-                        className="bg-white border-gray-100"
+                    <SearchBar
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                        placeholder="Search providers..."
                     />
-                    
-                    <div className="relative">
-                        <select 
-                            value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-white border border-gray-100 rounded-xl text-sm font-bold text-gray-600 appearance-none focus:border-primary/30 outline-none"
-                        >
-                            <option value="all">All Types</option>
-                            {Object.values(ProviderType).map(type => (
-                                <option key={type} value={type}>{ProviderDisplayNames[type]}</option>
-                            ))}
-                        </select>
-                        <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    </div>
                 </div>
 
                 <div className="flex-grow flex flex-col min-h-[400px]">
@@ -220,23 +202,20 @@ export const LLMManagement: React.FC = () => {
                                 <button
                                     key={provider.id}
                                     onClick={() => setSelectedProviderId(provider.id)}
-                                    className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between group ${
-                                        selectedProviderId === provider.id 
-                                        ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20' 
-                                        : 'bg-white border-gray-100 text-gray-900 hover:border-primary/20 hover:shadow-sm'
-                                    }`}
+                                    className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between group ${selectedProviderId === provider.id
+                                            ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
+                                            : 'bg-white border-gray-100 text-gray-900 hover:border-primary/20 hover:shadow-sm'
+                                        }`}
                                 >
                                     <div className="flex items-center gap-3">
-                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                                            selectedProviderId === provider.id ? 'bg-white/20' : 'bg-gray-50 text-gray-400 group-hover:text-primary group-hover:bg-primary/5'
-                                        }`}>
+                                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${selectedProviderId === provider.id ? 'bg-white/20' : 'bg-gray-50 text-gray-400 group-hover:text-primary group-hover:bg-primary/5'
+                                            }`}>
                                             <Server className="w-5 h-5" />
                                         </div>
                                         <div>
                                             <p className="font-bold text-sm truncate max-w-[160px]">{provider.display_name}</p>
-                                            <p className={`text-[10px] font-black uppercase tracking-wider ${
-                                                selectedProviderId === provider.id ? 'text-white/60' : 'text-gray-400'
-                                            }`}>
+                                            <p className={`text-[10px] font-black uppercase tracking-wider ${selectedProviderId === provider.id ? 'text-white/60' : 'text-gray-400'
+                                                }`}>
                                                 {ProviderDisplayNames[provider.provider_type] || provider.provider_type}
                                             </p>
                                         </div>
@@ -251,10 +230,10 @@ export const LLMManagement: React.FC = () => {
                             )}
                         </div>
                     )}
-                    
+
                     {totalProviders > ITEMS_PER_PAGE && (
                         <div className="mt-auto pt-4 border-t border-gray-50">
-                            <Pagination 
+                            <Pagination
                                 currentPage={providerPage}
                                 totalItems={totalProviders}
                                 itemsPerPage={ITEMS_PER_PAGE}
@@ -320,7 +299,7 @@ export const LLMManagement: React.FC = () => {
                                         {totalModels}
                                     </span>
                                 </div>
-                                <Button 
+                                <Button
                                     onClick={() => { setEditingModel(undefined); setIsModelModalOpen(true); }}
                                     className="bg-primary hover:bg-primary/90 rounded-xl"
                                 >
@@ -346,13 +325,13 @@ export const LLMManagement: React.FC = () => {
                                                                 <p className="text-[10px] font-mono font-bold text-gray-400 uppercase tracking-widest">{model.model_name}</p>
                                                             </div>
                                                             <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                                <button 
+                                                                <button
                                                                     onClick={() => { setEditingModel(model); setIsModelModalOpen(true); }}
                                                                     className="p-2 hover:bg-primary/5 rounded-lg text-gray-400 hover:text-primary transition-all"
                                                                 >
                                                                     <Edit2 className="w-4 h-4" />
                                                                 </button>
-                                                                <button 
+                                                                <button
                                                                     onClick={() => setDeleteConfirmation({ id: model.id, type: 'model', name: model.display_name })}
                                                                     className="p-2 hover:bg-red-50 rounded-lg text-gray-400 hover:text-red-500 transition-all"
                                                                 >
@@ -371,10 +350,10 @@ export const LLMManagement: React.FC = () => {
                                                 )}
                                             </div>
                                         </div>
-                                        
+
                                         {totalModels > ITEMS_PER_PAGE && (
                                             <div className="pt-4 border-t border-gray-50 mt-auto">
-                                                <Pagination 
+                                                <Pagination
                                                     currentPage={modelPage}
                                                     totalItems={totalModels}
                                                     itemsPerPage={ITEMS_PER_PAGE}
@@ -414,7 +393,7 @@ export const LLMManagement: React.FC = () => {
             </div>
 
             {/* Modals */}
-            <ProviderFormModal 
+            <ProviderFormModal
                 isOpen={isProviderModalOpen}
                 onClose={() => setIsProviderModalOpen(false)}
                 onAdd={handleAddProvider}
@@ -425,7 +404,7 @@ export const LLMManagement: React.FC = () => {
                 isLoading={modalLoading}
             />
 
-            <ModelFormModal 
+            <ModelFormModal
                 isOpen={isModelModalOpen}
                 onClose={() => setIsModelModalOpen(false)}
                 onAdd={handleAddModel}
@@ -437,7 +416,7 @@ export const LLMManagement: React.FC = () => {
                 isLoading={modalLoading}
             />
 
-            <DeleteConfirmationModal 
+            <DeleteConfirmationModal
                 isOpen={deleteConfirmation !== null}
                 onClose={() => setDeleteConfirmation(null)}
                 onConfirm={handleDelete}
