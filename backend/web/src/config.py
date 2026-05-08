@@ -8,8 +8,6 @@ ENV_FILE_PATH = Path(__file__).resolve().parents[2] / ".env"
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=str(ENV_FILE_PATH), extra="ignore")
     DATABASE_URL: str
-    LLM_MODEL: str = "openai:gpt-5.4-nano"
-    OPENAI_API_KEY: str
 
     CELERY_BROKER: str = "redis://redis:6379/0"
     REDIS_STREAM: str = "redis://redis:6379/1"
