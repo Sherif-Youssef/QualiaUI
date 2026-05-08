@@ -56,10 +56,11 @@ class ProviderType(StrEnum):
 class LLMModelBase(BaseModel):
     model_name: str
     display_name: str
-    provider_id: int
+    
 
 
 class LLMModelCreate(LLMModelBase):
+    provider_id: int
     pass
 
 
@@ -69,8 +70,9 @@ class LLMModelUpdate(BaseModel):
     provider_id: int | None = None
 
 
-class LLMModelRead(LLMModelBase):
+class LLMModelListRead(LLMModelBase):
     id: int
+    provider_id: int
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -92,11 +94,19 @@ class ProviderUpdate(BaseModel):
     api_key: str | None = None
     additional_config: dict | None = None
 
-
-class ProviderRead(ProviderBase):
+class ProviderBaseRead(ProviderBase):
     id: int
-    llm_models: list[LLMModelRead] = Field(default_factory=list)
     has_api_key: bool = False
+
+
+class LLMModelRead(LLMModelBase):
+    id: int
+    provider: ProviderBaseRead
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ProviderRead(ProviderBaseRead):
+    llm_models: list[LLMModelListRead] = Field(default_factory=list)
     model_config = ConfigDict(from_attributes=True)
 
 

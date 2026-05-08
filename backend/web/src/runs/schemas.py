@@ -4,6 +4,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from src.base.schemas import Scope
 from src.runs.models import RunMode, RunStatus, TestCaseStepRunStatus
+from src.llms.schemas import LLMModelRead
+from src.auth.schemas import UserRead
 
 
 class TestsuiteStartRunRequest(BaseModel):
@@ -61,7 +63,8 @@ class TestCaseRunRead(BaseModel):
     
     testcase_id: int
     testsuite_run_id: int | None = None
-    llm_model_id: int | None = None
+    llm_model: LLMModelRead | None = None
+    user: UserRead | None = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -84,7 +87,8 @@ class TestSuiteRunRead(BaseModel):
     status: RunStatus
 
     testsuite_id: int
-    llm_model_id: int | None = None
+    llm_model: LLMModelRead | None = None
+    user: UserRead | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

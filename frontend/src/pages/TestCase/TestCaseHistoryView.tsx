@@ -6,7 +6,9 @@ import {
     PlayCircle,
     RefreshCw,
     AlertCircle,
-    FileText
+    FileText,
+    Bot,
+    User
 } from 'lucide-react';
 import { formatDate, parseUTCDate } from '@/utils/formatters';
 import { runService } from '@/services/runService';
@@ -116,6 +118,8 @@ export const TestCaseHistoryView: React.FC<TestCaseHistoryViewProps> = ({
                         <tr>
                             <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Status</th>
                             <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Run Details</th>
+                            <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Model</th>
+                            <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Initiated By</th>
                             <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Date & Time</th>
                             <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">Duration</th>
                         </tr>
@@ -124,14 +128,14 @@ export const TestCaseHistoryView: React.FC<TestCaseHistoryViewProps> = ({
                         {(isLoading && runs.length === 0) ? (
                             Array(pageSize).fill(0).map((_, i) => (
                                 <tr key={i} className="animate-pulse">
-                                    <td colSpan={4} className="px-6 py-5">
+                                    <td colSpan={6} className="px-6 py-5">
                                         <div className="h-8 bg-gray-50 rounded-lg w-full"></div>
                                     </td>
                                 </tr>
                             ))
                         ) : runs.length === 0 ? (
                             <tr>
-                                <td colSpan={4} className="px-6 py-20 text-center">
+                                <td colSpan={6} className="px-6 py-20 text-center">
                                     <div className="flex flex-col items-center gap-3 text-gray-300">
                                         <FileText className="w-8 h-8 opacity-20" />
                                         <p className="text-sm font-bold tracking-tight">No Execution History</p>
@@ -160,6 +164,39 @@ export const TestCaseHistoryView: React.FC<TestCaseHistoryViewProps> = ({
                                                 {run.testsuite_run_id ? `Part of Suite Run #${run.testsuite_run_id}` : 'Standalone Run'}
                                             </span>
                                         </div>
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        {run.llm_model ? (
+                                            <div className="flex items-center gap-2">
+                                                <div className="p-1 bg-amber-50 rounded-md">
+                                                    <Bot className="w-3 h-3 text-amber-600" />
+                                                </div>
+                                                <div className="flex flex-col">
+                                                    <span className="text-xs font-bold text-gray-700">
+                                                        {run.llm_model.display_name}
+                                                    </span>
+                                                    <span className="text-[9px] text-gray-400 font-medium uppercase tracking-wider">
+                                                        {run.llm_model.provider.display_name}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-gray-300">--</span>
+                                        )}
+                                    </td>
+                                    <td className="px-6 py-5">
+                                        {run.user ? (
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-[9px] font-black text-primary">
+                                                    {run.user.first_name?.[0]}{run.user.last_name?.[0]}
+                                                </div>
+                                                <span className="text-xs font-bold text-gray-700">
+                                                    {run.user.first_name} {run.user.last_name}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-gray-300">--</span>
+                                        )}
                                     </td>
                                     <td className="px-6 py-5">
                                         <span className="text-sm font-bold text-gray-600">
