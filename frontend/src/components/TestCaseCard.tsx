@@ -3,6 +3,7 @@ import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TestCase, ActionStep } from '@/types/test-case';
 import { EditStepModal } from './Modal/EditStepModal';
+import { ExpandableStepText } from './ExpandableStepText';
 
 interface TestCaseCardProps {
   testCase: TestCase;
@@ -21,8 +22,6 @@ const TestCaseStep: React.FC<{
   index: number;
   isActive?: boolean;
 }> = ({ step, testCase, onStepClick, isReadOnly, onEditStep, index, isActive }) => {
-  const [isStepExpanded, setIsStepExpanded] = useState(false);
-
   return (
     <div
       className={`group relative p-4 rounded-3xl border transition-all duration-300 cursor-pointer overflow-hidden ${isActive
@@ -32,7 +31,6 @@ const TestCaseStep: React.FC<{
       onClick={() => onStepClick(step, testCase)}
     >
       <div className="flex gap-4">
-        {/* Left: Step Number */}
         <div className="flex flex-col items-center">
           <div
             className={`w-10 h-10 rounded-2xl text-xs font-black flex items-center justify-center transition-all duration-300 ${isActive
@@ -44,23 +42,13 @@ const TestCaseStep: React.FC<{
           </div>
         </div>
 
-        {/* Right: Content */}
         <div className="flex-1 min-w-0 flex flex-col gap-2">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <div className={`text-sm font-bold text-gray-800 leading-relaxed ${isStepExpanded ? '' : 'truncate block'}`}>
-                {step.text || (step as any).description || 'Action Step'}
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsStepExpanded(!isStepExpanded);
-                }}
-                className={`text-[9px] mt-1 tracking-widest transition-colors ${isActive ? 'text-primary' : 'text-gray-400 hover:text-primary'
-                  }`}
-              >
-                {isStepExpanded ? 'Show less' : 'Show more'}
-              </button>
+              <ExpandableStepText 
+                text={step.text || (step as any).description || 'Action Step'} 
+                className="text-sm font-bold text-gray-800 leading-relaxed"
+              />
             </div>
 
             {!isReadOnly && (
@@ -153,10 +141,27 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
           );
         })}
 
-        {(testCase.terminationReason || ['aborted', 'failed', 'error'].includes(testCase.status?.toLowerCase() || '')) && 
-         !['passed', 'success', 'executed'].includes(testCase.status?.toLowerCase() || '') && (() => {
-          const isAborted = testCase.status?.toLowerCase() === 'aborted' || testCase.terminationReason?.toLowerCase().includes('abort');
-          const colors = isAborted ? {
+        {(testCase.terminationReason || ['aborted', 'failed', 'error'].includes((testCase.status || '').toLowerCase())) && (() => {
+          const s = (testCase.status || '').toLowerCase();
+          const isPassed = ['passed', 'success', 'executed'].includes(s);
+          const isAborted = s === 'aborted' || testCase.terminationReason?.toLowerCase().includes('abort');
+          const isError = s === 'error' || testCase.terminationReason?.toLowerCase().includes('error');
+          const isFailed = s === 'failed' || s === 'failure';
+
+          const colors = isPassed ? {
+            bg: 'bg-emerald-50/30',
+            border: 'border-emerald-200',
+            text: 'text-emerald-600',
+            darkText: 'text-emerald-700',
+            iconBg: 'bg-emerald-500',
+            iconShadow: 'shadow-emerald-200',
+            badgeBg: 'bg-emerald-100',
+            badgeText: 'text-emerald-700',
+            badgeBorder: 'border-emerald-200',
+            accent: 'bg-emerald-500',
+            label: 'Execution Completed',
+            statusLabel: 'Passed'
+          } : isAborted ? {
             bg: 'bg-slate-50/50',
             border: 'border-slate-200',
             text: 'text-slate-600',
@@ -169,7 +174,7 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
             accent: 'bg-slate-500',
             label: 'Execution Aborted',
             statusLabel: 'Aborted'
-          } : {
+          } : isError ? {
             bg: 'bg-amber-50/30',
             border: 'border-amber-200',
             text: 'text-amber-600',
@@ -180,8 +185,21 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
             badgeText: 'text-amber-700',
             badgeBorder: 'border-amber-200',
             accent: 'bg-amber-500',
-            label: 'Execution Terminated',
-            statusLabel: 'Terminated'
+            label: 'Execution Error',
+            statusLabel: 'Error'
+          } : {
+            bg: 'bg-rose-50/30',
+            border: 'border-rose-200',
+            text: 'text-rose-600',
+            darkText: 'text-rose-700',
+            iconBg: 'bg-rose-500',
+            iconShadow: 'shadow-rose-200',
+            badgeBg: 'bg-rose-100',
+            badgeText: 'text-rose-700',
+            badgeBorder: 'border-rose-200',
+            accent: 'bg-rose-500',
+            label: 'Execution Failed',
+            statusLabel: 'Failed'
           };
 
           return (
@@ -197,9 +215,10 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
                     <h4 className={`text-[10px] font-black uppercase tracking-widest ${colors.text}`}>
                       {colors.label}
                     </h4>
-                    <p className={`text-sm font-bold leading-relaxed italic ${colors.darkText}`}>
-                      {testCase.terminationReason || (isAborted ? 'The run was manually aborted or timed out.' : 'An unexpected error occurred during execution.')}
-                    </p>
+                    <ExpandableStepText 
+                      text={testCase.terminationReason || 'No detailed reason was provided for this status.'} 
+                      className={`text-sm font-bold leading-relaxed italic ${colors.darkText}`}
+                    />
                   </div>
                   <div className="flex items-center justify-start mt-1">
                     <div className={`px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm border ${colors.badgeBg} ${colors.badgeText} ${colors.badgeBorder}`}>

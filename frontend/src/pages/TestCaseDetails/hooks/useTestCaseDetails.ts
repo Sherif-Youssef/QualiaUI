@@ -55,16 +55,14 @@ export const useTestCaseDetails = ({ projectId, suiteId, caseId }: UseTestCaseDe
             else if (status === 'ABORTED') setFinalStatus('aborted');
             else if (status === 'FAILED' || status === 'FAILURE') setFinalStatus('failed');
 
-            if (['FAILED', 'ERROR', 'ABORTED', 'FAILURE'].includes(status)) {
-                setTerminationReason(eventPayload.termination_reason || (status === 'ABORTED' ? 'Execution was aborted by the user.' : `Execution stopped with status: ${status}`));
-            }
+            const reason = eventPayload.termination_reason || eventPayload.reason;
+            if (reason) setTerminationReason(reason);
 
-            if (['PASSED', 'FAILED', 'ERROR', 'ABORTED'].includes(status)) {
+            if (['PASSED', 'FAILED', 'ERROR', 'ABORTED', 'SUCCESS', 'FAILURE'].includes(status || '')) {
                 setIsRunning(false);
                 isStartingRef.current = false;
                 setIsAborting(false);
                 setActiveRunId(null);
-                refreshTestCaseSilent();
             }
         }
     }, [caseId, refreshTestCaseSilent]);

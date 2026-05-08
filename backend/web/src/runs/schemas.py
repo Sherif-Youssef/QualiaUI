@@ -6,17 +6,15 @@ from src.base.schemas import Scope
 from src.runs.models import RunMode, RunStatus, TestCaseStepRunStatus
 
 
-class ProjectStartRunRequest(BaseModel):
-    mode: RunMode
-    project_id: int
-
 class TestsuiteStartRunRequest(BaseModel):
     mode: RunMode
     testsuite_id: int
+    llm_model_id: int
 
 class TestcaseStartRunRequest(BaseModel):
     mode: RunMode
     testcase_id: int
+    llm_model_id: int
 
 class StartRunResponse(BaseModel):
     scope: str
@@ -63,6 +61,7 @@ class TestCaseRunRead(BaseModel):
     
     testcase_id: int
     testsuite_run_id: int | None = None
+    llm_model_id: int | None = None
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -80,37 +79,16 @@ class TestSuiteRunRead(BaseModel):
     finished_at: datetime | None = None
     job_uid: str
     
+    name: str
     mode: RunMode
     status: RunStatus
 
     testsuite_id: int
-    project_run_id: int | None = None
+    llm_model_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class TestSuiteRunWithCasesRead(TestSuiteRunRead):
     testcase_runs: list[TestCaseRunRead] = Field(default_factory=list)
-
-
-class ProjectRunRead(BaseModel):
-    id: int
-
-    scope: Scope
-
-    created_at: datetime
-    started_at: datetime | None = None
-    finished_at: datetime | None = None
-    job_uid: str
-
-    mode: RunMode
-    status: RunStatus
-    
-    project_id: int
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class ProjectRunWithSuitesRead(ProjectRunRead):
-    testsuite_runs: list[TestSuiteRunRead] = Field(default_factory=list)
 

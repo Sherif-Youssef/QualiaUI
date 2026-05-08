@@ -97,7 +97,7 @@ def generate_test_suite_report(run: TestSuiteRun) -> bytes:
             return colors.HexColor("#94a3b8") # Light Grey for others
     
     # Add Title
-    elements.append(Paragraph("Test Suite Execution Report", title_style))
+    elements.append(Paragraph(run.name, title_style))
     
     # Add Summary Information
     triggered_at_str = run.created_at.strftime('%B %d, %Y at %I:%M %p') if run.created_at else "N/A"

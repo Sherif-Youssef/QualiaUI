@@ -58,7 +58,7 @@ export const testCaseService = {
                 name: data.name,
                 description: data.description,
                 base_url: data.url,
-                instruction: data.prompt || data.plainText,
+                instruction: data.plainText !== undefined ? data.plainText : (data.prompt || ''),
                 executable_steps: data.steps
             };
             const response = await api.put<TestCaseDTO>(

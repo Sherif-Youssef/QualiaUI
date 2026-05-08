@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Any
 import logging
 
-from automation_engine import BrowserConfig, EngineConfig, TestingEngine
+from automation_engine import BrowserConfig, EngineConfig, TestingEngine, LLMConfig
 from celery import chord, group, Task
 from celery.canvas import Signature
 from sqlmodel import Session
@@ -16,28 +16,34 @@ from src.runs.execution import (
     TestCaseOutcomePayload,
     TestSuiteOutcomePayload,
     TestCaseJob,
-    ProjectOutcomePayload,
     aggregate_parent_status,
     stream_status,
 )
+from src.base.schemas import Scope
 from src.models import *
 from src.runs.models import RunStatus, Scope
 
+from .schemas import RunStatus
+
 logger = logging.getLogger(__name__)
 
-def _build_testing_engine() -> TestingEngine:
+def _build_testing_engine(llm_model: LLMModel) -> TestingEngine:
     return TestingEngine(
         config=EngineConfig(
             browser=BrowserConfig(headless=True),
+            llm=LLMConfig(
+                provider=llm_model.provider.provider_type.value,
+                model=llm_model.model_name,
+                api_key=llm_model.provider.api_key,
+                base_url=llm_model.provider.base_url,
+                additional_kwargs=llm_model.provider.additional_config,
+            )
         ),
     )
 
 
 class ExecuteTestcaseTask(Task):
     name = "runs.execute_testcase"
-    autoretry_for = (Exception,)
-    retry_backoff = True
-    max_retries = 2
 
     def run(
         self,
@@ -46,9 +52,19 @@ class ExecuteTestcaseTask(Task):
         abort_id: int,
         stream_steps: bool = True,
     ) -> dict[str, Any]:
-        testing_engine = _build_testing_engine()
-
         with Session(db_engine) as db_session:
+            testcase_run = db_session.get(TestCaseRun, testcase_run_id)
+            if testcase_run is None:
+                raise ValueError(f"TestCaseRun {testcase_run_id} not found")
+            
+            if testcase_run.llm_model is None:
+                raise ValueError(f"TestCaseRun {testcase_run_id} has no LLM model")
+            
+            if testcase_run.llm_model.provider.api_key is None:
+                raise ValueError(f"LLM Model {testcase_run.llm_model.id} API key is not set")
+
+            testing_engine = _build_testing_engine(testcase_run.llm_model)
+
             outcome = asyncio.run(
                 TestCaseJob(
                     testcase_run_id,
@@ -149,51 +165,6 @@ def finalize_testsuite_task(
     ).model_dump(mode="json")
 
 
-@app.task(
-    name="runs.finalize_project", 
-    autoretry_for=(Exception,), 
-    retry_backoff=True, 
-    max_retries=3
-)
-def finalize_project_task(
-    testsuite_outcomes: list[dict[str, Any]],
-    project_run_id: int,
-    stream_key: str,
-) -> dict[str, Any]:
-    parsed_outcomes = [TestSuiteOutcomePayload.model_validate(item) for item in testsuite_outcomes]
-
-    with Session(db_engine, expire_on_commit=False) as db_session:
-        project_run = db_session.get(ProjectRun, project_run_id)
-        if project_run is None:
-            raise ValueError(f"ProjectRun {project_run_id} not found")
-
-        status = aggregate_parent_status(item.status for item in parsed_outcomes)
-        finished_at = max((item.finished_at for item in parsed_outcomes if item.finished_at), default=datetime.now())
-        started_at = min((item.started_at for item in parsed_outcomes if item.started_at), default=datetime.now())
-
-        project_run.status = status
-        project_run.finished_at = finished_at
-        project_run.started_at = started_at
-        db_session.add(project_run)
-        db_session.commit()
-
-        stream_status(
-            stream_key,
-            event=StatusChangeEvent(
-                element=Scope.PROJECT,
-                id=project_run.project_id,
-                status=status,
-            ),
-        )
-
-    return ProjectOutcomePayload(
-        project_run_id=project_run_id,
-        status=status,
-        started_at=started_at,
-        finished_at=finished_at,
-    ).model_dump(mode="json")
-
-
 def build_testsuite_workflow(
     *,
     testcase_runs_ids: list[int],
@@ -218,19 +189,6 @@ def build_testsuite_workflow(
     )
 
     return chord(header, callback)
-
-
-def build_project_workflow(
-    *,
-    testsuite_workflows: list[Signature],
-    project_run_id: int,
-    stream_key: str,
-) -> Signature:
-    callback = finalize_project_task.s(
-        project_run_id=project_run_id,
-        stream_key=stream_key,
-    )
-    return chord(group(testsuite_workflows), callback)
 
 
 app.register_task(ExecuteTestcaseTask())

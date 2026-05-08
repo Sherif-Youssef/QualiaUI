@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { TestCase, ActionStep } from '@/types/test-case';
+import { TestCaseDTO, TestCase, ActionStep } from '@/types/test-case';
 import { testCaseService } from '@/services/testCase/testCaseService';
 import { runService } from '@/services/runService';
 import { Scope } from '@/types/run';
-import { mapActiveStepToActionStep, mapTestStepRunToActionStep } from '@/utils/mappers';
+import { mapActiveStepToActionStep, mapTestStepRunToActionStep, mapTestCaseToViewModel } from '@/utils/mappers';
+import { getDeduplicated } from '@/lib/api';
 
 interface UseTestCaseRunProps {
     projectId?: string;
@@ -68,18 +69,19 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
                 const status = (event.status || '').toUpperCase();
                 console.log(`[TestCaseRun] Status change: ${status}`, event);
 
-                let tcStatus: TestCase['status'] = 'running';
+                let tcStatus: TestCase['status'] | null = null;
                 if (['PASSED', 'SUCCESS', 'EXECUTED', 'COMPLETED', 'FINISHED'].includes(status)) tcStatus = 'passed';
                 else if (['FAILED', 'FAILURE', 'STOPPED'].includes(status)) tcStatus = 'failed';
                 else if (status === 'ABORTED') tcStatus = 'aborted';
                 else if (status === 'ERROR') tcStatus = 'error';
+                else if (status === 'RUNNING') tcStatus = 'running';
 
                 setTestCase(prev => {
                     if (!prev) return null;
                     return {
                         ...prev,
-                        status: tcStatus,
-                        terminationReason: event.termination_reason || prev.terminationReason,
+                        status: tcStatus || prev.status,
+                        terminationReason: event.termination_reason || event.reason || prev.terminationReason,
                     };
                 });
 
@@ -89,6 +91,7 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
                     setIsRunning(false);
                     isStartingRef.current = false;
                     setIsAborting(false);
+
                 }
             }
 
@@ -172,6 +175,31 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
         }
     }, [activeRunId]);
 
+    const refreshTestCase = useCallback(async () => {
+        if (!projectId || !caseId) return;
+        try {
+            const finalSuiteId = suiteId || testCase?.suiteId || '0';
+            const response = await getDeduplicated<TestCaseDTO>(
+                `/projects/${projectId}/testsuites/${finalSuiteId}/testcases/${caseId}`,
+                undefined,
+                true
+            );
+            const updatedCase = mapTestCaseToViewModel(response.data);
+            setTestCase(prev => {
+                if (!prev) return updatedCase;
+                return {
+                    ...updatedCase,
+                    status: (prev.status !== 'idle' && updatedCase.status === 'idle') ? prev.status : updatedCase.status,
+                    steps: prev.steps && prev.steps.length > 0 ? prev.steps : updatedCase.steps,
+                    terminationReason: updatedCase.terminationReason || prev.terminationReason
+                };
+            });
+            setCurrentUrl(updatedCase.url || '');
+        } catch (err: any) {
+            console.error('Failed to refresh test case:', err);
+        }
+    }, [projectId, suiteId, caseId, testCase?.suiteId]);
+
     useEffect(() => {
         const fetchInitialData = async () => {
             if (!projectId || !caseId) return;
@@ -213,7 +241,10 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
                         }
 
                         if (['running', 'queued', 'pending'].includes(currentStatus || '')) {
+                            setIsRunning(true);
                             subscribeToRun(Number(runId));
+                        } else {
+                            setIsRunning(false);
                         }
                     } catch (e) {
                         console.warn("Failed to fetch run details, assuming it's running and subscribing to stream:", e);
@@ -223,11 +254,15 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
                     }
                 }
 
-                setTestCase({
-                    ...tcData,
-                    status: currentStatus,
-                    terminationReason: reason,
-                    steps: currentSteps
+                setTestCase(prev => {
+                    const finalSteps = (prev?.steps && prev.steps.length > 0) ? prev.steps : currentSteps;
+
+                    return {
+                        ...tcData,
+                        status: currentStatus || prev?.status || tcData.status,
+                        terminationReason: reason || prev?.terminationReason || tcData.terminationReason,
+                        steps: finalSteps
+                    };
                 });
 
                 if (currentSteps.length > 0) {
@@ -271,6 +306,7 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
         setSelectedStep,
         handleRunTest,
         handleAbort,
-        handleBack: () => navigate(-1)
+        handleBack: () => navigate(-1),
+        refreshTestCase
     };
 };

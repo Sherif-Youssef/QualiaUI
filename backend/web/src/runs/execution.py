@@ -69,12 +69,6 @@ class TestSuiteOutcomePayload(BaseModel):
     finished_at: datetime
     started_at: datetime
 
-class ProjectOutcomePayload(BaseModel):
-    project_run_id: int
-    status: RunStatus
-    finished_at: datetime
-    started_at: datetime
-
 def to_run_status(status: AutomationEngineTestStatus) -> RunStatus:
     return RunStatus(status.value)
 

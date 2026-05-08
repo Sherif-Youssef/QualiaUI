@@ -9,6 +9,7 @@ from sqlmodel import Column, Field, JSON, Relationship, SQLModel
 from src.projects.models import Project
 from src.testcases.models import TestCase
 from src.testsuites.models import TestSuite
+from src.llms.models import LLMModel
 
 from src.base.schemas import Scope
 
@@ -30,29 +31,6 @@ class RunMode(StrEnum):
     EXECUTABLE = "EXECUTABLE"
 
 
-class ProjectRun(SQLModel, table=True):
-    __tablename__ = "project_run"
-
-    id: int | None = Field(default=None, primary_key=True)
-
-    scope: Scope = Field(default=Scope.PROJECT, nullable=False)
-
-    # fields
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc), nullable=False)
-    started_at: datetime | None = Field(default=None, nullable=True)
-    finished_at: datetime | None = Field(default=None, nullable=True)
-    job_uid: str = Field(unique=True, index=True, nullable=False)
-
-    mode: RunMode
-    status: RunStatus = Field(default=RunStatus.QUEUED) 
-
-    # entity
-    project_id: int = Field(foreign_key="project.id", ondelete="CASCADE")
-    project: "Project" = Relationship(back_populates="runs")
-
-    # lower
-    testsuite_runs: list["TestSuiteRun"] = Relationship(back_populates="project_run")
-
 class TestSuiteRun(SQLModel, table=True):
     __tablename__ = "testsuite_run"
 
@@ -68,16 +46,16 @@ class TestSuiteRun(SQLModel, table=True):
     finished_at: datetime | None = Field(default=None, nullable=True)
     job_uid: str = Field(unique=True, index=True, nullable=False)
 
+    name: str
     mode: RunMode
-    status: RunStatus = Field(default=RunStatus.QUEUED)
+    status: RunStatus = Field(default=RunStatus.RUNNING)
 
     # entity
     testsuite_id: int = Field(foreign_key="testsuite.id", ondelete="CASCADE")
     testsuite: "TestSuite" = Relationship(back_populates="runs")
 
-    # upper
-    project_run_id: int | None = Field(foreign_key="project_run.id", ondelete="CASCADE", nullable=True)
-    project_run: Optional["ProjectRun"]  = Relationship(back_populates="testsuite_runs")
+    llm_model_id: int | None = Field(foreign_key="llm_model.id", ondelete="SET NULL", nullable=True)
+    llm_model: Optional["LLMModel"] = Relationship()
 
     # lower
     testcase_runs: list["TestCaseRun"] = Relationship(back_populates="testsuite_run")
@@ -108,6 +86,9 @@ class TestCaseRun(SQLModel, table=True):
     # entity
     testcase_id: int = Field(foreign_key="testcase.id", ondelete="CASCADE")
     testcase: "TestCase" = Relationship(back_populates="runs")
+
+    llm_model_id: int | None = Field(foreign_key="llm_model.id", ondelete="SET NULL", nullable=True)
+    llm_model: Optional["LLMModel"] = Relationship()
 
     # upper
     testsuite_run_id: int | None = Field(foreign_key="testsuite_run.id", ondelete="CASCADE", nullable=True)

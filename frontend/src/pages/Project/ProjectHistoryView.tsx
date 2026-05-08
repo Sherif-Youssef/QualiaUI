@@ -34,7 +34,7 @@ interface UnifiedRun {
 
 export const ProjectHistoryView: React.FC<ProjectHistoryViewProps> = ({
     projectId,
-    isLoading: isProjectLoading
+
 }) => {
     const navigate = useNavigate();
     const [unifiedRuns, setUnifiedRuns] = useState<UnifiedRun[]>([]);
@@ -47,18 +47,13 @@ export const ProjectHistoryView: React.FC<ProjectHistoryViewProps> = ({
         if (!projectId) return;
         setIsLocalLoading(true);
         setError(null);
-        setCurrentPage(1); // Reset to first page on refresh
-        
+        setCurrentPage(1);
+
         try {
-            // 1. Fetch suites to resolve names
             const suitesRes = await testSuiteService.getTestSuites(projectId, 0, 50);
             const suites = suitesRes.testSuites;
-            const suiteMap = new Map(suites.map(s => [String(s.id), s]));
-
-            // 2. Fetch Suite runs and Case runs in parallel
             const historyPromises = suites.map(async (suite) => {
                 try {
-                    // Fetch suite runs
                     const sRunsRes = await runService.getTestSuiteRuns(projectId, suite.id, 0, 100);
                     const sRuns: UnifiedRun[] = sRunsRes.runs.map(r => ({
                         id: r.id,
@@ -105,7 +100,7 @@ export const ProjectHistoryView: React.FC<ProjectHistoryViewProps> = ({
             const allHistory = allHistoryResults.flat();
 
             // 3. Combine and Sort
-            const combined = [...allHistory].sort((a, b) => 
+            const combined = [...allHistory].sort((a, b) =>
                 new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             );
 
@@ -151,7 +146,7 @@ export const ProjectHistoryView: React.FC<ProjectHistoryViewProps> = ({
 
     const handleRowClick = (run: UnifiedRun) => {
         if (run.type === 'SUITE' || run.type === 'PROJECT') {
-            const path = run.type === 'PROJECT' 
+            const path = run.type === 'PROJECT'
                 ? `/project/${projectId}/run/${run.id}`
                 : `/project/${projectId}/suite/${run.suiteId}/run/${run.id}`;
             navigate(path);
@@ -165,7 +160,7 @@ export const ProjectHistoryView: React.FC<ProjectHistoryViewProps> = ({
     return (
         <div className="space-y-6 animate-in fade-in duration-700">
             <div className="flex justify-end mb-4">
-                <button 
+                <button
                     onClick={fetchAllHistory}
                     disabled={isLocalLoading}
                     className="p-2.5 rounded-xl bg-white border border-gray-100 shadow-sm text-gray-400 hover:text-primary hover:border-primary/20 hover:bg-primary/5 transition-all disabled:opacity-50"
@@ -180,7 +175,7 @@ export const ProjectHistoryView: React.FC<ProjectHistoryViewProps> = ({
                     <AlertCircle className="w-4 h-4" />
                     {error}
                 </div>
-            ) }
+            )}
 
             <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl overflow-hidden">
                 <table className="w-full">
@@ -216,34 +211,34 @@ export const ProjectHistoryView: React.FC<ProjectHistoryViewProps> = ({
                             unifiedRuns
                                 .slice((currentPage - 1) * pageSize, currentPage * pageSize)
                                 .map((run) => (
-                                <tr
-                                    key={`${run.type}-${run.id}`}
-                                    onClick={() => handleRowClick(run)}
-                                    className="hover:bg-gray-50/80 transition-all cursor-pointer group"
-                                >
-                                    <td className="px-8 py-6">
-                                        <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm w-fit text-[10px] font-black uppercase tracking-wider transition-all duration-300 group-hover:scale-105 ${getStatusStyles(run.status)}`}>
-                                            {getStatusIcon(run.status)}
-                                            {run.status}
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6">
-                                        <div className="flex flex-col">
-                                            <span className="text-base font-black text-gray-800 tracking-tight group-hover:text-primary transition-colors">Run #{run.id}</span>
-                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate max-w-[250px]">
-                                                {run.name}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-8 py-6 text-sm font-bold text-gray-500">{formatDate(run.created_at)}</td>
-                                    <td className="px-8 py-6 text-sm font-bold text-gray-400">
-                                        <div className="flex items-center gap-2">
-                                            <Clock className="w-3.5 h-3.5 opacity-30" />
-                                            {calculateDuration(run.started_at, run.finished_at)}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))
+                                    <tr
+                                        key={`${run.type}-${run.id}`}
+                                        onClick={() => handleRowClick(run)}
+                                        className="hover:bg-gray-50/80 transition-all cursor-pointer group"
+                                    >
+                                        <td className="px-8 py-6">
+                                            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border shadow-sm w-fit text-[10px] font-black uppercase tracking-wider transition-all duration-300 group-hover:scale-105 ${getStatusStyles(run.status)}`}>
+                                                {getStatusIcon(run.status)}
+                                                {run.status}
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6">
+                                            <div className="flex flex-col">
+                                                <span className="text-base font-black text-gray-800 tracking-tight group-hover:text-primary transition-colors">Run #{run.id}</span>
+                                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate max-w-[250px]">
+                                                    {run.name}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="px-8 py-6 text-sm font-bold text-gray-500">{formatDate(run.created_at)}</td>
+                                        <td className="px-8 py-6 text-sm font-bold text-gray-400">
+                                            <div className="flex items-center gap-2">
+                                                <Clock className="w-3.5 h-3.5 opacity-30" />
+                                                {calculateDuration(run.started_at, run.finished_at)}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
                         )}
                     </tbody>
                 </table>

@@ -127,11 +127,27 @@ export const ExecutionStepsSidebar: React.FC<ExecutionStepsSidebarProps> = ({
                             );
                         })}
 
-                        {(terminationReason && !isPassed) && (() => {
-                            const reason = terminationReason.toLowerCase();
-                            const isAborted = reason.includes('abort');
-                            const isError = reason.includes('error');
-                            const colors = isAborted ? {
+                        {(terminationReason || ['aborted', 'failed', 'error'].includes(status?.toLowerCase() || '')) && (() => {
+                            const currentStatus = status?.toLowerCase() || '';
+                            const isAborted = ['aborted', 'terminated'].includes(currentStatus) || terminationReason?.toLowerCase().includes('abort');
+                            const isError = ['error'].includes(currentStatus) || terminationReason?.toLowerCase().includes('error');
+                            const isFailed = ['failed', 'failure'].includes(currentStatus);
+                            const isPassedFinal = ['passed', 'success', 'executed'].includes(currentStatus);
+
+                            const colors = isPassedFinal ? {
+                                bg: 'bg-emerald-50/50',
+                                border: 'border-emerald-200',
+                                text: 'text-emerald-600',
+                                darkText: 'text-emerald-700',
+                                iconBg: 'bg-emerald-500',
+                                iconShadow: 'shadow-emerald-200',
+                                badgeBg: 'bg-emerald-100',
+                                badgeText: 'text-emerald-700',
+                                badgeBorder: 'border-emerald-200',
+                                accent: 'bg-emerald-500',
+                                label: 'Execution Completed',
+                                statusLabel: 'Passed'
+                            } : isAborted ? {
                                 bg: 'bg-slate-50/50',
                                 border: 'border-slate-200',
                                 text: 'text-slate-600',
@@ -185,7 +201,7 @@ export const ExecutionStepsSidebar: React.FC<ExecutionStepsSidebarProps> = ({
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex-1 pt-1">
                                                     <h4 className={`text-[10px] font-black ${colors.text} uppercase tracking-widest mb-1`}>{colors.label}</h4>
-                                                    <ExpandableStepText text={terminationReason || ''} />
+                                                    <ExpandableStepText text={terminationReason || 'No detailed reason was provided for this status.'} />
                                                 </div>
                                             </div>
 

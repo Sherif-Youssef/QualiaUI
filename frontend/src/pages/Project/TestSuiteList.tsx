@@ -44,9 +44,7 @@ export const TestSuiteList: React.FC<TestSuiteListProps> = ({
                                             <span className="text-sm font-black text-gray-900 group-hover:text-primary transition-all truncate">
                                                 {suite.name}
                                             </span>
-                                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                                                ID: #{suite.id.substring(0, 8)}
-                                            </span>
+
                                         </div>
                                     </div>
                                 </td>
