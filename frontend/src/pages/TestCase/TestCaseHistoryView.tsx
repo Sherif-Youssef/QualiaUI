@@ -66,8 +66,7 @@ export const TestCaseHistoryView: React.FC<TestCaseHistoryViewProps> = ({
     const getStatusStyles = (status: string) => {
         const s = (status || '').toUpperCase();
         if (['PASSED', 'SUCCESS', 'EXECUTED'].includes(s)) return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-        if (['FAILED', 'FAILURE'].includes(s)) return 'bg-rose-50 text-rose-600 border-rose-100';
-        if (s === 'ERROR') return 'bg-amber-50 text-amber-600 border-amber-100';
+        if (['FAILED', 'FAILURE', 'ERROR'].includes(s)) return 'bg-rose-50 text-rose-600 border-rose-100';
         if (s === 'ABORTED') return 'bg-slate-100 text-slate-600 border-slate-200';
         if (['RUNNING', 'QUEUED', 'PENDING'].includes(s)) return 'bg-blue-50 text-blue-600 border-blue-100';
         return 'bg-gray-50 text-gray-400 border-gray-100';
@@ -93,7 +92,6 @@ export const TestCaseHistoryView: React.FC<TestCaseHistoryViewProps> = ({
             <div className="flex items-center justify-between">
                 <div>
                     <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Execution Logs</h3>
-                    <p className="text-sm text-gray-500 font-medium mt-1">Chronological history of this test case runs.</p>
                 </div>
                 <button
                     onClick={fetchHistory}

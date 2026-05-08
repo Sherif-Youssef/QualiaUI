@@ -49,10 +49,17 @@ export const TestSuiteList: React.FC<TestSuiteListProps> = ({
                                     </div>
                                 </td>
                                 <td className="px-8 py-6">
-                                    <p className="text-xs font-medium text-gray-500 line-clamp-1 max-w-md leading-relaxed">
-                                        {suite.description || 'No description provided'}
-                                    </p>
+                                    <div className="max-w-[150px]">
+                                        <p
+                                            className="text-xs font-medium text-gray-500 truncate leading-relaxed"
+                                            title={suite.description || 'No description provided'}
+                                        >
+                                            {suite.description || 'No description provided'}
+                                        </p>
+                                    </div>
                                 </td>
+
+
                                 <td className="px-8 py-6 text-right">
                                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-4 group-hover:translate-x-0">
                                         {canManageSuites && (

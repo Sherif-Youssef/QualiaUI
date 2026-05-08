@@ -105,7 +105,7 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
             case 'EXECUTED': return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
             case 'FAILED':
             case 'FAILURE': return <XCircle className="w-4 h-4 text-rose-500" />;
-            case 'ERROR': return <AlertCircle className="w-4 h-4 text-amber-500" />;
+            case 'ERROR': return <XCircle className="w-4 h-4 text-rose-500" />;
             case 'ABORTED': return <StopCircle className="w-4 h-4 text-slate-500" />;
             case 'RUNNING': return <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />;
             case 'QUEUED':
@@ -127,7 +127,7 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
     if (error) return <div className="p-8"><ErrorMessage message={error} onClose={() => setError(null)} /></div>;
     if (!suiteRun) return <div className="p-8 text-center text-gray-500 font-bold">Run not found</div>;
 
-    const isAnyCaseActive = suiteRun.testcase_runs.some(tr => 
+    const isAnyCaseActive = suiteRun.testcase_runs.some(tr =>
         ['RUNNING', 'QUEUED', 'PENDING'].includes(tr.status?.toUpperCase() || '')
     );
     const isRunning = ['RUNNING', 'QUEUED', 'PENDING'].includes(suiteRun.status?.toUpperCase() || '') && isAnyCaseActive;
@@ -164,11 +164,10 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
                                         const isError = s === 'ERROR';
                                         const isRunningStatus = s === 'RUNNING';
                                         const colors = isSuccess ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-50' :
-                                            isFailure ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-rose-50' :
+                                            (isFailure || isError) ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-rose-50' :
                                                 isAborted ? 'bg-slate-100 text-slate-600 border-slate-200 shadow-slate-50' :
-                                                    isError ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-amber-50' :
-                                                        isRunningStatus ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-blue-50' :
-                                                            'bg-gray-50 text-gray-400 border-gray-100 shadow-gray-50';
+                                                    isRunningStatus ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-blue-50' :
+                                                        'bg-gray-50 text-gray-400 border-gray-100 shadow-gray-50';
 
                                         return (
                                             <div className={`shrink-0 flex items-center gap-1.5 px-3 py-1 rounded-full border shadow-sm ${colors} text-[10px] font-black uppercase tracking-wider`}>
@@ -269,11 +268,10 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
                                                     const isAborted = s === 'ABORTED';
 
                                                     const colors = isSuccess ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-50' :
-                                                        isFailure ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-rose-50' :
-                                                            isError ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-amber-50' :
-                                                                isRunningStatus ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-blue-50' :
-                                                                    isAborted ? 'bg-slate-100 text-slate-600 border-slate-200 shadow-slate-50' :
-                                                                        'bg-gray-50 text-gray-400 border-gray-100 shadow-gray-50';
+                                                        (isFailure || isError) ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-rose-50' :
+                                                            isRunningStatus ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-blue-50' :
+                                                                isAborted ? 'bg-slate-100 text-slate-600 border-slate-200 shadow-slate-50' :
+                                                                    'bg-gray-50 text-gray-400 border-gray-100 shadow-gray-50';
 
                                                     return (
                                                         <div className={`flex items-center justify-center gap-1.5 px-3 py-1 rounded-full border shadow-sm mx-auto w-fit transition-all group-hover:scale-105 ${colors}`}>

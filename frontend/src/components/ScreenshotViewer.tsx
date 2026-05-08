@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from 'react';
-import { ZoomIn, ZoomOut } from 'lucide-react';
+import { ZoomIn, ZoomOut, Camera } from 'lucide-react';
 import { Button } from './ui/button';
 import { ActionStep } from '@/types/test-case';
 import gsap from 'gsap';
@@ -87,22 +87,20 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
               <button
                 onClick={() => setScreenshotType('before')}
                 disabled={!selectedStep.screenshot_before}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                  screenshotType === 'before'
-                    ? 'bg-white text-primary shadow-sm'
-                    : 'text-gray-400 hover:text-gray-600 disabled:opacity-30'
-                }`}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${screenshotType === 'before'
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-gray-400 hover:text-gray-600 disabled:opacity-30'
+                  }`}
               >
                 Before
               </button>
               <button
                 onClick={() => setScreenshotType('after')}
                 disabled={!selectedStep.screenshot_after}
-                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
-                  screenshotType === 'after'
-                    ? 'bg-white text-primary shadow-sm'
-                    : 'text-gray-400 hover:text-gray-600 disabled:opacity-30'
-                }`}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${screenshotType === 'after'
+                  ? 'bg-white text-primary shadow-sm'
+                  : 'text-gray-400 hover:text-gray-600 disabled:opacity-30'
+                  }`}
               >
                 After
               </button>
@@ -112,19 +110,31 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
       </div>
 
       <div className="flex-1 overflow-auto bg-[#f8f9fb] p-6 flex justify-center items-start custom-scrollbar">
-        <div 
-          className="transition-all duration-300 ease-out bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden"
+        <div
+          className="transition-all duration-300 ease-out bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden flex-none"
           style={{ width: `${zoomLevel}%`, minWidth: '320px' }}
         >
-          <div className="relative bg-white">
-            <img
-              ref={imageRef}
-              src={currentDisplayScreenshot || 'https://placehold.co/1280x720/e2e8f0/64748b?text=Waiting+for+Automation+Run...'}
-              alt="Browser Screenshot"
-              className="w-full h-auto block"
-              loading="lazy"
-            />
+          <div className="relative bg-white min-h-[400px] flex items-center justify-center">
+            {currentDisplayScreenshot ? (
+              <img
+                ref={imageRef}
+                src={currentDisplayScreenshot}
+                alt="Browser Screenshot"
+                className="w-full h-auto block transition-opacity duration-300"
+                loading="lazy"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 animate-in fade-in duration-700">
+                <div className="w-20 h-20 rounded-3xl bg-gray-50 flex items-center justify-center mb-4 border border-gray-100 shadow-sm">
+                  <Camera className="w-10 h-10 text-gray-300" />
+                </div>
+                <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">
+                  Screenshots show up here
+                </p>
+              </div>
+            )}
           </div>
+
         </div>
       </div>
 

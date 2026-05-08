@@ -45,8 +45,8 @@ const TestCaseStep: React.FC<{
         <div className="flex-1 min-w-0 flex flex-col gap-2">
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
-              <ExpandableStepText 
-                text={step.text || (step as any).description || 'Action Step'} 
+              <ExpandableStepText
+                text={step.text || (step as any).description || 'Action Step'}
                 className="text-sm font-bold text-gray-800 leading-relaxed"
               />
             </div>
@@ -68,16 +68,14 @@ const TestCaseStep: React.FC<{
 
           <div className="flex items-center justify-start">
             <div className={`px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-sm border ${(step.status === 'passed' || step.status === 'success') ? 'bg-emerald-50/50 text-emerald-600 border-emerald-100' :
-              (step.status === 'failed' || step.status === 'failure') ? 'bg-rose-50/50 text-rose-600 border-rose-100' :
-                step.status === 'error' ? 'bg-amber-50/50 text-amber-600 border-amber-100' :
-                  step.status === 'aborted' ? 'bg-slate-50/50 text-slate-600 border-slate-100' :
-                    'bg-blue-50/50 text-blue-600 border-blue-100'
+              (step.status === 'failed' || step.status === 'failure' || step.status === 'error') ? 'bg-rose-50/50 text-rose-600 border-rose-100' :
+                step.status === 'aborted' ? 'bg-slate-50/50 text-slate-600 border-slate-100' :
+                  'bg-blue-50/50 text-blue-600 border-blue-100'
               }`}>
               <div className={`w-1.5 h-1.5 rounded-full ${(step.status === 'passed' || step.status === 'success') ? 'bg-emerald-500' :
-                (step.status === 'failed' || step.status === 'failure') ? 'bg-rose-500' :
-                  step.status === 'error' ? 'bg-amber-500' :
-                    step.status === 'aborted' ? 'bg-slate-400' :
-                      'bg-blue-500 animate-pulse'
+                (step.status === 'failed' || step.status === 'failure' || step.status === 'error') ? 'bg-rose-500' :
+                  step.status === 'aborted' ? 'bg-slate-400' :
+                    'bg-blue-500 animate-pulse'
                 }`} />
               <span className="text-[9px] font-black uppercase tracking-[0.1em]">
                 {(step.status === 'success' || step.status === 'passed') ? 'Passed' :

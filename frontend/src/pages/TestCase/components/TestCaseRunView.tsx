@@ -28,12 +28,12 @@ export const TestCaseRunView: React.FC<TestCaseRunViewProps> = ({
     runId,
     showBack = true
 }) => {
-    const navigate = useNavigate();
     const [isRunConfigModalOpen, setIsRunConfigModalOpen] = useState(false);
     const [isViewPromptModalOpen, setIsViewPromptModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
+    const [isExpanded, setIsExpanded] = useState(false);
 
     const {
         testCase,
@@ -159,17 +159,16 @@ export const TestCaseRunView: React.FC<TestCaseRunViewProps> = ({
                                         const isRunningStatus = s === 'RUNNING';
 
                                         const colors = isSuccess ? 'bg-emerald-50 text-emerald-600 border-emerald-100 shadow-emerald-50' :
-                                            isFailure ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-rose-50' :
-                                                isError ? 'bg-amber-50 text-amber-600 border-amber-100 shadow-amber-50' :
-                                                    isAborted ? 'bg-slate-100 text-slate-600 border-slate-200 shadow-slate-50' :
-                                                        isRunningStatus ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-blue-50' :
-                                                            'bg-gray-50 text-gray-400 border-gray-100 shadow-gray-50';
+                                            (isFailure || isError) ? 'bg-rose-50 text-rose-600 border-rose-100 shadow-rose-50' :
+                                                isAborted ? 'bg-slate-100 text-slate-600 border-slate-200 shadow-slate-50' :
+                                                    isRunningStatus ? 'bg-blue-50 text-blue-600 border-blue-100 shadow-blue-50' :
+                                                        'bg-gray-50 text-gray-400 border-gray-100 shadow-gray-50';
 
                                         return (
                                             <div className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm flex items-center gap-1.5 ${colors}`}>
                                                 {isSuccess && <CheckCircle2 className="w-3.5 h-3.5" />}
                                                 {isFailure && <XCircle className="w-3.5 h-3.5" />}
-                                                {isError && <AlertCircle className="w-3.5 h-3.5" />}
+                                                {isError && <XCircle className="w-3.5 h-3.5" />}
                                                 {isAborted && <StopCircle className="w-3.5 h-3.5" />}
                                                 {isRunningStatus && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                                                 {s || 'Idle'}
@@ -183,19 +182,32 @@ export const TestCaseRunView: React.FC<TestCaseRunViewProps> = ({
 
                     <div className="flex-1 overflow-y-auto p-6 space-y-6">
                         {testCase?.terminationReason && (
-                            <div className={`p-4 rounded-2xl border animate-in fade-in slide-in-from-top-2 duration-300 ${
-                                ['passed', 'success', 'executed'].includes(testCase.status?.toLowerCase() || '')
-                                    ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
-                                    : testCase.status?.toLowerCase() === 'aborted'
-                                        ? 'bg-slate-50 border-slate-100 text-slate-800'
-                                        : 'bg-rose-50 border-rose-100 text-rose-800'
-                            }`}>
-                                <h4 className="text-[10px] font-black uppercase tracking-widest mb-2 opacity-70">
+                            <div className={`p-4 rounded-2xl border animate-in fade-in slide-in-from-top-2 duration-300 ${['passed', 'success', 'executed'].includes(testCase.status?.toLowerCase() || '')
+                                ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+                                : testCase.status?.toLowerCase() === 'aborted'
+                                    ? 'bg-slate-50 border-slate-100 text-slate-800'
+                                    : 'bg-rose-50 border-rose-100 text-rose-800'
+                                }`}>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">
                                     Termination Reason
                                 </h4>
-                                <p className="text-sm font-medium leading-relaxed">
-                                    {testCase.terminationReason}
-                                </p>
+                                <div className="relative">
+                                    <p className={`text-sm font-medium leading-relaxed break-words whitespace-pre-wrap transition-all duration-300 ${!isExpanded ? 'line-clamp-3' : ''
+                                        }`}>
+                                        {testCase.terminationReason}
+                                    </p>
+
+                                    {(testCase.terminationReason.length > 150) && (
+                                        <button
+                                            onClick={() => setIsExpanded(!isExpanded)}
+                                            className="mt-2 text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-600 transition-all hover:underline flex items-center gap-1"
+                                        >
+                                            {isExpanded ? 'Show less' : 'Show more'}
+                                        </button>
+
+
+                                    )}
+                                </div>
                             </div>
                         )}
 
