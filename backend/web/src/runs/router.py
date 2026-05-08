@@ -56,6 +56,7 @@ async def start_testcase_run_route(
 		testcase=testcase,
 		mode=payload.mode,
 		llm_model_id=payload.llm_model_id,
+		user=user
 	)
 
 @router.post(
@@ -78,6 +79,7 @@ async def start_testsuite_run_route(
 		testsuite=testsuite,
 		mode=payload.mode,
 		llm_model_id=payload.llm_model_id,
+		user=user
 	)
 
 

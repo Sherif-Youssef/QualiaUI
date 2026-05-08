@@ -10,6 +10,7 @@ from src.projects.models import Project
 from src.testcases.models import TestCase
 from src.testsuites.models import TestSuite
 from src.llms.models import LLMModel
+from src.auth.models import User
 
 from src.base.schemas import Scope
 
@@ -45,6 +46,10 @@ class TestSuiteRun(SQLModel, table=True):
     started_at: datetime | None = Field(default=None, nullable=True)
     finished_at: datetime | None = Field(default=None, nullable=True)
     job_uid: str = Field(unique=True, index=True, nullable=False)
+
+    # user
+    user_id: int | None = Field(foreign_key="user.id", ondelete="SET NULL", nullable=True)
+    user: Optional["User"] = Relationship()
 
     name: str
     mode: RunMode
@@ -82,6 +87,10 @@ class TestCaseRun(SQLModel, table=True):
     instruction: str | None = Field(default=None)
     status: RunStatus = Field(default=RunStatus.QUEUED)
     termination_reason: str | None = Field(default=None)
+
+    # user
+    user_id: int | None = Field(foreign_key="user.id", ondelete="SET NULL", nullable=True)
+    user: Optional["User"] = Relationship()
 
     # entity
     testcase_id: int = Field(foreign_key="testcase.id", ondelete="CASCADE")

@@ -24,6 +24,7 @@ from src.runs.stream import abort_async, get_stream_key
 from src.testcases.models import TestCase
 from src.testsuites.models import TestSuite
 from src.base.schemas import Scope
+from src.auth.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +82,7 @@ def launch_testcase_run(
     testcase: TestCase,
     mode: RunMode,
     llm_model_id: int,
+    user: User
 ) -> StartRunResponse:
     
     llm_model = _get_model_or_throw(session, llm_model_id)
@@ -98,6 +100,7 @@ def launch_testcase_run(
         instruction=testcase.instruction,
         testsuite_run_id = None,
         llm_model_id=llm_model_id,
+        user_id=user.id
     )
 
     session.add(test_case_run)
@@ -140,6 +143,7 @@ def launch_testsuite_run(
     testsuite: TestSuite,
     mode: RunMode,
     llm_model_id: int,
+    user: User
 ) -> StartRunResponse:
     llm_model = _get_model_or_throw(session, llm_model_id)
 
@@ -157,6 +161,7 @@ def launch_testsuite_run(
         testsuite_id=testsuite.id,  # type: ignore[arg-type]
         name=testsuite.name,
         llm_model_id=llm_model_id,
+        user_id=user.id
     )
     session.add(testsuite_run)
     session.flush()
@@ -172,6 +177,7 @@ def launch_testsuite_run(
             base_url=testcase.base_url,
             instruction=testcase.instruction,
             llm_model_id=llm_model_id,
+            user_id=user.id
         )
         for testcase, job_uid in zip(testcases, testcase_job_uids)
     ]

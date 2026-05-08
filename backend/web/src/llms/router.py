@@ -5,7 +5,7 @@ from src.base.schemas import Page, PaginationParams
 from .dependencies import ProviderDep, LLMModelDep
 from .schemas import (
     ProviderCreate, ProviderRead, ProviderUpdate,
-    LLMModelCreate, LLMModelRead, LLMModelUpdate,
+    LLMModelCreate, LLMModelListRead, LLMModelUpdate,
     ProviderType, ProviderApiKeyRead, ProviderApiKeyUpdate
 )
 from .service import (
@@ -96,7 +96,7 @@ async def delete_provider_route(
 
 
 # Models
-@router.get("/models", response_model=Page[LLMModelRead])
+@router.get("/models", response_model=Page[LLMModelListRead])
 async def list_models_route(
     session: SessionDep,
     user: UserDep,
@@ -112,7 +112,7 @@ async def list_models_route(
     )
 
 
-@router.get("/models/{model_id}", response_model=LLMModelRead)
+@router.get("/models/{model_id}", response_model=LLMModelListRead)
 async def get_model_route(
     user: UserDep,
     model: LLMModelDep,
@@ -120,7 +120,7 @@ async def get_model_route(
     return model
 
 
-@router.post("/models", status_code=status.HTTP_201_CREATED, response_model=LLMModelRead)
+@router.post("/models", status_code=status.HTTP_201_CREATED, response_model=LLMModelListRead)
 async def create_model_route(
     session: SessionDep,
     user: AdminUserDep,
@@ -129,7 +129,7 @@ async def create_model_route(
     return create_model(session=session, model_create=model_create)
 
 
-@router.put("/models/{model_id}", response_model=LLMModelRead)
+@router.put("/models/{model_id}", response_model=LLMModelListRead)
 async def update_model_route(
     session: SessionDep,
     user: AdminUserDep,
