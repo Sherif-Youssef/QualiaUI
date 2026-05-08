@@ -8,7 +8,6 @@ from src.base.schemas import RoleEnum
 if TYPE_CHECKING:
 	from src.auth.models import User
 	from src.testsuites.models import TestSuite
-	from src.runs.models import ProjectRun
 
 
 class Role(RoleEnum):
@@ -43,4 +42,3 @@ class Project(SQLModel, table=True):
 	description: str = Field(default="")
 	users_links: list[UserProjectLink] = Relationship(back_populates="project", cascade_delete=True)
 	testsuites: list["TestSuite"] = Relationship(back_populates="project", cascade_delete=True)
-	runs: list["ProjectRun"] = Relationship(back_populates="project")

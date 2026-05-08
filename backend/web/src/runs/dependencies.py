@@ -10,10 +10,10 @@ from src.projects.dependencies import check_project_role
 from src.projects.models import Role as ProjectRole, UserProjectLink
 from src.testcases.models import TestCase
 from src.testsuites.models import TestSuite
-from src.runs.models import TestCaseRun, TestSuiteRun, ProjectRun
+from src.runs.models import TestCaseRun, TestSuiteRun
 from src.projects.models import Project
 
-from .queries import get_project_run_by_id_with_user_link, get_testcase_run_by_id_with_user_link, get_testsuite_run_by_id_with_user_link
+from .queries import get_testcase_run_by_id_with_user_link, get_testsuite_run_by_id_with_user_link
 
 def _testcase_run_dep_factory(minimum_role: ProjectRole):
     def dependency(
@@ -56,26 +56,6 @@ def _testsuite_run_dep_factory(minimum_role: ProjectRole):
     return dependency
 
 
-def _project_run_dep_factory(minimum_role: ProjectRole):
-    def dependency(
-        session: SessionDep,
-        user: UserDep,
-        project_run_id: int = Path(...),
-    ) -> ProjectRun:
-        
-        project_run_with_link = get_project_run_by_id_with_user_link(session, project_run_id, user_id=user.id) # type: ignore[arg-type]
-        
-        if project_run_with_link is None: 
-            raise HTTPException(status_code=404, detail="Project run not found")
-        
-        project_run, user_link = project_run_with_link
-
-        check_project_role(user, user_link, minimum_role)
-
-        return project_run
-
-    return dependency
-
 # test case run
 
 ViewerTestCaseRunDep = Annotated[
@@ -108,23 +88,6 @@ EditorTestSuiteRunDep = Annotated[
 AdminTestSuiteRunDep = Annotated[
     TestSuiteRun,
     Depends(_testsuite_run_dep_factory(ProjectRole.ADMIN)),
-]
-
-# project run
-
-ViewerProjectRunDep = Annotated[
-    ProjectRun,
-    Depends(_project_run_dep_factory(ProjectRole.VIEWER)),
-]
-
-EditorProjectRunDep = Annotated[
-    ProjectRun,
-    Depends(_project_run_dep_factory(ProjectRole.EDITOR)),
-]
-
-AdminProjectRunDep = Annotated[
-    ProjectRun,
-    Depends(_project_run_dep_factory(ProjectRole.ADMIN)),
 ]
 
 

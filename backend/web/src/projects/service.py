@@ -8,11 +8,6 @@ from src.base.schemas import PaginationParams, Page
 
 from .models import Project, Role, UserProjectLink
 from .queries import get_all_with_link, get_by_id , count, get_with_link, delete
-from src.runs.schemas import ProjectRunRead
-from src.runs.queries import (
-    get_all_project_runs_by_project_id as get_all_runs,
-    count_project_runs_by_project_id as count_runs,
-)
 from .schemas import (
 	ProjectCreate,
 	ProjectSummaryRead,
@@ -42,25 +37,6 @@ def list_projects(
         offset=pagination_params.offset,
         limit=pagination_params.limit,
         total_items=projects_count,
-    )
-
-
-def list_project_runs(
-    session: Session,
-    project_id: int,
-    pagination_params: PaginationParams,
-) -> Page[ProjectRunRead]:
-    runs = get_all_runs(session, project_id, pagination_params)
-    total_items = count_runs(session, project_id)
-
-    return Page(
-        items=[
-            ProjectRunRead.model_validate(run, from_attributes=True)
-            for run in runs
-        ],
-        offset=pagination_params.offset,
-        limit=pagination_params.limit,
-        total_items=total_items,
     )
 
 

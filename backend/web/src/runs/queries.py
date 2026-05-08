@@ -6,35 +6,7 @@ from src.projects.models import Project, UserProjectLink
 from src.testsuites.models import TestSuite
 from src.testcases.models import TestCase
 
-from .models import ProjectRun, TestCaseRun, TestSuiteRun
-
-
-def get_project_run_by_id_with_user_link(
-    session: Session,
-    project_run_id: int,
-    user_id: int,
-) -> tuple[ProjectRun, UserProjectLink | None] | None:
-    statement = (
-        select(ProjectRun, UserProjectLink)
-        .join(Project, col(ProjectRun.project_id) == col(Project.id))
-        .outerjoin(
-            UserProjectLink,
-            and_(
-                col(UserProjectLink.project_id) == col(Project.id),
-                col(UserProjectLink.user_id) == user_id,
-            ),
-        )
-        .where(col(ProjectRun.id) == project_run_id)
-    )
-
-    result = session.exec(statement)
-    row = result.first()
-
-    if row is None:
-        return None
-
-    project_run, user_project_link = row
-    return project_run, user_project_link
+from .models import TestCaseRun, TestSuiteRun
 
 
 def get_testsuite_run_by_id_with_user_link(
@@ -139,29 +111,5 @@ def count_testsuite_runs_by_testsuite_id(session: Session, testsuite_id: int) ->
         select(func.count())
         .select_from(TestSuiteRun)
         .where(TestSuiteRun.testsuite_id == testsuite_id)
-    )
-    return session.exec(statement).one()  # type: ignore[arg-type]
-
-
-def get_all_project_runs_by_project_id(
-    session: Session,
-    project_id: int,
-    pagination_params: PaginationParams,
-) -> list[ProjectRun]:
-    statement = (
-        select(ProjectRun)
-        .where(ProjectRun.project_id == project_id)
-        .order_by(col(ProjectRun.id).desc())
-        .limit(pagination_params.limit)
-        .offset(pagination_params.offset)
-    )
-    return list(session.exec(statement).all())
-
-
-def count_project_runs_by_project_id(session: Session, project_id: int) -> int:
-    statement = (
-        select(func.count())
-        .select_from(ProjectRun)
-        .where(ProjectRun.project_id == project_id)
     )
     return session.exec(statement).one()  # type: ignore[arg-type]
