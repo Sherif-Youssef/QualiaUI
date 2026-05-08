@@ -1,7 +1,7 @@
 import React from 'react';
 import { LayoutGrid, Users, History } from 'lucide-react';
 
-export type ProjectView = 'suites' | 'team' | 'history';
+export type ProjectView = 'suites' | 'team';
 
 interface ProjectTabsProps {
     activeView: ProjectView;
@@ -11,7 +11,6 @@ interface ProjectTabsProps {
 export const ProjectTabs: React.FC<ProjectTabsProps> = ({ activeView, onViewChange }) => {
     const tabs = [
         { id: 'suites' as const, label: 'Test Suites', icon: LayoutGrid },
-        { id: 'history' as const, label: 'Execution History', icon: History },
         { id: 'team' as const, label: 'Manage Team', icon: Users },
     ];
 

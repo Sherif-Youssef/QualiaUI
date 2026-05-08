@@ -6,16 +6,26 @@ import { NotificationDTO, NotificationViewModel } from "@/types/notification";
 import { DashboardDTO, DashboardData } from "@/types/dashboard";
 import { TestCaseRun, TestStepRun } from "@/types/run";
 
+const formatScreenshot = (screenshot: string | null | undefined): string => {
+    if (!screenshot) return '';
+    return (screenshot.startsWith('http') || screenshot.startsWith('data:'))
+        ? screenshot
+        : `data:image/png;base64,${screenshot}`;
+};
+
 export const mapTestStepRunToActionStep = (sr: TestStepRun, index: number): ActionStep => {
     const actionText = sr.recreation_prompt || 'Action Step';
 
-    const screenshot = sr.screenshot_after || sr.screenshot_before;
+    const screenshot_before = formatScreenshot(sr.screenshot_before);
+    const screenshot_after = formatScreenshot(sr.screenshot_after);
 
     return {
         id: sr.id.toString(),
         number: index + 1,
         text: actionText,
-        screenshot: screenshot ? (screenshot.startsWith('data:') ? screenshot : `data:image/png;base64,${screenshot}`) : '',
+        screenshot: screenshot_after || screenshot_before,
+        screenshot_before,
+        screenshot_after,
         status: sr.status === 'PASSED' ? 'success' : (sr.status === 'ABORTED' ? 'aborted' : (sr.status === 'ERROR' ? 'error' : 'failure')) as any,
         description: sr.error_message || undefined
     };
@@ -42,13 +52,11 @@ export const mapTestCaseRunToViewModel = (cr: TestCaseRun, steps: TestStepRun[] 
 };
 
 export const mapActiveStepToActionStep = (stepRun: any, currentStepCount: number): ActionStep => {
-    const screenshot = stepRun.screenshot_after || stepRun.screenshot_before || (stepRun.snapshot_after ? stepRun.snapshot_after.screenshot : '') || (stepRun.snapshot_before ? stepRun.snapshot_before.screenshot : '');
-    let formattedScreenshot = '';
-    if (screenshot) {
-        formattedScreenshot = (screenshot.startsWith('http') || screenshot.startsWith('data:'))
-            ? screenshot
-            : `data:image/png;base64,${screenshot}`;
-    }
+    const screenshot_before_raw = stepRun.screenshot_before || (stepRun.snapshot_before ? stepRun.snapshot_before.screenshot : '');
+    const screenshot_after_raw = stepRun.screenshot_after || (stepRun.snapshot_after ? stepRun.snapshot_after.screenshot : '');
+
+    const screenshot_before = formatScreenshot(screenshot_before_raw);
+    const screenshot_after = formatScreenshot(screenshot_after_raw);
 
     const rawStatus = (stepRun.status || 'running').toLowerCase();
     const statusMap: Record<string, ActionStep['status']> = {
@@ -63,7 +71,9 @@ export const mapActiveStepToActionStep = (stepRun: any, currentStepCount: number
         id: stepRun.id ? String(stepRun.id) : (crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(7)),
         number: currentStepCount + 1,
         text: stepRun.recreation_prompt || stepRun.action_description || 'Executing Action...',
-        screenshot: formattedScreenshot,
+        screenshot: screenshot_after || screenshot_before,
+        screenshot_before,
+        screenshot_after,
         status: statusMap[rawStatus] || 'running',
         type: 'do',
     };

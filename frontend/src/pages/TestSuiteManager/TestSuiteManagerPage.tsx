@@ -8,6 +8,7 @@ import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLayout } from './TestSuiteManagerLayout';
 import { TestSuiteManagerLoading } from './TestSuiteManagerLoading';
 import { useTestSuiteManager } from './hooks/useTestSuiteManager';
+import { TopNav } from '@/components/TopNav';
 
 
 export const TestSuiteManagerPage: React.FC = () => {
@@ -40,8 +41,10 @@ export const TestSuiteManagerPage: React.FC = () => {
     if (isLoading) return <TestSuiteManagerLoading />;
 
     return (
-        <TestSuiteManagerLayout
-            error={error && <ErrorMessage message={error} />}
+        <div className="h-screen flex flex-col overflow-hidden">
+            <TopNav />
+            <TestSuiteManagerLayout
+                error={error && <ErrorMessage message={error} />}
             sidebar={
                 <TestSuiteManager
                     testCases={testCases}
@@ -134,5 +137,6 @@ export const TestSuiteManagerPage: React.FC = () => {
                 </>
             }
         />
+        </div>
     );
 };

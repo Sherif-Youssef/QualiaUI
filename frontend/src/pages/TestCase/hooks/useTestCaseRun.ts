@@ -11,9 +11,10 @@ interface UseTestCaseRunProps {
     projectId?: string;
     suiteId?: string;
     caseId?: string;
+    runId?: string;
 }
 
-export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunProps) => {
+export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }: UseTestCaseRunProps) => {
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -23,7 +24,11 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
     const [zoomLevel, setZoomLevel] = useState(100);
     const [isLoading, setIsLoading] = useState(true);
     const [isRunning, setIsRunning] = useState<boolean>(false);
-    const [activeRunId, setActiveRunId] = useState<number | null>(location.state?.runId || null);
+    
+    // Check runId from prop, then params (via prop in this case), then state
+    const activeRunIdParam = propRunId || location.state?.runId;
+    const [activeRunId, setActiveRunId] = useState<number | null>(activeRunIdParam ? Number(activeRunIdParam) : null);
+    
     const [error, setError] = useState<string | null>(null);
     const [selectedStep, setSelectedStep] = useState<ActionStep | null>(null);
     const [isAborting, setIsAborting] = useState(false);
@@ -69,6 +74,8 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
                 const status = (event.status || '').toUpperCase();
                 console.log(`[TestCaseRun] Status change: ${status}`, event);
 
+                const terminalReason = event.termination_reason || event.reason;
+
                 let tcStatus: TestCase['status'] | null = null;
                 if (['PASSED', 'SUCCESS', 'EXECUTED', 'COMPLETED', 'FINISHED'].includes(status)) tcStatus = 'passed';
                 else if (['FAILED', 'FAILURE', 'STOPPED'].includes(status)) tcStatus = 'failed';
@@ -81,7 +88,7 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
                     return {
                         ...prev,
                         status: tcStatus || prev.status,
-                        terminationReason: event.termination_reason || event.reason || prev.terminationReason,
+                        terminationReason: terminalReason || prev.terminationReason,
                     };
                 });
 
@@ -147,13 +154,13 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
         eventSourceRef.current = eventSource;
     }, [caseId, location]);
 
-    const handleRunTest = useCallback(async (model: string = 'gemini-1.5-pro') => {
+    const handleRunTest = useCallback(async (llmModelId?: number) => {
         if (!caseId || isStartingRef.current) return;
         isStartingRef.current = true;
         setIsRunning(true);
         setError(null);
         try {
-            const run = await runService.startTestCaseRun(parseInt(caseId), 'NATURAL', model);
+            const run = await runService.startTestCaseRun(parseInt(caseId), 'NATURAL', llmModelId);
             setActiveRunId(run.run_id);
             setTestCase(prev => prev ? { ...prev, status: 'running', steps: [] } : null);
             subscribeToRun(run.run_id);
@@ -211,16 +218,16 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
                 let reason = tcData.terminationReason;
 
                 const parentSuiteRunId = location.state?.parentSuiteRunId;
-                const runId = location.state?.runId || activeRunId;
+                const runIdToFetch = propRunId || location.state?.runId || activeRunId;
 
-                if (runId) {
+                if (runIdToFetch) {
                     try {
                         let runDetails: any;
                         // First try to get basic status from suite if available
                         if (parentSuiteRunId) {
                             try {
                                 const suiteDetails = await runService.getTestSuiteRunDetails(Number(parentSuiteRunId));
-                                runDetails = suiteDetails.testcase_runs?.find((r: any) => String(r.id) === String(runId));
+                                runDetails = suiteDetails.testcase_runs?.find((r: any) => String(r.id) === String(runIdToFetch));
                                 if (runDetails) {
                                     currentStatus = (runDetails.status?.toLowerCase() as TestCase['status']) || currentStatus;
                                 }
@@ -230,7 +237,7 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
                         }
 
                         // Always fetch individual details to get the test steps and screenshots
-                        const fullDetails = await runService.getTestCaseRunDetails(Number(runId));
+                        const fullDetails = await runService.getTestCaseRunDetails(Number(runIdToFetch));
                         if (fullDetails) {
                             runDetails = fullDetails;
                             if (fullDetails.teststep_runs) {
@@ -242,14 +249,14 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
 
                         if (['running', 'queued', 'pending'].includes(currentStatus || '')) {
                             setIsRunning(true);
-                            subscribeToRun(Number(runId));
+                            subscribeToRun(Number(runIdToFetch));
                         } else {
                             setIsRunning(false);
                         }
                     } catch (e) {
                         console.warn("Failed to fetch run details, assuming it's running and subscribing to stream:", e);
-                        if (location.state?.startRun || runId) {
-                            subscribeToRun(Number(runId));
+                        if (location.state?.startRun || runIdToFetch) {
+                            subscribeToRun(Number(runIdToFetch));
                         }
                     }
                 }
@@ -283,7 +290,7 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId }: UseTestCaseRunPro
         };
 
         fetchInitialData();
-    }, [projectId, suiteId, caseId, subscribeToRun, handleRunTest]);
+    }, [projectId, suiteId, caseId, propRunId, subscribeToRun, handleRunTest]);
 
     useEffect(() => {
         return () => {

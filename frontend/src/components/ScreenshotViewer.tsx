@@ -26,15 +26,35 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
   const imageRef = useRef<HTMLImageElement>(null);
   const infoRef = useRef<HTMLDivElement>(null);
   const previousScreenshot = useRef<string>(screenshot);
+  const [screenshotType, setScreenshotType] = React.useState<'before' | 'after'>('after');
 
   useEffect(() => {
-    if (imageRef.current && screenshot !== previousScreenshot.current) {
+    // Reset to 'after' when step changes if after exists
+    if (selectedStep?.screenshot_after) {
+      setScreenshotType('after');
+    } else if (selectedStep?.screenshot_before) {
+      setScreenshotType('before');
+    }
+  }, [selectedStep?.id]);
+
+  const currentDisplayScreenshot = React.useMemo(() => {
+    if (screenshotType === 'before' && selectedStep?.screenshot_before) {
+      return selectedStep.screenshot_before;
+    }
+    if (screenshotType === 'after' && selectedStep?.screenshot_after) {
+      return selectedStep.screenshot_after;
+    }
+    return screenshot;
+  }, [screenshotType, selectedStep, screenshot]);
+
+  useEffect(() => {
+    if (imageRef.current && currentDisplayScreenshot !== previousScreenshot.current) {
       gsap.fromTo(
         imageRef.current,
         { opacity: 0, scale: 0.98 },
         { opacity: 1, scale: 1, duration: 0.4, ease: 'power2.out' }
       );
-      previousScreenshot.current = screenshot;
+      previousScreenshot.current = currentDisplayScreenshot;
     }
 
     if (infoRef.current) {
@@ -44,7 +64,7 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
         { x: 0, opacity: 1, duration: 0.3, ease: 'power2.out' }
       );
     }
-  }, [screenshot, selectedStep]);
+  }, [currentDisplayScreenshot, selectedStep]);
 
   return (
     <section
@@ -62,6 +82,32 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
             </span>
           </div>
 
+          {selectedStep && (selectedStep.screenshot_before || selectedStep.screenshot_after) && (
+            <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200 shadow-inner">
+              <button
+                onClick={() => setScreenshotType('before')}
+                disabled={!selectedStep.screenshot_before}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                  screenshotType === 'before'
+                    ? 'bg-white text-primary shadow-sm'
+                    : 'text-gray-400 hover:text-gray-600 disabled:opacity-30'
+                }`}
+              >
+                Before
+              </button>
+              <button
+                onClick={() => setScreenshotType('after')}
+                disabled={!selectedStep.screenshot_after}
+                className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                  screenshotType === 'after'
+                    ? 'bg-white text-primary shadow-sm'
+                    : 'text-gray-400 hover:text-gray-600 disabled:opacity-30'
+                }`}
+              >
+                After
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -73,7 +119,7 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
           <div className="relative bg-white">
             <img
               ref={imageRef}
-              src={screenshot || 'https://placehold.co/1280x720/e2e8f0/64748b?text=Waiting+for+Automation+Run...'}
+              src={currentDisplayScreenshot || 'https://placehold.co/1280x720/e2e8f0/64748b?text=Waiting+for+Automation+Run...'}
               alt="Browser Screenshot"
               className="w-full h-auto block"
               loading="lazy"

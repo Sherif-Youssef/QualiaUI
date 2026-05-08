@@ -1,10 +1,11 @@
 import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Play, History } from 'lucide-react';
 import { TestCase } from '@/types/test-case';
 
 interface TestCaseTableProps {
     testCases: TestCase[];
     onNavigate: (id: string) => void;
+    onHistory: (id: string) => void;
     onEdit: (testCase: TestCase, e: React.MouseEvent) => void;
     onDelete: (id: string, name: string, e: React.MouseEvent) => void;
     canManageCases: boolean;
@@ -13,6 +14,7 @@ interface TestCaseTableProps {
 export const TestCaseTable: React.FC<TestCaseTableProps> = ({
     testCases,
     onNavigate,
+    onHistory,
     onEdit,
     onDelete
 }) => {
@@ -49,6 +51,26 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
                             </td>
                             <td className="px-6 py-5 text-right">
                                 <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onNavigate(testCase.id);
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-primary transition-all active:scale-90"
+                                        title="Run Test Case"
+                                    >
+                                        <Play className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onHistory(testCase.id);
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-primary transition-all active:scale-90"
+                                        title="View History"
+                                    >
+                                        <History className="w-4 h-4" />
+                                    </button>
                                     <button
                                         onClick={(e) => onEdit(testCase, e)}
                                         className="p-2 text-gray-400 hover:text-primary transition-all active:scale-90"

@@ -105,14 +105,14 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
         setIsModalOpen(true);
     };
 
-    const handleRunAll = async (model: string = 'gemini-1.5-pro') => {
+    const handleRunAll = async (llmModelId?: number) => {
         if (!projectId || !suiteId || isStartingRef.current) return;
 
         isStartingRef.current = true;
         setIsRunningSuite(true);
         setError(null);
         try {
-            const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL', model);
+            const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL', llmModelId);
             setActiveRunId(run.run_id);
             navigate(`/project/${projectId}/suite/${suiteId}/run/${run.run_id}`);
         } catch (err: any) {

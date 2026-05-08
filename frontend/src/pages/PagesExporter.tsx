@@ -2,7 +2,8 @@ import { LoginPage } from './Auth/LoginPage';
 import { ProjectsPage } from './Projects/ProjectsPage';
 import { ProjectPage } from './Project/ProjectPage';
 import { TestSuitePage } from './TestSuite/TestSuitePage';
-import { TestCaseDetailsPage } from './TestCaseDetails/TestCaseDetailsPage';
+import { TestCasePage } from './TestCase/TestCasePage';
+import { TestCaseRunPage } from './TestCase/TestCaseRunPage';
 import { TestSuiteManagerPage } from './TestSuiteManager/TestSuiteManagerPage';
 import { ProfilePage } from './Profile/Profile';
 import { AuthCallbackPage } from './Auth/AuthCallbackPage';
@@ -12,14 +13,14 @@ import { SiteSettingsPage } from './Admin/SiteSettings/SiteSettingsPage';
 import { ProjectMembersPage } from './Project/ProjectMembersPage';
 import { TestSuiteRunDashboardPage } from './TestSuite/TestSuiteRunDashboardPage';
 import { LandingPage } from './Landing';
-import { TestCaseRunPage } from './TestCaseRun/TestCaseRunPage';
 
 export {
     LoginPage,
     ProjectPage,
     ProjectsPage,
     TestSuitePage,
-    TestCaseDetailsPage,
+    TestCasePage,
+    TestCaseRunPage,
     ProfilePage,
     AuthCallbackPage,
     ForgotPasswordPage,
@@ -28,6 +29,5 @@ export {
     SiteSettingsPage,
     ProjectMembersPage,
     TestSuiteRunDashboardPage,
-    LandingPage,
-    TestCaseRunPage
+    LandingPage
 }

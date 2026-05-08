@@ -12,20 +12,20 @@ import {
 export const runService = {
     // --- Starting Runs ---
 
-    startTestCaseRun: async (testcaseId: number, mode: RunMode, model?: string): Promise<StartRunResponse> => {
+    startTestCaseRun: async (testcaseId: number, mode: RunMode, llm_model_id?: number): Promise<StartRunResponse> => {
         const response = await api.post<StartRunResponse>(`/runs/testcases`, {
             testcase_id: testcaseId,
             mode,
-            model
+            llm_model_id
         });
         return response.data;
     },
 
-    startTestSuiteRun: async (testsuiteId: number, mode: RunMode, model?: string): Promise<StartRunResponse> => {
+    startTestSuiteRun: async (testsuiteId: number, mode: RunMode, llm_model_id?: number): Promise<StartRunResponse> => {
         const response = await api.post<StartRunResponse>(`/runs/testsuites`, {
             testsuite_id: testsuiteId,
             mode,
-            model
+            llm_model_id
         });
         return response.data;
     },

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Plus, Play, Loader2, ChevronLeft, CheckCircle2, XCircle, AlertCircle, Clock, StopCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ModelSelector } from '@/components/ModelSelector';
 
 interface TestSuiteHeaderProps {
     suiteName?: string;
@@ -12,8 +11,6 @@ interface TestSuiteHeaderProps {
     onBack: () => void;
     onAbort?: () => void;
     isAborting?: boolean;
-    selectedModel?: string;
-    onModelChange?: (model: string) => void;
 }
 
 export const TestSuiteHeader: React.FC<TestSuiteHeaderProps> = ({
@@ -24,9 +21,7 @@ export const TestSuiteHeader: React.FC<TestSuiteHeaderProps> = ({
     onAddTestCase,
     onBack,
     onAbort,
-    isAborting,
-    selectedModel,
-    onModelChange
+    isAborting
 }) => {
 
     const renderStatusBadge = () => {
@@ -89,14 +84,6 @@ export const TestSuiteHeader: React.FC<TestSuiteHeaderProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-                {selectedModel && onModelChange && (
-                    <ModelSelector
-                        value={selectedModel}
-                        onChange={onModelChange}
-                        disabled={isRunningAll}
-                    />
-                )}
-
                 <Button
                     onClick={onRunAll}
                     disabled={isRunningAll || isAborting}

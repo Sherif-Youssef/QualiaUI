@@ -57,6 +57,8 @@ export interface ActionStep {
     steps?: ActionStep[];
     description?: string;
     screenshot?: string;
+    screenshot_before?: string;
+    screenshot_after?: string;
     url?: string;
     terminationReason?: string | null;
     type?: 'do' | 'check' | 'wait';

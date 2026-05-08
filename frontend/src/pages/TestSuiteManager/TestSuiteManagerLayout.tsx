@@ -15,8 +15,7 @@ export const TestSuiteManagerLayout: React.FC<TestSuiteManagerLayoutProps> = ({
     error
 }) => {
     return (
-        <div className="h-screen bg-gray-50 flex flex-col overflow-hidden text-left">
-            <TopNav />
+        <div className="h-full bg-gray-50 flex flex-col overflow-hidden text-left">
             {error && <div className="px-6 pt-4">{error}</div>}
             <main className="flex-1 flex flex-col lg:flex-row overflow-hidden min-h-0">
                 {sidebar}

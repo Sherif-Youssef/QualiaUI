@@ -7,7 +7,7 @@ import {
   ProjectPage,
   ProfilePage,
   ProjectsPage,
-  TestCaseDetailsPage,
+  TestCasePage,
   TestSuitePage,
   AuthCallbackPage,
   ForgotPasswordPage,
@@ -66,12 +66,13 @@ function App() {
 
             <Route path="/project/:projectId/suite/:suiteId" element={<TestSuitePage />} />
             <Route path="/project/:projectId/suite/:suiteId/run/:runId" element={<TestSuiteRunDashboardPage />} />
-            <Route path="/project/:projectId/suite/:suiteId/case/:caseId" element={<TestCaseDetailsPage />} />
+            <Route path="/project/:projectId/suite/:suiteId/case/:caseId" element={<TestCasePage />} />
             <Route path="/project/:projectId/suite/:suiteId/manager" element={<TestSuiteManagerPage />} />
             <Route path="/project/:projectId/manager" element={<TestSuiteManagerPage />} />
             <Route path="/project/:projectId/case/:caseId/manager" element={<TestSuiteManagerPage />} />
             <Route path="/project/:projectId/case/:caseId/run" element={<TestCaseRunPage />} />
-            <Route path="/project/:projectId/suite/:suiteId/case/:caseId/run" element={<TestCaseRunPage />} />
+            <Route path="/project/:projectId/suite/:suiteId/case/:caseId/run" element={<TestCasePage />} />
+            <Route path="/project/:projectId/suite/:suiteId/case/:caseId/run/:runId" element={<TestCaseRunPage />} />
             <Route path="/admin/users" element={<AdminUsersPage />} />
             <Route path="/admin/settings" element={<SiteSettingsPage />} />
             <Route path="/profile/:userId?" element={<ProfilePage />} />

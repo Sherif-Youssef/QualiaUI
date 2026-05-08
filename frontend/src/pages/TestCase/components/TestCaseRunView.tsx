@@ -1,21 +1,35 @@
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, CheckCircle2, XCircle, AlertCircle, StopCircle, Loader2, Play, Pencil, FileText } from 'lucide-react';
 import { TestCaseCard } from '@/components/TestCaseCard';
 import { ScreenshotViewer } from '@/components/ScreenshotViewer';
 import { ErrorMessage } from '@/components/GeneralComponents';
-import { TestSuiteManagerLayout } from '../TestSuiteManager/TestSuiteManagerLayout';
-import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
-import { useTestCaseRun } from './hooks/useTestCaseRun';
-import { ModelSelector } from '@/components/ModelSelector';
+import { TestSuiteManagerLayout } from '../../TestSuiteManager/TestSuiteManagerLayout';
+import { TestSuiteManagerLoading } from '../../TestSuiteManager/TestSuiteManagerLoading';
+import { useTestCaseRun } from '../hooks/useTestCaseRun';
 import { Button } from '@/components/ui/button';
 import { ViewPromptModal } from '@/components/Modal/ViewPromptModal';
 import { AddTestCaseModal } from '@/components/Modal/AddTestCaseModal';
 import { testCaseService } from '@/services/testCase/testCaseService';
+import { RunConfigurationModal } from '@/components/Modal/RunConfigurationModal';
 
-export const TestCaseRunPage: React.FC = () => {
-    const { projectId, suiteId, caseId } = useParams<{ projectId: string; suiteId?: string; caseId?: string }>();
-    const [selectedModel, setSelectedModel] = useState('gemini-1.5-pro');
+interface TestCaseRunViewProps {
+    projectId?: string;
+    suiteId?: string;
+    caseId?: string;
+    runId?: string;
+    showBack?: boolean;
+}
+
+export const TestCaseRunView: React.FC<TestCaseRunViewProps> = ({
+    projectId,
+    suiteId,
+    caseId,
+    runId,
+    showBack = true
+}) => {
+    const navigate = useNavigate();
+    const [isRunConfigModalOpen, setIsRunConfigModalOpen] = useState(false);
     const [isViewPromptModalOpen, setIsViewPromptModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -38,7 +52,7 @@ export const TestCaseRunPage: React.FC = () => {
         handleAbort,
         handleBack,
         refreshTestCase
-    } = useTestCaseRun({ projectId, suiteId, caseId });
+    } = useTestCaseRun({ projectId, suiteId, caseId, runId });
 
     const handleSaveTestCase = async (data: any) => {
         if (!projectId || !caseId || !testCase) return;
@@ -68,19 +82,21 @@ export const TestCaseRunPage: React.FC = () => {
                 <aside className="w-full lg:w-[400px] xl:w-[450px] bg-white border-r border-border flex flex-col h-full overflow-hidden shadow-sm z-10 text-left">
                     <div className="px-6 py-6 border-b border-border bg-white space-y-6">
                         <div className="flex items-center justify-between gap-4">
-                            <button
-                                onClick={handleBack}
-                                className="flex shrink-0 items-center gap-2 text-gray-400 hover:text-primary transition-all group/back"
-                            >
-                                <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover/back:border-primary group-hover/back:text-primary transition-colors">
-                                    <ChevronLeft className="w-5 h-5" />
-                                </div>
-                                <span className="text-[11px] font-black uppercase tracking-[0.2em] leading-none">
-                                    Back
-                                </span>
-                            </button>
+                            {showBack && (
+                                <button
+                                    onClick={handleBack}
+                                    className="flex shrink-0 items-center gap-2 text-gray-400 hover:text-primary transition-all group/back"
+                                >
+                                    <div className="w-10 h-10 rounded-full bg-white shadow-sm border border-gray-100 flex items-center justify-center group-hover/back:border-primary group-hover/back:text-primary transition-colors">
+                                        <ChevronLeft className="w-5 h-5" />
+                                    </div>
+                                    <span className="text-[11px] font-black uppercase tracking-[0.2em] leading-none">
+                                        Back
+                                    </span>
+                                </button>
+                            )}
 
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 ml-auto">
                                 {!isSuiteRun && !isReadOnly && (
                                     <>
                                         {isRunning ? (
@@ -94,20 +110,13 @@ export const TestCaseRunPage: React.FC = () => {
                                                 {isAborting ? 'Aborting...' : 'Abort'}
                                             </Button>
                                         ) : (
-                                            <div className="flex items-center gap-2">
-                                                <ModelSelector
-                                                    value={selectedModel}
-                                                    onChange={setSelectedModel}
-                                                    className="w-[140px] h-9 text-[10px] font-black"
-                                                />
-                                                <Button
-                                                    onClick={() => handleRunTest(selectedModel)}
-                                                    className="h-9 px-4 rounded-xl font-bold shadow-lg shadow-primary/20 flex items-center gap-2 transition-all active:scale-95 text-[10px] uppercase tracking-widest bg-primary hover:bg-primary/90 text-white"
-                                                >
-                                                    <Play className="w-4 h-4 fill-current" />
-                                                    Run
-                                                </Button>
-                                            </div>
+                                            <Button
+                                                onClick={() => setIsRunConfigModalOpen(true)}
+                                                className="h-9 px-4 rounded-xl font-bold shadow-lg shadow-primary/20 flex items-center gap-2 transition-all active:scale-95 text-[10px] uppercase tracking-widest bg-primary hover:bg-primary/90 text-white"
+                                            >
+                                                <Play className="w-4 h-4 fill-current" />
+                                                Run
+                                            </Button>
                                         )}
                                     </>
                                 )}
@@ -172,7 +181,24 @@ export const TestCaseRunPage: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-6">
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                        {testCase?.terminationReason && (
+                            <div className={`p-4 rounded-2xl border animate-in fade-in slide-in-from-top-2 duration-300 ${
+                                ['passed', 'success', 'executed'].includes(testCase.status?.toLowerCase() || '')
+                                    ? 'bg-emerald-50 border-emerald-100 text-emerald-800'
+                                    : testCase.status?.toLowerCase() === 'aborted'
+                                        ? 'bg-slate-50 border-slate-100 text-slate-800'
+                                        : 'bg-rose-50 border-rose-100 text-rose-800'
+                            }`}>
+                                <h4 className="text-[10px] font-black uppercase tracking-widest mb-2 opacity-70">
+                                    Termination Reason
+                                </h4>
+                                <p className="text-sm font-medium leading-relaxed">
+                                    {testCase.terminationReason}
+                                </p>
+                            </div>
+                        )}
+
                         {testCase && (
                             <TestCaseCard
                                 testCase={testCase}
@@ -215,6 +241,15 @@ export const TestCaseRunPage: React.FC = () => {
                         isOpen={isViewPromptModalOpen}
                         onClose={() => setIsViewPromptModalOpen(false)}
                         prompt={testCase?.plainText || testCase?.prompt || ''}
+                    />
+                    <RunConfigurationModal
+                        isOpen={isRunConfigModalOpen}
+                        onClose={() => setIsRunConfigModalOpen(false)}
+                        onConfirm={(llmModelId) => {
+                            handleRunTest(llmModelId);
+                            setIsRunConfigModalOpen(false);
+                        }}
+                        title={`Run ${testCase?.name}`}
                     />
                 </>
             }

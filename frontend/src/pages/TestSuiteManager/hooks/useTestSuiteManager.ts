@@ -382,12 +382,12 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
         }
     }, [projectId, suiteId, editingTestCase]);
 
-    const handleRunAllTests = useCallback(async (model: string = 'gemini-1.5-pro') => {
+    const handleRunAllTests = useCallback(async (llmModelId?: number) => {
         if (!projectId || !suiteId || isStartingRef.current) return;
         isStartingRef.current = true;
         setIsRunning(true);
         try {
-            const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL', model);
+            const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL', llmModelId);
             const details = await runService.getTestSuiteRunDetails(run.run_id);
 
             setActiveRunId(run.run_id);
@@ -408,12 +408,12 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
         }
     }, [projectId, suiteId, subscribeToRun]);
 
-    const handleRunSingleTest = useCallback(async (testId: string, model: string = 'gemini-1.5-pro') => {
+    const handleRunSingleTest = useCallback(async (testId: string, llmModelId?: number) => {
         if (isStartingRef.current) return;
         isStartingRef.current = true;
         setIsRunning(true);
         try {
-            const run = await runService.startTestCaseRun(parseInt(testId), 'NATURAL', model);
+            const run = await runService.startTestCaseRun(parseInt(testId), 'NATURAL', llmModelId);
             setActiveRunId(run.run_id);
             setRunScope('TESTCASE');
 
