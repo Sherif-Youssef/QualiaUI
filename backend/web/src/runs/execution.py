@@ -42,6 +42,7 @@ class StatusChangeEvent(BaseModel):
     element: Scope
     id: int
     status: RunStatus
+    termination_reason: str | None = None
 
 class TestCaseOutcomePayload(BaseModel):
     testcase_run_id: int
@@ -188,7 +189,7 @@ class TestCaseJob:
             snapshot_after_url=snapshot_after_url,
         )
 
-    def _stream_status(self, status: RunStatus) -> None:
+    def _stream_status(self, status: RunStatus, termination_reason: str | None = None) -> None:
         assert self.testcase_run
         stream_status(
             self.stream_key,
@@ -196,6 +197,7 @@ class TestCaseJob:
                 element=Scope.TESTCASE,
                 id=self.testcase_run.testcase_id,
                 status=status,
+                termination_reason=termination_reason
             ),
         )
 
@@ -216,7 +218,7 @@ class TestCaseJob:
             self.db_session.rollback()
             raise
 
-        self._stream_status(RunStatus.ABORTED)
+        self._stream_status(RunStatus.ABORTED, termination_reason="Execution aborted by user")
 
         return TestCaseOutcomePayload.from_testcase_run(self.testcase_run)
 
@@ -322,7 +324,7 @@ class TestCaseJob:
                 self.testcase_run.termination_reason = run.termination_reason
                 self.db_session.add(self.testcase_run)
                 self.db_session.commit()
-                self._stream_status(status)
+                self._stream_status(status, termination_reason=run.termination_reason)
             
             elif self.testcase_run.mode == RunMode.EXECUTABLE:
                 # Placeholder for executable mode
@@ -333,12 +335,16 @@ class TestCaseJob:
                 self._stream_status(RunStatus.PASSED)
 
         except Exception as e:
-            logger.exception("Error during testcase execution: testcase_run_id=%s", self.testcase_run_id)
+            logger.exception(
+                "Error during testcase execution: testcase_run_id=%s, error=%s",
+                self.testcase_run_id,
+                str(e)
+            )
             self.testcase_run.status = RunStatus.ERROR
             self.testcase_run.finished_at = datetime.now(timezone.utc)
-            self.testcase_run.termination_reason = str(e)
+            self.testcase_run.termination_reason = "Unexpected error"
             self.db_session.add(self.testcase_run)
             self.db_session.commit()
-            self._stream_status(RunStatus.ERROR)
+            self._stream_status(RunStatus.ERROR, "Unexpected error")
 
         return TestCaseOutcomePayload.from_testcase_run(self.testcase_run)

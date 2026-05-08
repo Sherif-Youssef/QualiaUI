@@ -110,6 +110,7 @@ class ExecuteTestcaseTask(Task):
                     element=Scope.TESTCASE,
                     id=testcase_run_id,
                     status=RunStatus.ERROR,
+                    termination_reason="Unexpected Error"
                 ),
             )
 
