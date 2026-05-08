@@ -1,3 +1,5 @@
+import { UserDTO } from './user';
+
 export type RunStatus = 'QUEUED' | 'RUNNING' | 'PASSED' | 'FAILED' | 'ERROR' | 'ABORTED' | 'EXECUTED';
 export type RunMode = 'NATURAL' | 'EXECUTABLE';
 export type Scope = 'PROJECT' | 'TESTSUITE' | 'TESTCASE';
@@ -11,6 +13,17 @@ export interface BaseRun {
     job_uid: string;
     mode: RunMode;
     status: RunStatus;
+    llm_model?: {
+        id: number;
+        model_name: string;
+        display_name: string;
+        provider: {
+            id: number;
+            display_name: string;
+            provider_type: string;
+        };
+    };
+    user?: UserDTO;
 }
 
 export interface ProjectRun extends BaseRun {
