@@ -4,6 +4,8 @@ from pydantic import BaseModel, Field
 class TestCaseBase(BaseModel):
 	name: str
 	description: str = ""
+	preconditions: str = ""
+	objectives: str = ""
 	base_url: str
 	instruction: str
 	executable_steps: list[dict] | None = None
@@ -19,6 +21,8 @@ class TestCaseCreate(BaseModel):
 	description: str = ""
 	base_url: str
 	instruction: str
+	preconditions: str = ""
+	objectives: str = ""
 
 
 class TestCaseUpdate(BaseModel):
@@ -26,3 +30,5 @@ class TestCaseUpdate(BaseModel):
 	description: str | None = None
 	base_url: str | None = None
 	instruction: str | None = None
+	preconditions: str = ""
+	objectives: str = ""

@@ -12,6 +12,8 @@ class TestCase(SQLModel, table=True):
 
     name: str
     description: str = Field(default="")
+    preconditions: str = Field(default="")
+    objectives: str = Field(default="")
     base_url: str
     instruction: str
     executable_steps: list[dict] | None = Field(default=None, sa_column=Column(JSON))
