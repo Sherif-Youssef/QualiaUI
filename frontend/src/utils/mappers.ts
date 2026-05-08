@@ -110,6 +110,8 @@ export const mapTestCaseToViewModel = (dto: TestCaseDTO): TestCase => ({
     suiteId: String(dto.testsuite_id),
     name: dto.name,
     description: dto.description,
+    preconditions: dto.preconditions,
+    objectives: dto.objectives,
     url: dto.base_url || '',
     mode: (dto.executable_steps && dto.executable_steps.length > 0) ? 'step-based' : 'plain',
     plainText: dto.instruction || '',

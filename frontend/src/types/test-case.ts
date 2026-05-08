@@ -5,6 +5,8 @@ export interface TestCaseDTO {
     testsuite_id: number | string;
     name: string;
     description: string;
+    preconditions?: string;
+    objectives?: string;
     base_url: string;
     instruction: string;
     executable_steps?: any[];
@@ -20,6 +22,8 @@ export interface TestCase {
     suiteName?: string;
     name: string;
     description?: string;
+    preconditions?: string;
+    objectives?: string;
     url: string;
     mode: 'plain' | 'step-based';
     plainText?: string;

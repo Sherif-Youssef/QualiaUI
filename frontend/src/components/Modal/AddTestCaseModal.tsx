@@ -13,6 +13,9 @@ interface AddTestCaseModalProps {
   editingTestCase?: TestCase | null;
   onSave: (data: {
     name: string;
+    description: string;
+    preconditions: string;
+    objectives: string;
     url: string;
     plainText: string;
   }) => void;
@@ -29,16 +32,25 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
   error = null,
 }) => {
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [preconditions, setPreconditions] = useState('');
+  const [objectives, setObjectives] = useState('');
   const [url, setUrl] = useState('');
   const [plainText, setPlainText] = useState('');
 
   useEffect(() => {
     if (editingTestCase) {
       setName(editingTestCase.name);
+      setDescription(editingTestCase.description || '');
+      setPreconditions(editingTestCase.preconditions || '');
+      setObjectives(editingTestCase.objectives || '');
       setUrl(editingTestCase.url);
       setPlainText(editingTestCase.plainText || '');
     } else {
       setName('');
+      setDescription('');
+      setPreconditions('');
+      setObjectives('');
       setUrl('');
       setPlainText('');
     }
@@ -51,6 +63,9 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
 
     onSave({
       name,
+      description,
+      preconditions,
+      objectives,
       url,
       plainText,
     });
@@ -73,33 +88,77 @@ export const AddTestCaseModal: React.FC<AddTestCaseModalProps> = ({
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white [scrollbar-width:thin] [scrollbar-color:#E5E7EB_transparent]">
           {error && <ErrorMessage message={error} />}
 
-          <div>
-            <Label htmlFor="name" className="text-sm font-semibold text-gray-700 mb-2 block">
-              Test Case Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Login with valid credentials"
-              className="mt-1 h-11"
-              disabled={isLoading}
-            />
-          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2">
+              <Label htmlFor="name" className="text-sm font-semibold text-gray-700 mb-2 block">
+                Test Case Name <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g., Login with valid credentials"
+                className="mt-1 h-11"
+                disabled={isLoading}
+              />
+            </div>
 
-          <div>
-            <Label htmlFor="url" className="text-sm font-semibold text-gray-700 mb-2 block">
-              Website URL <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="url"
-              type="url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://example.com"
-              className="mt-1 h-11"
-              disabled={isLoading}
-            />
+            <div className="col-span-2">
+              <Label htmlFor="url" className="text-sm font-semibold text-gray-700 mb-2 block">
+                Website URL <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="url"
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://example.com"
+                className="mt-1 h-11"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div className="col-span-2">
+              <Label htmlFor="description" className="text-sm font-semibold text-gray-700 mb-2 block">
+                Description
+              </Label>
+              <Textarea
+                id="description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Briefly describe what this test case does"
+                className="mt-1 min-h-[80px]"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="preconditions" className="text-sm font-semibold text-gray-700 mb-2 block">
+                Preconditions
+              </Label>
+              <Textarea
+                id="preconditions"
+                value={preconditions}
+                onChange={(e) => setPreconditions(e.target.value)}
+                placeholder="What needs to be true before starting"
+                className="mt-1 min-h-[100px]"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="objectives" className="text-sm font-semibold text-gray-700 mb-2 block">
+                Objectives
+              </Label>
+              <Textarea
+                id="objectives"
+                value={objectives}
+                onChange={(e) => setObjectives(e.target.value)}
+                placeholder="Desired outcome"
+                className="mt-1 min-h-[100px]"
+                disabled={isLoading}
+              />
+            </div>
           </div>
 
           <div className="space-y-2">

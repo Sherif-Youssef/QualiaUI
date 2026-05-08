@@ -1,13 +1,12 @@
 import React from 'react';
-import { Pencil, Trash2, Play, History } from 'lucide-react';
+import { Settings, Play, History } from 'lucide-react';
 import { TestCase } from '@/types/test-case';
 
 interface TestCaseTableProps {
     testCases: TestCase[];
     onNavigate: (id: string) => void;
     onHistory: (id: string) => void;
-    onEdit: (testCase: TestCase, e: React.MouseEvent) => void;
-    onDelete: (id: string, name: string, e: React.MouseEvent) => void;
+    onManage: (id: string) => void;
     canManageCases: boolean;
 }
 
@@ -15,8 +14,7 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
     testCases,
     onNavigate,
     onHistory,
-    onEdit,
-    onDelete
+    onManage
 }) => {
     return (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -72,18 +70,14 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
                                         <History className="w-4 h-4" />
                                     </button>
                                     <button
-                                        onClick={(e) => onEdit(testCase, e)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onManage(testCase.id);
+                                        }}
                                         className="p-2 text-gray-400 hover:text-primary transition-all active:scale-90"
-                                        title="Edit Test Case"
+                                        title="Manage Test Case"
                                     >
-                                        <Pencil className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={(e) => onDelete(testCase.id, testCase.name, e)}
-                                        className="p-2 text-gray-400 hover:text-failure transition-all active:scale-90"
-                                        title="Delete Test Case"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
+                                        <Settings className="w-4 h-4" />
                                     </button>
                                 </div>
                             </td>
@@ -94,3 +88,4 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
         </div>
     );
 };
+

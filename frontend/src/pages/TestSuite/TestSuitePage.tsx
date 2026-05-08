@@ -121,8 +121,7 @@ export const TestSuitePage: React.FC = () => {
                                         testCases={testCases}
                                         onNavigate={(caseId) => navigate(`/project/${projectId}/suite/${suiteId}/case/${caseId}?view=live`)}
                                         onHistory={(caseId) => navigate(`/project/${projectId}/suite/${suiteId}/case/${caseId}?view=history`)}
-                                        onEdit={handleEditClick}
-                                        onDelete={handleDeleteClick}
+                                        onManage={(caseId) => navigate(`/project/${projectId}/suite/${suiteId}/case/${caseId}?view=manage`)}
                                         canManageCases={canManageCases}
                                     />
                                     {isSearchEmpty && (

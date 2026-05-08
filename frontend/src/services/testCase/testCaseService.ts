@@ -37,6 +37,8 @@ export const testCaseService = {
             const payload = {
                 name: data.name,
                 description: data.description || '',
+                preconditions: data.preconditions || '',
+                objectives: data.objectives || '',
                 base_url: data.url || '',
                 instruction: data.prompt || data.plainText || '',
                 executable_steps: data.steps || null
@@ -57,6 +59,8 @@ export const testCaseService = {
             const payload = {
                 name: data.name,
                 description: data.description,
+                preconditions: data.preconditions,
+                objectives: data.objectives,
                 base_url: data.url,
                 instruction: data.plainText !== undefined ? data.plainText : (data.prompt || ''),
                 executable_steps: data.steps

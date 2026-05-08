@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutGrid, History, ChevronLeft } from 'lucide-react';
+import { LayoutGrid, History, Settings } from 'lucide-react';
 import { TestCaseLiveView } from './TestCaseLiveView';
 import { TestCaseHistoryView } from './TestCaseHistoryView';
+import { TestCaseManageView } from './TestCaseManageView';
 import { TopNav } from '@/components/TopNav';
 
 export const TestCasePage: React.FC = () => {
@@ -12,20 +13,22 @@ export const TestCasePage: React.FC = () => {
 
     // Check for view parameter in URL
     const searchParams = new URLSearchParams(location.search);
-    const initialView = searchParams.get('view') === 'history' ? 'history' : 'live';
+    const initialView = (searchParams.get('view') as 'live' | 'history' | 'manage') || 'live';
 
-    const [activeView, setActiveView] = useState<'live' | 'history'>(initialView);
+    const [activeView, setActiveView] = useState<'live' | 'history' | 'manage'>(initialView);
 
     useEffect(() => {
-        const view = new URLSearchParams(location.search).get('view');
+        const view = new URLSearchParams(location.search).get('view') as 'live' | 'history' | 'manage';
         if (view === 'history') {
             setActiveView('history');
+        } else if (view === 'manage') {
+            setActiveView('manage');
         } else {
             setActiveView('live');
         }
     }, [location.search]);
 
-    const handleViewChange = (view: 'live' | 'history') => {
+    const handleViewChange = (view: 'live' | 'history' | 'manage') => {
         setActiveView(view);
         navigate(`?view=${view}`, { replace: true });
     };
@@ -58,26 +61,41 @@ export const TestCasePage: React.FC = () => {
                                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.3)]" />
                             )}
                         </button>
+                        <button
+                            onClick={() => handleViewChange('manage')}
+                            className={`flex items-center gap-2 px-6 py-4 text-sm font-bold transition-all relative ${activeView === 'manage' ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
+                                }`}
+                        >
+                            <Settings className="w-4 h-4" />
+                            Manage
+                            {activeView === 'manage' && (
+                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.3)]" />
+                            )}
+                        </button>
                     </div>
                 </div>
             </div>
 
             <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-                {activeView === 'live' ? (
+                {activeView === 'live' && projectId && suiteId && caseId ? (
                     <TestCaseLiveView
                         projectId={projectId}
                         suiteId={suiteId}
                         caseId={caseId}
                     />
-                ) : (
-                    projectId && suiteId && caseId && (
-                        <TestCaseHistoryView
-                            projectId={projectId}
-                            suiteId={suiteId}
-                            caseId={caseId}
-                        />
-                    )
-                )}
+                ) : activeView === 'history' && projectId && suiteId && caseId ? (
+                    <TestCaseHistoryView
+                        projectId={projectId}
+                        suiteId={suiteId}
+                        caseId={caseId}
+                    />
+                ) : activeView === 'manage' && projectId && suiteId && caseId ? (
+                    <TestCaseManageView
+                        projectId={projectId}
+                        suiteId={suiteId}
+                        caseId={caseId}
+                    />
+                ) : null}
             </div>
         </div>
     );
