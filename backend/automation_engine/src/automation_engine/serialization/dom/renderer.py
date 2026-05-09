@@ -18,7 +18,7 @@ class PageRenderer:
     def __init__(
         self,
         instruction: str | None = None,
-        verbosity_pct: float = 0.8,
+        verbosity_pct: float = 1,
     ) -> None:
         profile = VerbosityProfile.from_percentage(verbosity_pct)
         self._instruction = instruction
@@ -65,8 +65,8 @@ class PageRenderer:
             line = self._render_element(el)
             new_chars = chars + len(line) + 1
 
-            if new_chars > self.MAX_TOTAL_CHARS:
-                break
+            # if new_chars > self.MAX_TOTAL_CHARS:
+            #     break
 
             lines.append(line)
             chars = new_chars
@@ -132,6 +132,7 @@ class PageRenderer:
 
     @staticmethod
     def _truncate(text: str, max_len: int) -> str:
+        return text
         if len(text) <= max_len:
             return text
         return text[:max_len-1] + "…"

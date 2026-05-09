@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 import inspect
 from pathlib import Path
 from typing import Any, Literal, Type, Callable
@@ -12,8 +11,9 @@ from playwright.async_api import (
     Page,
     Playwright,
     Error as PlaywrightError,
-    expect,
 )
+from playwright_stealth import Stealth
+from playwright_captcha import CaptchaType, ClickSolver, FrameworkType
 
 from automation_engine.compilation.executable_actions import (
     ExecAction,
@@ -21,6 +21,7 @@ from automation_engine.compilation.executable_actions import (
     SelectOptionExec, PressExec, NavigateExec,
     DragDropExec, UploadFileExec, ExecuteJSExec
 )
+from .utils import wait_for_network_idle
 
 
 class PlaywrightBrowser:
@@ -83,12 +84,18 @@ class PlaywrightBrowser:
             raise RuntimeError("Browser already started.")
 
         self._playwright = await async_playwright().start()
-        self._browser = await self._playwright.chromium.launch(headless=self._headless)
+        self._browser = await self._playwright.chromium.launch(
+            headless=self._headless,
+            args=["--disable-blink-features=AutomationControlled"]
+        )
         self.context = await self._browser.new_context(
             viewport={"width": self._viewport_width, "height": self._viewport_height},
             record_video_dir=record_video_dir,
             record_video_size={"width": self._viewport_width, "height": self._viewport_height} if record_video_dir else None,
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
         )
+        stealth = Stealth()
+        await stealth.apply_stealth_async(self.context)
 
         if self._default_timeout is not None:
             self.context.set_default_timeout(self._default_timeout)
@@ -98,11 +105,40 @@ class PlaywrightBrowser:
                 await self.context.add_init_script(path=script)
             else:
                 await self.context.add_init_script(script)
-        
+
         self.context.on("page", self._on_new_page)
 
         self.page = await self.context.new_page()
-        await self.page.goto(url)        
+        await self.page.goto(url)
+        await self.solve_captchas()
+    
+    async def solve_captchas(self) -> None:
+        """
+        Attempts to solve common CAPTCHAs (reCAPTCHA, Turnstile, hCaptcha) 
+        using free, interaction-based methods.
+        """
+        if not self.page:
+            return
+
+        try:
+            async with ClickSolver(framework=FrameworkType.PLAYWRIGHT, page=self.page) as solver:
+                # Attempt Cloudflare Turnstile
+                await solver.solve_captcha(
+                    captcha_container=self.page,
+                    captcha_type=CaptchaType.CLOUDFLARE_TURNSTILE
+                )
+                # Attempt reCAPTCHA V2
+                await solver.solve_captcha(
+                    captcha_container=self.page,
+                    captcha_type=CaptchaType.RECAPTCHA_V2
+                )
+                # 3. Handle reCAPTCHA V3 (Invisible/Score-based)
+                await solver.solve_captcha(
+                    captcha_container=self.page,
+                    captcha_type=CaptchaType.RECAPTCHA_V3
+                )
+        except Exception:
+            pass
 
     async def close(self) -> None:
         if self.context:
@@ -150,26 +186,29 @@ class PlaywrightBrowser:
     async def screenshot(self) -> bytes:
         return await self.page.screenshot(type="png")
 
-    async def wait_for_page_load(self, timeout=30000) -> None:
+    async def wait_for_page_load(self, timeout=10000) -> None:
         """
         Waits until the page is fully loaded by combining multiple strategies.
         """
         try:
+            # Give the browser time to initiate any navigation that might have been triggered
+            await self.page.wait_for_timeout(500)
+            
             await self.page.wait_for_load_state("domcontentloaded", timeout=timeout)
             await self.page.wait_for_load_state("load", timeout=timeout)
-            await self.page.wait_for_load_state("networkidle", timeout=timeout)
-        except PlaywrightError:
-            # Fallback: if networkidle times out (e.g., long-polling, websockets),
-            # ensure at least DOM + load are done
-            await self.page.wait_for_load_state("load", timeout=timeout)
-        
-        await self.page.wait_for_function(
-            "document.readyState === 'complete'",
-            timeout=timeout
-        )
+            await wait_for_network_idle(self.page, timeout=timeout / 1000, loop_until_idle=True)
+            await self.page.wait_for_timeout(300)
 
-        # Final safety delay to allow any late scripts to execute
-        await self.page.wait_for_timeout(300)
+            await self.solve_captchas()
+
+            await self.page.wait_for_load_state("domcontentloaded", timeout=timeout)
+            await self.page.wait_for_load_state("load", timeout=timeout)
+            await wait_for_network_idle(self.page, timeout=timeout / 1000, loop_until_idle=True)
+            await self.page.wait_for_timeout(300)
+        except PlaywrightError:
+            # Ignore errors like "Target closed" or "Execution context destroyed"
+            # which can happen if the page navigates while waiting.
+            pass
 
     # Dispatch
 
@@ -195,6 +234,16 @@ class PlaywrightBrowser:
         modifiers: list[Literal["Alt", "ControlOrMeta", "Shift"]] | None = None,
         timeout: float | None = None,
     ) -> None:
+        is_option = await self.page.locator(target_selector).evaluate("el => el.tagName.toLowerCase() === 'option'")
+        if is_option:
+            # Playwright doesn't support clicking <option> elements, so we have to use select_option instead
+            target = self.page.locator(target_selector).locator("xpath=ancestor::select").first
+            await target.select_option(
+                value=await self.page.locator(target_selector).get_attribute("value"),
+                timeout=timeout
+            )
+            return
+
         kwargs: dict = {"button": button, "click_count": click_count}
         if modifiers:
             kwargs["modifiers"] = modifiers

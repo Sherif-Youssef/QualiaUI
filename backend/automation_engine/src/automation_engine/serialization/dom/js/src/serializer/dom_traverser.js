@@ -15,17 +15,21 @@ export class DOMTraverser {
         const children = [];
         const interactive = this.validator.isInteractive(node);
         const semantic = this.validator.isSemantic(node);
-        const worthKeeping = (
-            elementData.visibility != "hidden" 
-            && (interactive || (semantic && this.extractor.hasImportantData(elementData)))
+        const worthKeeping = interactive || (
+            elementData.visibility !== "hidden"
+            && semantic && this.extractor.hasImportantData(elementData)
         ) || isRoot;
+
+        if (worthKeeping) {
+            node.setAttribute('data-qualia-testing-element-id', elementId);
+        }
 
         elementData.depth = depth;
         elementData.selector = selectorGen.getSelector();
         elementData.is_interactive = interactive;
         elementData.element_id = elementId;
 
-        let elementCount = worthKeeping;
+        let elementCount = worthKeeping ? 1 : 0;
 
         // Traverse children
         selectorGen.enterLevel();
@@ -60,11 +64,11 @@ export class DOMTraverser {
     getSimplifiedDOM() {
         const selectorGen = new SelectorGenerator();
         const tree = this.traverse(document.body, selectorGen)[1];
-        
+
         if (tree.length === 0) {
             return null;
         }
-        
+
         return tree[0];
     }
 }

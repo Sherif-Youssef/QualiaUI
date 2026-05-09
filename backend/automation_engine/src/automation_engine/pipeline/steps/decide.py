@@ -27,6 +27,7 @@ class BuildModelStateStep:
             screenshot=(
                 snapshot.state.screenshot if snapshot.state else None
             ),
+            last_error=ctx.last_error_message,
         )
         return ctx
 

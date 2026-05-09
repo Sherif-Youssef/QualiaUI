@@ -104,14 +104,17 @@ class PlanningAgent:
     def _build_user_message(state: ModelState) -> UserMessage:
         """Build user-message content, optionally including a screenshot."""
         sections = [
-            f"## Task\n{state.instruction}",
-            f"\n\n## Current Page\n```\n{state.page}\n```",
+            f"## <user_request>\n{state.instruction}",
         ]
 
         if state.history:
-            sections.append(f"\n\n## Action History\n{state.history}")
+            sections.append(f"\n\n## <agent_history>\n{state.history}")
 
-        sections.append("\n\nAnalyze the current state and decide your next action.")
+        if state.last_error:
+            sections.append(f"\n\n## <previous_error>\nThe previous execution failed with the following error. Please consider this when planning your next action:\n{state.last_error}")
+
+        sections.append(f"\n\n## <browser_state>\n```\n{state.page}\n```",)
+
         text = "".join(sections)
 
         if state.screenshot is None:

@@ -110,7 +110,8 @@ class TestingSession:
                 CompileActionsStep(),
                 StuckDetectionStep(),
                 self._exec_pipeline,
-            ]
+            ],
+            max_consecutive_errors=3,
         )
 
     # Lifecycle

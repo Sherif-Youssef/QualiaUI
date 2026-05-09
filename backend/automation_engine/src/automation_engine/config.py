@@ -26,9 +26,9 @@ class LLMConfig(BaseModel):
     base_url: str | None = Field(default=None, description="Base URL for the LLM provider API (for custom endpoints).")
     additional_kwargs: dict = Field(default_factory=dict, description="Additional kwargs to pass to the LLM provider.")
 
-    planning_mode: PlanningMode = mode_presets.GROUP_FULL
+    planning_mode: PlanningMode = mode_presets.SINGLE_FULL
     use_tool_calling: bool = Field(default=True, description="True = structured output / tool calling, False = raw JSON in prompt.")
-    use_screenshot: bool = Field(default=False, description="Attach a page screenshot to every LLM call.")
+    use_screenshot: bool = Field(default=True, description="Attach a page screenshot to every LLM call.")
 
 
 class ExecutionConfig(BaseModel):

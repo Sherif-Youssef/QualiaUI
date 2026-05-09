@@ -11,6 +11,7 @@ class ModelState(BaseModel):
     page: str
     history: Optional[str] = None
     screenshot: Optional[bytes] = None
+    last_error: Optional[str] = None
 
 
 class PageSnapshot(BaseModel):

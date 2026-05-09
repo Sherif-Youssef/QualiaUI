@@ -58,3 +58,4 @@ class IterationContext:
     status: IterationStatus = IterationStatus.CONTINUE
     error: Exception | None = None
     error_message: str = ""
+    last_error_message: str = ""

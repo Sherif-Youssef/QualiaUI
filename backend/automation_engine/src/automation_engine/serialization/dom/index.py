@@ -25,7 +25,7 @@ class DOMIndex:
 
     def selector(self, element_id: int) -> str:
         """Shortcut: element_id -> CSS selector."""
-        return self[element_id].selector
+        return f'[data-qualia-testing-element-id="{element_id}"]'
 
     def __contains__(self, element_id: int) -> bool:
         return element_id in self._by_id

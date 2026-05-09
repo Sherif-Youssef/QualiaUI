@@ -10,15 +10,14 @@ logger = logging.getLogger(__name__)
 class ObserveStep:
     name = "observe"
 
-    def __init__(self, use_screenshot: bool = False):
+    def __init__(self, use_screenshot: bool = False, timeout: int = 10000):
         self.use_screenshot = use_screenshot
+        self.timeout = timeout
 
     async def run(self, ctx: IterationContext) -> IterationContext:
         browser = ctx.browser
 
-        await ctx.browser.page.wait_for_load_state("domcontentloaded")
-        await ctx.browser.page.wait_for_load_state("load")
-        await ctx.browser.page.wait_for_timeout(500)
+        await ctx.browser.wait_for_page_load(timeout=self.timeout)
 
         raw: dict = await browser.evaluate_js(code=get_js_serializer_api_code())
         root = DOMElement(**raw)
