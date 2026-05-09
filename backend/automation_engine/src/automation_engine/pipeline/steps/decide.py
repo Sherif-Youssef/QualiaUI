@@ -3,7 +3,7 @@ import logging
 from automation_engine.pipeline.context import IterationContext, IterationStatus
 from automation_engine.planning import ModelState
 from automation_engine.actions import TerminationSignal
-from automation_engine.history import TestTermination
+from automation_engine.history import TestTermination, StateSnapshot
 from automation_engine.serialization import PageRenderer, HistoryRenderer
 
 
@@ -44,7 +44,15 @@ class CallAgentStep:
             ctx.status = IterationStatus.TERMINATE
             from automation_engine.pipeline.context import IterationResult
             ctx.results.append(
-                IterationResult(termination=TestTermination(term_signal=result))
+                IterationResult(termination=TestTermination(
+                    term_signal=result,
+                    snapshot=await self._capture(ctx)
+                ))
             )
 
         return ctx
+
+    @staticmethod
+    async def _capture(ctx: IterationContext) -> StateSnapshot:
+        screenshot = await ctx.browser.screenshot()
+        return StateSnapshot(screenshot=screenshot)

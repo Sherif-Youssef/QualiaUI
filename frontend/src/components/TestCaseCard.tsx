@@ -141,7 +141,7 @@ export const TestCaseCard: React.FC<TestCaseCardProps> = ({
 
         {(!testCase.steps || testCase.steps.length === 0) && (
           <div className="py-12 text-center border-2 border-dashed border-gray-50 rounded-[2.5rem] bg-gray-50/20">
-            <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">No steps defined</p>
+            <p className="text-[10px] font-black text-gray-300 uppercase tracking-[0.2em]">Steps show up here</p>
           </div>
         )}
       </div>

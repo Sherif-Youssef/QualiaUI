@@ -13,7 +13,7 @@ from playwright.async_api import (
     Error as PlaywrightError,
 )
 from playwright_stealth import Stealth
-from playwright_captcha import CaptchaType, ClickSolver, FrameworkType
+# from playwright_recaptcha import recaptchav2, recaptchav3
 
 from automation_engine.compilation.executable_actions import (
     ExecAction,
@@ -110,35 +110,21 @@ class PlaywrightBrowser:
 
         self.page = await self.context.new_page()
         await self.page.goto(url)
-        await self.solve_captchas()
-    
-    async def solve_captchas(self) -> None:
-        """
-        Attempts to solve common CAPTCHAs (reCAPTCHA, Turnstile, hCaptcha) 
-        using free, interaction-based methods.
-        """
-        if not self.page:
-            return
 
-        try:
-            async with ClickSolver(framework=FrameworkType.PLAYWRIGHT, page=self.page) as solver:
-                # Attempt Cloudflare Turnstile
-                await solver.solve_captcha(
-                    captcha_container=self.page,
-                    captcha_type=CaptchaType.CLOUDFLARE_TURNSTILE
-                )
-                # Attempt reCAPTCHA V2
-                await solver.solve_captcha(
-                    captcha_container=self.page,
-                    captcha_type=CaptchaType.RECAPTCHA_V2
-                )
-                # 3. Handle reCAPTCHA V3 (Invisible/Score-based)
-                await solver.solve_captcha(
-                    captcha_container=self.page,
-                    captcha_type=CaptchaType.RECAPTCHA_V3
-                )
-        except Exception:
-            pass
+    # async def solve_captchas(self) -> None:
+    #     """
+    #     Attempts to solve common CAPTCHAs (reCAPTCHA, Turnstile, hCaptcha) 
+    #     using free, interaction-based methods.
+    #     """
+    #     if not self.page:
+    #         return
+    #     try:
+    #         with recaptchav3.AsyncSolver(self.page) as solver:
+    #             token = solver.solve_recaptcha()
+    #         with recaptchav2.AsyncSolver(self.page) as solver:
+    #             token = solver.solve_recaptcha(wait=True)
+    #     except Exception:
+    #         pass
 
     async def close(self) -> None:
         if self.context:
@@ -199,7 +185,7 @@ class PlaywrightBrowser:
             await wait_for_network_idle(self.page, timeout=timeout / 1000, loop_until_idle=True)
             await self.page.wait_for_timeout(300)
 
-            await self.solve_captchas()
+            # await self.solve_captchas()
 
             await self.page.wait_for_load_state("domcontentloaded", timeout=timeout)
             await self.page.wait_for_load_state("load", timeout=timeout)

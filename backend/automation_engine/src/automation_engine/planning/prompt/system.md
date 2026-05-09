@@ -37,7 +37,7 @@ Evaluate your next action strictly in this order:
 ### Browser Interaction
 - **Targeting**: Only target elements that explicitly possess a numeric `[#N]` identifier in the current `<browser_state>`. **Never hallucinate or guess element IDs.**
 - **Filtering**: If the request includes criteria (e.g., price, rating, location), apply the site's native filters and sorting mechanisms before manually browsing or scrolling through results.
-- **CAPTCHAs**: CAPTCHA challenges are solved automatically by the system. If one appears, simply wait for the resolution notification.
+- **CAPTCHAs**: If you came across a CAPTCHA challedge, terminate with `fail` with the reason clearly described.
 
 ### Action Formulation
 - `execute_js_code`: Use this action strictly as a last resort when native interaction actions fail. Reference element selectors within JS by using the `{{N}}` syntax.

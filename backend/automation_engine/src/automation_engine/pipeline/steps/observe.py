@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 class ObserveStep:
     name = "observe"
 
-    def __init__(self, use_screenshot: bool = False, timeout: int = 10000):
+    def __init__(self, use_screenshot: bool = False, timeout: int = 30000):
         self.use_screenshot = use_screenshot
         self.timeout = timeout
 

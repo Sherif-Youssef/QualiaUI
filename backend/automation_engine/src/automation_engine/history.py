@@ -85,6 +85,7 @@ class TestStep(TestHierarchyElement):
 
 class TestTermination(BaseModel):
     term_signal: TerminationSignal
+    snapshot: StateSnapshot
 
 
 class TestStepGroup(TestHierarchyElement):
