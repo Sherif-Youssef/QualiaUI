@@ -4,3 +4,6 @@ playwright
 pydantic_ai
 logfire
 rapidfuzz
+playwright_stealth
+playwright_captcha
+genai-prices
