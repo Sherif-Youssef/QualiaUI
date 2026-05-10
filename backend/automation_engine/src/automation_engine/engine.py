@@ -191,7 +191,7 @@ class TestingSession:
             raise ValueError("Video recording not enabled for this session")
         if not self._test_run.is_finalized:
             raise ValueError("Test run must be finalized to get video path")
-        return await self._browser.page.video.path() if self._browser and self._browser.page.video else None  
+        return await Path(self._browser.page.video.path()) if self._browser and self._browser.page.video else None  
 
     def finalize_group(self) -> TestStepGroup:
         if (

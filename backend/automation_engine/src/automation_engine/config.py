@@ -28,7 +28,7 @@ class LLMConfig(BaseModel):
 
     planning_mode: PlanningMode = mode_presets.SINGLE_FULL
     use_tool_calling: bool = Field(default=True, description="True = structured output / tool calling, False = raw JSON in prompt.")
-    use_screenshot: bool = Field(default=True, description="Attach a page screenshot to every LLM call.")
+    use_screenshot: bool = Field(default=False, description="Attach a page screenshot to every LLM call.")
 
 
 class ExecutionConfig(BaseModel):

@@ -18,7 +18,7 @@ from playwright_stealth import Stealth
 from automation_engine.compilation.executable_actions import (
     ExecAction,
     WaitExec, ClickExec, FillExec, HoverExec,
-    SelectOptionExec, PressExec, NavigateExec,
+    SelectOptionExec, PressExec, NavigateExec, ReloadPageExec,
     DragDropExec, UploadFileExec, ExecuteJSExec
 )
 from .utils import wait_for_network_idle
@@ -298,6 +298,15 @@ class PlaywrightBrowser:
             await self.page.locator(target_selector).press(key, **kwargs)
         else:
             await self.page.keyboard.press(key)
+
+    @register_action(ReloadPageExec)
+    async def reload(
+        self,
+        *,
+        timeout: float | None = None,
+    ) -> None:
+        kwargs = {"timeout": timeout} if timeout else {}
+        await self.page.reload(**kwargs)
 
     @register_action(NavigateExec)
     async def goto(

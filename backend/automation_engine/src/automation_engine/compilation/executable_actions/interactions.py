@@ -60,6 +60,12 @@ class PressExec(ExecAction):
     timeout: float | None = None
 
 
+@maps(ReloadPage)
+class ReloadPageExec(ExecAction):
+    action_type: Literal[Interaction.RELOAD] = Interaction.RELOAD
+    timeout: float | None = None
+
+
 @maps(Navigate)
 class NavigateExec(ExecAction):
     action_type: Literal[Interaction.NAVIGATE] = Interaction.NAVIGATE
