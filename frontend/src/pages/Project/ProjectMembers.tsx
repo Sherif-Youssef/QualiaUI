@@ -20,37 +20,37 @@ export const ProjectMembers: React.FC<ProjectMembersProps> = ({
     onRemoveMember
 }) => {
     return (
-        <div className="bg-white rounded-[2rem] border border-gray-100 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <table className="w-full">
-                <thead className="bg-gray-50/50 border-b border-gray-100">
+        <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <table className="w-full text-left font-sans">
+                <thead className="bg-gray-50 border-b border-gray-200">
                     <tr>
-                        <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        <th className="px-6 py-4 text-xs font-black text-gray-400 uppercase tracking-widest">
                             Team Member
                         </th>
-                        <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest hidden md:table-cell">
+                        <th className="px-6 py-4 text-left text-xs font-black text-gray-400 uppercase tracking-widest hidden md:table-cell">
                             Email Address
                         </th>
-                        <th className="px-8 py-5 text-center text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        <th className="px-6 py-4 text-center text-xs font-black text-gray-400 uppercase tracking-widest">
                             Role
                         </th>
-                        <th className="px-8 py-5 text-left text-[10px] font-black text-gray-400 uppercase tracking-widest hidden lg:table-cell">
+                        <th className="px-6 py-4 text-left text-xs font-black text-gray-400 uppercase tracking-widest hidden lg:table-cell">
                             Joined At
                         </th>
                         {canManageMembers && (
-                            <th className="px-8 py-5 text-right text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                            <th className="px-6 py-4 text-right text-xs font-black text-gray-400 uppercase tracking-widest">
                                 Actions
                             </th>
                         )}
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-50">
+                <tbody className="divide-y divide-gray-100">
                     {members.length > 0 ? (
                         members.map((member) => (
                             <tr
                                 key={member.user.email}
-                                className="hover:bg-gray-50/50 transition-all group"
+                                className="hover:bg-primary/[0.02] transition-all group"
                             >
-                                <td className="px-8 py-5">
+                                <td className="px-6 py-5">
                                     <div className="flex items-center gap-4">
                                         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black text-sm border border-primary/10 shadow-sm shrink-0">
                                             {member.user.firstName[0]}{member.user.lastName[0]}
@@ -68,10 +68,10 @@ export const ProjectMembers: React.FC<ProjectMembersProps> = ({
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-8 py-5 hidden md:table-cell">
+                                <td className="px-6 py-5 hidden md:table-cell">
                                     <span className="text-sm font-medium text-gray-600">{member.user.email}</span>
                                 </td>
-                                <td className="px-8 py-5 text-center">
+                                <td className="px-6 py-5 text-center">
                                     <div className="flex items-center justify-center">
                                         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/5 text-primary border border-primary/10 shadow-sm transition-all hover:bg-primary/10">
                                             <span className="text-[10px] font-black uppercase tracking-[0.05em]">
@@ -80,13 +80,13 @@ export const ProjectMembers: React.FC<ProjectMembersProps> = ({
                                         </div>
                                     </div>
                                 </td>
-                                <td className="px-8 py-5 hidden lg:table-cell">
+                                <td className="px-6 py-5 hidden lg:table-cell">
                                     <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
                                         {new Date(member.joinedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </span>
                                 </td>
                                 {canManageMembers && (
-                                    <td className="px-8 py-5">
+                                    <td className="px-6 py-5">
                                         <div className="flex items-center justify-end">
                                             <button 
                                                 onClick={() => onRemoveMember(member.user.email)}

@@ -22,6 +22,7 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
     };
 
     // Data State
+    const [projectName, setProjectName] = useState<string>('');
     const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
     const [projectMembers, setProjectMembers] = useState<any[]>([]);
     const [totalItems, setTotalItems] = useState(0);
@@ -48,6 +49,19 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
         }, 500);
         return () => clearTimeout(timer);
     }, [searchQuery]);
+
+    useEffect(() => {
+        const fetchProjectDetails = async () => {
+            if (!projectId) return;
+            try {
+                const project = await projectService.getProjectById(projectId);
+                setProjectName(project.name);
+            } catch (err) {
+                console.error('Failed to fetch project details:', err);
+            }
+        };
+        fetchProjectDetails();
+    }, [projectId]);
 
     const fetchData = useCallback(async () => {
         if (!projectId) return;
@@ -153,6 +167,7 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
 
 
     return {
+        projectName,
         searchQuery, setSearchQuery,
         currentPage, setCurrentPage,
         activeView, setActiveView,

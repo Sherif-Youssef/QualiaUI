@@ -78,7 +78,6 @@ export const ProjectsPage: React.FC = () => {
                                 onEdit={handleEditClick}
                                 onDelete={handleDeleteClick}
                                 isAdmin={isAdminState}
-                                userRole={userRoleState}
                             />
                             {isSearchEmpty && (
                                 <div className="text-center py-12 text-gray-500 font-medium bg-white rounded-[2rem] border border-dashed border-gray-200">

@@ -10,15 +10,15 @@ interface ProjectModalsProps {
     editingSuite: TestSuite | null;
     onAddSuite: (data: { name: string; description: string }) => void;
     onEditSuite: (id: string, data: { name: string; description: string }) => void;
-    
+
     deleteConfirmation: { id: string; name: string } | null;
     onCloseDeleteModal: () => void;
     onConfirmDelete: () => void;
-    
+
     isAddMemberModalOpen: boolean;
     onCloseMemberModal: () => void;
     onAddMember: (userId: number | string, role: string) => void;
-    
+
     isLoading: boolean;
     error: string | null;
     onClearError: () => void;

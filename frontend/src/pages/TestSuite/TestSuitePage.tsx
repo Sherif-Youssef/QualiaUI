@@ -20,6 +20,7 @@ export const TestSuitePage: React.FC = () => {
     const [activeView, setActiveView] = React.useState<'cases' | 'history'>('cases');
 
     const {
+        suiteName,
         searchQuery, setSearchQuery,
         currentPage, setCurrentPage,
         isModalOpen, setIsModalOpen,
@@ -52,7 +53,7 @@ export const TestSuitePage: React.FC = () => {
             error={pageError && <ErrorMessage message={pageError} onClose={() => setError(null)} />}
             header={
                 <TestSuiteHeader
-                    suiteName={testCases[0]?.suiteName}
+                    suiteName={suiteName}
                     isRunningAll={isRunningSuite}
                     isAborting={isAborting}
                     onRunAll={() => setIsRunConfigModalOpen(true)}
@@ -185,7 +186,7 @@ export const TestSuitePage: React.FC = () => {
                             handleRunAll(llmModelId, options);
                             setIsRunConfigModalOpen(false);
                         }}
-                        title={`Run Suite: ${testCases[0]?.suiteName || 'Test Suite'}`}
+                        title={`Run Suite: ${suiteName || 'Test Suite'}`}
                     />
                 </>
             }

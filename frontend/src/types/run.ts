@@ -13,6 +13,8 @@ export interface BaseRun {
     job_uid: string;
     mode: RunMode;
     status: RunStatus;
+    use_screenshots?: boolean;
+    use_video?: boolean;
     llm_model?: {
         id: number;
         model_name: string;

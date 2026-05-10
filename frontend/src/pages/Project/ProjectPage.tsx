@@ -17,6 +17,7 @@ export const ProjectPage: React.FC = () => {
     const { projectId } = useParams<{ projectId: string }>();
 
     const {
+        projectName,
         searchQuery, setSearchQuery,
         currentPage, setCurrentPage,
         activeView, setActiveView,
@@ -45,6 +46,7 @@ export const ProjectPage: React.FC = () => {
         <ProjectLayout
             header={
                 <ProjectHeader
+                    projectName={projectName}
                     onBack={() => navigate('/projects')}
                     onAddSuite={() => setIsModalOpen(true)}
                 />

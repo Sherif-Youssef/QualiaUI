@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { testCaseService } from '@/services/testCase/testCaseService';
+import { testSuiteService } from '@/services/testSuit/testSuiteService';
 import { runService } from '@/services/runService';
 import { TestCase } from '@/types/test-case';
 import { useProjectPermissions } from '@/hooks/useProjectPermissions';
@@ -19,6 +20,7 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTestCase, setEditingTestCase] = useState<TestCase | null>(null);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
+    const [suiteName, setSuiteName] = useState<string | undefined>(undefined);
     const [testCases, setTestCases] = useState<TestCase[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -42,6 +44,19 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
         }, 500);
         return () => clearTimeout(timer);
     }, [searchQuery]);
+
+    useEffect(() => {
+        const fetchSuiteDetails = async () => {
+            if (!projectId || !suiteId) return;
+            try {
+                const suite = await testSuiteService.getTestSuiteById(projectId, suiteId);
+                setSuiteName(suite.name);
+            } catch (err) {
+                console.error('Failed to fetch suite details:', err);
+            }
+        };
+        fetchSuiteDetails();
+    }, [projectId, suiteId]);
 
     const fetchData = useCallback(async () => {
         if (!suiteId || !projectId) return;
@@ -209,6 +224,7 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
     const isSearchEmpty = testCases.length === 0 && debouncedSearch !== '' && !isLoading;
 
     return {
+        suiteName,
         searchQuery, setSearchQuery,
         currentPage, setCurrentPage,
         isModalOpen, setIsModalOpen,
