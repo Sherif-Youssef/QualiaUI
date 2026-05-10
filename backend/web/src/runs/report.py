@@ -102,6 +102,19 @@ def generate_test_suite_report(run: TestSuiteRun) -> bytes:
     # Add Summary Information
     triggered_at_str = run.created_at.strftime('%B %d, %Y at %I:%M %p') if run.created_at else "N/A"
     
+    # Calculate total duration
+    total_duration_str = "N/A"
+    if run.started_at and run.finished_at:
+        delta = run.finished_at - run.started_at
+        hours, remainder = divmod(delta.total_seconds(), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        if hours > 0:
+            total_duration_str = f"{int(hours)}h {int(minutes)}m {int(seconds)}s"
+        elif minutes > 0:
+            total_duration_str = f"{int(minutes)}m {int(seconds)}s"
+        else:
+            total_duration_str = f"{seconds:.2f}s"
+
     runs = run.testcase_runs if hasattr(run, "testcase_runs") and run.testcase_runs else []
     total_tests = len(runs)
     passed_tests = sum(1 for r in runs if r.status == RunStatus.PASSED)
@@ -110,11 +123,31 @@ def generate_test_suite_report(run: TestSuiteRun) -> bytes:
     status_color = get_status_color(run.status.value)
     status_formatted = f'<font color="{status_color.hexval()}"><b>{run.status.value.upper()}</b></font>'
 
+    # User and Model info
+    user_info = run.user.email if run.user else "N/A"
+    model_info = run.llm_model.display_name if run.llm_model else "N/A"
+    llm_provider = "N/A"
+    if run.llm_model:
+        llm_provider = run.llm_model.provider.provider_type.display_name if run.llm_model.provider else "N/A"
+
     meta_data = [
-        [Paragraph("Status:", metadata_label_style), Paragraph(status_formatted, metadata_value_style),
-         Paragraph("Passed:", metadata_label_style), Paragraph(f"{passed_tests} / {total_tests}", metadata_value_style)],
-        [Paragraph("Triggered at:", metadata_label_style), Paragraph(triggered_at_str, metadata_value_style),
-         "", ""],
+        [
+            Paragraph("Status:", metadata_label_style), Paragraph(status_formatted, metadata_value_style),
+            Paragraph("Passed:", metadata_label_style), Paragraph(f"{passed_tests} / {total_tests}", metadata_value_style)],
+        [
+            Paragraph("Triggered by:", metadata_label_style), Paragraph(user_info, metadata_value_style),
+            Paragraph("Duration:", metadata_label_style), Paragraph(total_duration_str, metadata_value_style)
+            
+        ],
+        [
+            Paragraph("Model Provider:", metadata_label_style), Paragraph(llm_provider, metadata_value_style),
+            Paragraph("Model:", metadata_label_style), Paragraph(model_info, metadata_value_style)
+
+        ],
+        [
+            Paragraph("Triggered at:", metadata_label_style), Paragraph(triggered_at_str, metadata_value_style),
+         "", ""
+        ],
     ]
     
     meta_table = Table(meta_data, colWidths=[80, 180, 80, 180])
@@ -214,6 +247,13 @@ def generate_test_suite_report(run: TestSuiteRun) -> bytes:
             
             name = getattr(failed_case, "name", None) or "N/A"
             block.append(Paragraph(f"<b>Name:</b> {name}", failure_text_style))
+            
+            base_url = getattr(failed_case, "base_url", "N/A")
+            block.append(Paragraph(f"<b>Base URL:</b> {base_url}", failure_text_style))
+            
+            if failed_case.instruction:
+                instr = failed_case.instruction.replace('\n', '<br/>')
+                block.append(Paragraph(f"<b>Instruction:</b> {instr}", failure_text_style))
             
             reason = failed_case.termination_reason or "No termination reason provided."
             # Render reason with line breaks if any

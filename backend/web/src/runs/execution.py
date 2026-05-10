@@ -339,19 +339,19 @@ class TestCaseJob:
 
                     run_session.finalize()
                     run = cast(TestRun, run_session._test_run)
+                    video_path = await run_session.get_video_path()
 
-                    if self.testcase_run.use_video:
-                        try:
-                            video_path = await run_session.get_video_path()
-                            if video_path:
-                                from src.runs.tasks import upload_video_task
-                                # We need to pass the video_dir to the task so it can clean it up
-                                # The video_dir is passed to the engine config in tasks.py
-                                video_dir = str(Path(video_path).parent)
-                                task = upload_video_task.delay(self.testcase_run_id, video_path, video_dir)
-                                self.testcase_run.video_upload_task_id = task.id
-                        except Exception:
-                            logger.exception("Failed to initiate video upload task for testcase_run_id=%s", self.testcase_run_id)
+                if self.testcase_run.use_video:
+                    try:
+                        if video_path:
+                            from src.runs.tasks import upload_video_task
+                            # We need to pass the video_dir to the task so it can clean it up
+                            # The video_dir is passed to the engine config in tasks.py
+                            video_dir = str(Path(video_path).parent)
+                            task = upload_video_task.delay(self.testcase_run_id, video_path, video_dir)
+                            self.testcase_run.video_upload_task_id = task.id
+                    except Exception:
+                        logger.exception("Failed to initiate video upload task for testcase_run_id=%s", self.testcase_run_id)
 
                 status = to_run_status(run.status)
                 logger.info("Test run finished: testcase_run_id=%s status=%s", self.testcase_run_id, status)
