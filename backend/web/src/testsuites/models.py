@@ -15,4 +15,4 @@ class TestSuite(SQLModel, table=True):
     project: "Project" = Relationship(back_populates="testsuites")
     testcases: list["TestCase"] = Relationship(back_populates="testsuite", cascade_delete=True)
 
-    runs: list["TestSuiteRun"] = Relationship(back_populates="testsuite")
+    runs: list["TestSuiteRun"] = Relationship(back_populates="testsuite", cascade_delete=True)

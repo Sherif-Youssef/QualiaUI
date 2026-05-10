@@ -65,7 +65,7 @@ class TestSuiteRun(SQLModel, table=True):
     llm_model: Optional["LLMModel"] = Relationship()
 
     # lower
-    testcase_runs: list["TestCaseRun"] = Relationship(back_populates="testsuite_run")
+    testcase_runs: list["TestCaseRun"] = Relationship(back_populates="testsuite_run", cascade_delete=True)
 
 
 class TestCaseRun(SQLModel, table=True):
@@ -112,7 +112,7 @@ class TestCaseRun(SQLModel, table=True):
     testsuite_run: Optional["TestSuiteRun"] = Relationship(back_populates="testcase_runs")
 
     # lower
-    teststep_runs: list["TestStepRun"] = Relationship(back_populates="testcase_run")
+    teststep_runs: list["TestStepRun"] = Relationship(back_populates="testcase_run", cascade_delete=True)
 
 
 class TestStepRun(SQLModel, table=True):
