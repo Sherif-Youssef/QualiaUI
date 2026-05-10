@@ -13,6 +13,7 @@ class Interaction(StrEnum):
     HOVER = "hover"
     SELECT = "select_option"
     PRESS = "press"
+    RELOAD = "reload_page"
     NAVIGATE = "navigate"
     DRAG_DROP = "drag_drop"
     UPLOAD = "upload_file"

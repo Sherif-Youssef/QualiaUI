@@ -18,7 +18,7 @@ from playwright_stealth import Stealth
 from automation_engine.compilation.executable_actions import (
     ExecAction,
     WaitExec, ClickExec, FillExec, HoverExec,
-    SelectOptionExec, PressExec, NavigateExec,
+    SelectOptionExec, PressExec, NavigateExec, ReloadPageExec,
     DragDropExec, UploadFileExec, ExecuteJSExec
 )
 from .utils import wait_for_network_idle
@@ -57,12 +57,15 @@ class PlaywrightBrowser:
         viewport_width: int = 1920,
         viewport_height: int = 1080,
         default_timeout: float | None = None,
+        default_navigation_timeout: float | None = None,
+        cookies: list[dict] | None = None,
     ) -> None:
         self._headless = headless
         self._viewport_width = viewport_width
         self._viewport_height = viewport_height
         self._default_timeout = default_timeout
-
+        self._default_navigation_timeout = default_navigation_timeout
+        self._cookies = cookies
         self._playwright: Playwright | None = None
         self._browser: Browser | None = None
         self.context: BrowserContext | None = None
@@ -99,6 +102,12 @@ class PlaywrightBrowser:
 
         if self._default_timeout is not None:
             self.context.set_default_timeout(self._default_timeout)
+
+        if self._default_navigation_timeout is not None:
+            self.context.set_default_navigation_timeout(self._default_navigation_timeout)
+        
+        if self._cookies:
+            await self.context.add_cookies(self._cookies)
 
         for script in init_scripts or []:
             if isinstance(script, Path):
@@ -298,6 +307,15 @@ class PlaywrightBrowser:
             await self.page.locator(target_selector).press(key, **kwargs)
         else:
             await self.page.keyboard.press(key)
+
+    @register_action(ReloadPageExec)
+    async def reload(
+        self,
+        *,
+        timeout: float | None = None,
+    ) -> None:
+        kwargs = {"timeout": timeout} if timeout else {}
+        await self.page.reload(**kwargs)
 
     @register_action(NavigateExec)
     async def goto(

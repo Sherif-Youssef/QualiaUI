@@ -65,7 +65,12 @@ class ResolveVariablesStep:
             logger.debug("No variables to resolve, skipping variable resolution step")
             return ctx
 
-        compiler = ActionCompiler(CompileContext(variables=self.variable_store))
+        compiler = ActionCompiler(
+            CompileContext(
+                variables=self.variable_store,
+                page=ctx.browser.page
+            )
+        )
 
         for compiled in ctx.compiled_actions:
             try:

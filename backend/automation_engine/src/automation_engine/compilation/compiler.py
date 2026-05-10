@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Type, Callable, get_type_hints, Optional
 from pydantic import BaseModel, ConfigDict
 
+from playwright.async_api import Page
+
 from ..actions import (
     BaseAction,
     Wait, Click, Fill, Hover, SelectOption,
@@ -36,6 +38,7 @@ class CompileContext(BaseModel):
 
     dom_index: Optional[DOMIndex] = None
     variables: Optional[VariableStore] = None
+    page: Optional[Page] = None
 
 
 class ActionCompiler:
@@ -63,7 +66,12 @@ class ActionCompiler:
     # Helpers
 
     def _sel(self, element_id: int) -> str:
-        return self._ctx.dom_index.selector(element_id)
+        selector = self._ctx.dom_index.selector(element_id)
+        page = self._ctx.page
+        if page is not None and page.locator(selector).count() == 0:
+            raise CompilationError(f"Element ID {element_id} resolved to selector '{selector}', but no matching element was found on the page.")
+
+        return selector
 
     def _resolve_js(self, code: str) -> str:
         def _replace(match: re.Match) -> str:

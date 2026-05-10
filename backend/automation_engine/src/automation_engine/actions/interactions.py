@@ -54,6 +54,12 @@ class Press(InteractionAction):
     key: str = Field(min_length=1, description='Keys to press separated by "+". Uses Playwright key names: "Enter", "Tab", "ArrowDown", "Control+a", etc.')
     target_id: Optional[int] = Field(default=None, description="Focus target. None = page-level.")
 
+
+class ReloadPage(InteractionAction):
+    """Reload the current page."""
+    action_type: Literal[Interaction.RELOAD] = Field(default=Interaction.RELOAD, exclude=True)
+
+
 # TODO: Support refresh, back, forward, etc. Also, add URL to rendered history for better context
 class Navigate(InteractionAction):
     """Go to a URL."""
