@@ -210,9 +210,7 @@ def launch_testsuite_run(
         testsuite_run_id=testsuite_run_id,
         stream_key=stream_key,
         abort_id=testsuite_run_id,
-        stream_steps=True,
-        use_screenshots=request.use_screenshots,
-        use_video=request.use_video
+        stream_steps=True
     )
     workflow.apply_async(task_id=suite_job_uid)  
 
