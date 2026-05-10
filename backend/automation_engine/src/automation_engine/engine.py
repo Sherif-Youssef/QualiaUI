@@ -27,6 +27,7 @@ from automation_engine.history import (
     TestStep,
     TestStepGroup,
     TestTermination,
+    StateSnapshot,
 )
 
 logger = logging.getLogger(__name__)
@@ -244,7 +245,10 @@ class TestingSession:
         while True:
             if len(group.steps) >= cap:
                 logger.error("Exceeded max steps, aborting")
-                group.finalize(abort_reason="Exceeded max steps")
+                group.finalize(
+                    abort_reason="Exceeded max steps", 
+                    final_snapshot=await self._extract_snapshot()
+                )
                 break
 
             ctx = self._build_context(instruction)
@@ -255,7 +259,10 @@ class TestingSession:
 
             for result in ctx.results:
                 if result.is_terminal:
-                    group.finalize(term=result.termination)
+                    group.finalize(
+                        term=result.termination,
+                        final_snapshot=await self._extract_snapshot()
+                    )
                     yield result.termination
                 else:
                     group.add_step(result.step)
@@ -264,7 +271,10 @@ class TestingSession:
             if group.is_finalized:
                 break
             if group.status in (TestStatus.FAILED, TestStatus.ERROR):
-                group.finalize(abort_reason="Step failed")
+                group.finalize(
+                    abort_reason="Step failed",
+                    final_snapshot=await self._extract_snapshot()
+                )
                 break
 
         logger.info(
@@ -320,6 +330,13 @@ class TestingSession:
         )
 
     # Helpers
+
+    async def _extract_snapshot(self) -> StateSnapshot | None:
+        try:
+            return StateSnapshot(screenshot=await self._browser.screenshot())
+        except Exception as e:
+            logger.warning(f"Failed to capture snapshot: {e}")
+            return None
 
     def _build_context(self, instruction: str) -> IterationContext:
         return IterationContext(

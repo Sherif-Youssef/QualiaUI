@@ -44,15 +44,7 @@ class CallAgentStep:
             ctx.status = IterationStatus.TERMINATE
             from automation_engine.pipeline.context import IterationResult
             ctx.results.append(
-                IterationResult(termination=TestTermination(
-                    term_signal=result,
-                    snapshot=await self._capture(ctx)
-                ))
+                IterationResult(termination=TestTermination(term_signal=result))
             )
 
         return ctx
-
-    @staticmethod
-    async def _capture(ctx: IterationContext) -> StateSnapshot:
-        screenshot = await ctx.browser.screenshot()
-        return StateSnapshot(screenshot=screenshot)

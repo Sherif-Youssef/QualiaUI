@@ -85,7 +85,6 @@ class TestStep(TestHierarchyElement):
 
 class TestTermination(BaseModel):
     term_signal: TerminationSignal
-    snapshot: StateSnapshot
 
 
 class TestStepGroup(TestHierarchyElement):
@@ -96,6 +95,7 @@ class TestStepGroup(TestHierarchyElement):
     llm_loop: bool = Field(default=True)
     term: Optional[TestTermination] = Field(default=None, init=False)
     abort_reason: Optional[str] = Field(default=None)
+    final_snapshot: Optional[StateSnapshot] = Field(default=None, description="Browser state at the end of the group.")
 
     def add_step(self, step: TestStep) -> None:
         self._assert_running()
@@ -105,11 +105,13 @@ class TestStepGroup(TestHierarchyElement):
     def finalize(
         self,
         term: TestTermination | None = None,
-        abort_reason: str | None = None
+        abort_reason: str | None = None,
+        final_snapshot: StateSnapshot | None = None,
     ) -> None:
         super(TestStepGroup, self).finalize()
         self.term = term
         self.abort_reason = abort_reason
+        self.final_snapshot = final_snapshot
         
     @computed_field
     @property
