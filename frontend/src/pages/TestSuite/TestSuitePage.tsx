@@ -181,8 +181,8 @@ export const TestSuitePage: React.FC = () => {
                     <RunConfigurationModal
                         isOpen={isRunConfigModalOpen}
                         onClose={() => setIsRunConfigModalOpen(false)}
-                        onConfirm={(llmModelId) => {
-                            handleRunAll(llmModelId);
+                        onConfirm={(llmModelId, options) => {
+                            handleRunAll(llmModelId, options);
                             setIsRunConfigModalOpen(false);
                         }}
                         title={`Run Suite: ${testCases[0]?.suiteName || 'Test Suite'}`}

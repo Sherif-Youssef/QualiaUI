@@ -105,14 +105,20 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
         setIsModalOpen(true);
     };
 
-    const handleRunAll = async (llmModelId?: number) => {
+    const handleRunAll = async (llmModelId?: number, options?: { useScreenshots: boolean; useVideo: boolean }) => {
         if (!projectId || !suiteId || isStartingRef.current) return;
 
         isStartingRef.current = true;
         setIsRunningSuite(true);
         setError(null);
         try {
-            const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL', llmModelId);
+            const run = await runService.startTestSuiteRun(
+                parseInt(suiteId), 
+                'NATURAL', 
+                llmModelId,
+                options?.useScreenshots,
+                options?.useVideo
+            );
             setActiveRunId(run.run_id);
             navigate(`/project/${projectId}/suite/${suiteId}/run/${run.run_id}`);
         } catch (err: any) {

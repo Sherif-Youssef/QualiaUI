@@ -382,12 +382,18 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
         }
     }, [projectId, suiteId, editingTestCase]);
 
-    const handleRunAllTests = useCallback(async (llmModelId?: number) => {
+    const handleRunAllTests = useCallback(async (llmModelId?: number, options?: { useScreenshots: boolean; useVideo: boolean }) => {
         if (!projectId || !suiteId || isStartingRef.current) return;
         isStartingRef.current = true;
         setIsRunning(true);
         try {
-            const run = await runService.startTestSuiteRun(parseInt(suiteId), 'NATURAL', llmModelId);
+            const run = await runService.startTestSuiteRun(
+                parseInt(suiteId), 
+                'NATURAL', 
+                llmModelId,
+                options?.useScreenshots,
+                options?.useVideo
+            );
             const details = await runService.getTestSuiteRunDetails(run.run_id);
 
             setActiveRunId(run.run_id);
@@ -408,12 +414,18 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
         }
     }, [projectId, suiteId, subscribeToRun]);
 
-    const handleRunSingleTest = useCallback(async (testId: string, llmModelId?: number) => {
+    const handleRunSingleTest = useCallback(async (testId: string, llmModelId?: number, options?: { useScreenshots: boolean; useVideo: boolean }) => {
         if (isStartingRef.current) return;
         isStartingRef.current = true;
         setIsRunning(true);
         try {
-            const run = await runService.startTestCaseRun(parseInt(testId), 'NATURAL', llmModelId);
+            const run = await runService.startTestCaseRun(
+                parseInt(testId), 
+                'NATURAL', 
+                llmModelId,
+                options?.useScreenshots,
+                options?.useVideo
+            );
             setActiveRunId(run.run_id);
             setRunScope('TESTCASE');
 

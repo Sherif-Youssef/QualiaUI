@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Sparkles, Cpu } from 'lucide-react';
+import { X, Sparkles, Cpu, Camera, Video } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Label } from '../ui/label';
 import {
@@ -9,6 +9,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "../ui/select";
+import { Checkbox } from '../ui/checkbox';
 import { llmService } from '@/services/llmService';
 import { Provider, LLMModel } from '@/types/llm';
 import { ErrorMessage } from '../GeneralComponents';
@@ -16,7 +17,7 @@ import { ErrorMessage } from '../GeneralComponents';
 interface RunConfigurationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (llmModelId: number) => void;
+    onConfirm: (llmModelId: number, options: { useScreenshots: boolean; useVideo: boolean }) => void;
     title?: string;
 }
 
@@ -30,6 +31,8 @@ export const RunConfigurationModal: React.FC<RunConfigurationModalProps> = ({
     const [models, setModels] = useState<LLMModel[]>([]);
     const [selectedProviderId, setSelectedProviderId] = useState<string>('');
     const [selectedModelId, setSelectedModelId] = useState<string>('');
+    const [useScreenshots, setUseScreenshots] = useState(false);
+    const [useVideo, setUseVideo] = useState(true);
     const [isLoadingProviders, setIsLoadingProviders] = useState(false);
     const [isLoadingModels, setIsLoadingModels] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -42,6 +45,8 @@ export const RunConfigurationModal: React.FC<RunConfigurationModalProps> = ({
             setSelectedModelId('');
             setModels([]);
             setError(null);
+            setUseScreenshots(false);
+            setUseVideo(true);
         }
     }, [isOpen]);
 
@@ -81,7 +86,7 @@ export const RunConfigurationModal: React.FC<RunConfigurationModalProps> = ({
 
     const handleConfirm = () => {
         if (selectedModelId) {
-            onConfirm(parseInt(selectedModelId));
+            onConfirm(parseInt(selectedModelId), { useScreenshots, useVideo });
         }
     };
 
@@ -159,6 +164,59 @@ export const RunConfigurationModal: React.FC<RunConfigurationModalProps> = ({
                                 )}
                             </SelectContent>
                         </Select>
+                    </div>
+
+                    <div className="space-y-4 pt-2">
+                        <Label className="text-sm font-semibold text-gray-700 block">
+                            Run Options
+                        </Label>
+                        <div className="grid grid-cols-1 gap-3">
+                            <div 
+                                className="flex items-center space-x-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                                onClick={() => setUseScreenshots(!useScreenshots)}
+                            >
+                                <Checkbox 
+                                    id="useScreenshots" 
+                                    checked={useScreenshots}
+                                    onCheckedChange={(checked) => setUseScreenshots(!!checked)}
+                                />
+                                <div className="flex items-center gap-2 flex-1">
+                                    <Camera className="w-4 h-4 text-gray-500" />
+                                    <div className="grid gap-0.5">
+                                        <label
+                                            htmlFor="useScreenshots"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                        >
+                                            Use Screenshots
+                                        </label>
+                                        <p className="text-xs text-gray-500">Send page screenshots to LLM for better context</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div 
+                                className="flex items-center space-x-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                                onClick={() => setUseVideo(!useVideo)}
+                            >
+                                <Checkbox 
+                                    id="useVideo" 
+                                    checked={useVideo}
+                                    onCheckedChange={(checked) => setUseVideo(!!checked)}
+                                />
+                                <div className="flex items-center gap-2 flex-1">
+                                    <Video className="w-4 h-4 text-gray-500" />
+                                    <div className="grid gap-0.5">
+                                        <label
+                                            htmlFor="useVideo"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                        >
+                                            Record Video
+                                        </label>
+                                        <p className="text-xs text-gray-500">Record a video of the test execution</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

@@ -36,6 +36,8 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
     const eventSourceRef = useRef<EventSource | null>(null);
     const isStartingRef = useRef(false);
 
+    const [runDetails, setRunDetails] = useState<any>(null);
+
     const subscribeToRun = useCallback((runId: number) => {
         const parentSuiteRunId = location.state?.parentSuiteRunId;
         const subscriptionId = parentSuiteRunId ? Number(parentSuiteRunId) : runId;
@@ -154,13 +156,19 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
         eventSourceRef.current = eventSource;
     }, [caseId, location]);
 
-    const handleRunTest = useCallback(async (llmModelId?: number) => {
+    const handleRunTest = useCallback(async (llmModelId?: number, options?: { useScreenshots: boolean; useVideo: boolean }) => {
         if (!caseId || isStartingRef.current) return;
         isStartingRef.current = true;
         setIsRunning(true);
         setError(null);
         try {
-            const run = await runService.startTestCaseRun(parseInt(caseId), 'NATURAL', llmModelId);
+            const run = await runService.startTestCaseRun(
+                parseInt(caseId), 
+                'NATURAL', 
+                llmModelId,
+                options?.useScreenshots,
+                options?.useVideo
+            );
             setActiveRunId(run.run_id);
             setTestCase(prev => prev ? { ...prev, status: 'running', steps: [] } : null);
             subscribeToRun(run.run_id);
@@ -239,7 +247,7 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
                         // Always fetch individual details to get the test steps and screenshots
                         const fullDetails = await runService.getTestCaseRunDetails(Number(runIdToFetch));
                         if (fullDetails) {
-                            runDetails = fullDetails;
+                            setRunDetails(fullDetails);
                             if (fullDetails.teststep_runs) {
                                 currentSteps = fullDetails.teststep_runs.map((s: any, i: number) => mapTestStepRunToActionStep(s, i));
                             }
@@ -300,6 +308,7 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
 
     return {
         testCase,
+        runDetails,
         currentScreenshot, setCurrentScreenshot,
         currentUrl,
         zoomLevel, setZoomLevel,
@@ -308,7 +317,7 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
         isRunning,
         isAborting,
         isSuiteRun: !!location.state?.parentSuiteRunId,
-        isReadOnly: !!location.state?.runId && !location.state?.startRun,
+        isReadOnly: !!(propRunId || location.state?.runId) && !location.state?.startRun,
         selectedStep,
         setSelectedStep,
         handleRunTest,

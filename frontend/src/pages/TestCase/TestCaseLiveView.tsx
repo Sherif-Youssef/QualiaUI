@@ -17,7 +17,6 @@ export const TestCaseLiveView: React.FC<TestCaseLiveViewProps> = ({
             projectId={projectId}
             suiteId={suiteId}
             caseId={caseId}
-            showBack={false}
         />
     );
 };
