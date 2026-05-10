@@ -13,8 +13,10 @@ class BrowserConfig(BaseModel):
     headless: bool = False
     viewport_width: int = 1920
     viewport_height: int = 1080
+    default_timeout: int = 60000  # 1 minute
+    default_navigation_timeout: int = 120000  # 2 minutes
     record_video_dir: str | Path | None = None
-
+    cookies: list[dict] | None = None
 
 class LLMConfig(BaseModel):
     """Controls how the LLM is prompted and how its output is parsed."""

@@ -57,12 +57,15 @@ class PlaywrightBrowser:
         viewport_width: int = 1920,
         viewport_height: int = 1080,
         default_timeout: float | None = None,
+        default_navigation_timeout: float | None = None,
+        cookies: list[dict] | None = None,
     ) -> None:
         self._headless = headless
         self._viewport_width = viewport_width
         self._viewport_height = viewport_height
         self._default_timeout = default_timeout
-
+        self._default_navigation_timeout = default_navigation_timeout
+        self._cookies = cookies
         self._playwright: Playwright | None = None
         self._browser: Browser | None = None
         self.context: BrowserContext | None = None
@@ -99,6 +102,12 @@ class PlaywrightBrowser:
 
         if self._default_timeout is not None:
             self.context.set_default_timeout(self._default_timeout)
+
+        if self._default_navigation_timeout is not None:
+            self.context.set_default_navigation_timeout(self._default_navigation_timeout)
+        
+        if self._cookies:
+            await self.context.add_cookies(self._cookies)
 
         for script in init_scripts or []:
             if isinstance(script, Path):

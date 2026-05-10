@@ -105,7 +105,10 @@ class TestingSession:
         # Full LLM loop iteration
         self._loop_pipeline = IterationPipeline(
             steps=[
-                ObserveStep(use_screenshot=self._engine.config.llm.use_screenshot),
+                ObserveStep(
+                    use_screenshot=self._engine.config.llm.use_screenshot,
+                    timeout=self._engine.config.browser.default_timeout
+                ),
                 BuildModelStateStep(),
                 CallAgentStep(),
                 CompileActionsStep(),
@@ -123,6 +126,9 @@ class TestingSession:
             headless=cfg.browser.headless,
             viewport_width=cfg.browser.viewport_width,
             viewport_height=cfg.browser.viewport_height,
+            default_timeout=cfg.browser.default_timeout,
+            default_navigation_timeout=cfg.browser.default_navigation_timeout,
+            cookies=cfg.browser.cookies,
         )
         await self._browser.start(
             self._url,
@@ -191,7 +197,10 @@ class TestingSession:
             raise ValueError("Video recording not enabled for this session")
         if not self._test_run.is_finalized:
             raise ValueError("Test run must be finalized to get video path")
-        return await str(self._browser.page.video.path()) if self._browser and self._browser.page.video else None  
+        if self._browser and self._browser.page.video:
+            path = await self._browser.page.video.path()
+            return str(path)
+        return None
 
     def finalize_group(self) -> TestStepGroup:
         if (
