@@ -2,6 +2,9 @@ import asyncio
 from datetime import datetime
 from typing import Any
 import logging
+import tempfile
+import shutil
+import os
 
 from automation_engine import BrowserConfig, EngineConfig, TestingEngine, LLMConfig
 from celery import chord, group, Task
@@ -27,19 +30,48 @@ from .schemas import RunStatus
 
 logger = logging.getLogger(__name__)
 
-def _build_testing_engine(llm_model: LLMModel) -> TestingEngine:
+def _build_testing_engine(llm_model: LLMModel, use_screenshots: bool, record_video_dir: str | None = None) -> TestingEngine:
     return TestingEngine(
         config=EngineConfig(
-            browser=BrowserConfig(headless=True),
+            browser=BrowserConfig(headless=True, record_video_dir=record_video_dir),
             llm=LLMConfig(
                 provider=llm_model.provider.provider_type.value,
                 model=llm_model.model_name,
                 api_key=llm_model.provider.api_key,
                 base_url=llm_model.provider.base_url,
                 additional_kwargs=llm_model.provider.additional_config,
+                use_screenshot=use_screenshots
             )
         ),
     )
+
+
+@app.task(name="runs.upload_video")
+def upload_video_task(testcase_run_id: int, video_path: str, video_dir: str):
+    from src.runs.execution import upload_video
+    from pathlib import Path
+    
+    try:
+        with Session(db_engine) as db_session:
+            testcase_run = db_session.get(TestCaseRun, testcase_run_id)
+            if not testcase_run:
+                logger.error(f"TestCaseRun {testcase_run_id} not found for video upload")
+                return
+
+            v_path = Path(video_path)
+            if v_path.exists():
+                video_url = asyncio.run(upload_video(v_path))
+                testcase_run.video_url = video_url
+                db_session.add(testcase_run)
+                db_session.commit()
+                logger.info(f"Uploaded video for TestCaseRun {testcase_run_id}: {video_url}")
+            else:
+                logger.warning(f"Video file not found at {video_path}")
+    except Exception:
+        logger.exception(f"Failed to upload video for TestCaseRun {testcase_run_id}")
+    finally:
+        if video_dir and os.path.exists(video_dir):
+            shutil.rmtree(video_dir)
 
 
 class ExecuteTestcaseTask(Task):
@@ -63,18 +95,34 @@ class ExecuteTestcaseTask(Task):
             if testcase_run.llm_model.provider.api_key is None:
                 raise ValueError(f"LLM Model {testcase_run.llm_model.id} API key is not set")
 
-            testing_engine = _build_testing_engine(testcase_run.llm_model)
+            video_dir = None
+            if testcase_run.use_video:
+                video_dir = tempfile.mkdtemp()
 
-            outcome = asyncio.run(
-                TestCaseJob(
-                    testcase_run_id,
-                    engine=testing_engine,
-                    db_session=db_session,
-                    stream_key=stream_key,
-                    abort_id=abort_id,
-                    stream_steps=stream_steps,
-                ).execute_testcase()
+            testing_engine = _build_testing_engine(
+                llm_model=testcase_run.llm_model,
+                use_screenshots=testcase_run.use_screenshots,
+                record_video_dir=video_dir
             )
+
+            try:
+                outcome = asyncio.run(
+                    TestCaseJob(
+                        testcase_run_id,
+                        engine=testing_engine,
+                        db_session=db_session,
+                        stream_key=stream_key,
+                        abort_id=abort_id,
+                        stream_steps=stream_steps,
+                    ).execute_testcase()
+                )
+            finally:
+                if video_dir and os.path.exists(video_dir):
+                    # Check if a video task was started. If it was, it will clean up.
+                    # Otherwise, clean up now.
+                    db_session.refresh(testcase_run)
+                    if not testcase_run.video_upload_task_id:
+                        shutil.rmtree(video_dir)
 
         return outcome.model_dump(mode="json")
 

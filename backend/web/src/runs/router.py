@@ -42,20 +42,19 @@ router = APIRouter(tags=["runs"])
 async def start_testcase_run_route(
 	session: SessionDep,
 	user: UserDep,
-    payload: TestcaseStartRunRequest,
+    request: TestcaseStartRunRequest,
 ):
 	
 	testcase = get_editor_testcase(
 		session=session,
 		user=user,
-		testcase_id=payload.testcase_id
+		testcase_id=request.testcase_id
 	)
 
 	return launch_testcase_run(
 		session=session,
 		testcase=testcase,
-		mode=payload.mode,
-		llm_model_id=payload.llm_model_id,
+		request=request,
 		user=user
 	)
 
@@ -66,19 +65,18 @@ async def start_testcase_run_route(
 async def start_testsuite_run_route(
 	session: SessionDep,
 	user: UserDep,
-    payload: TestsuiteStartRunRequest,
+    request: TestsuiteStartRunRequest,
 ):
 	testsuite = get_editor_testsuite(
 		session=session,
 		user=user,
-		testsuite_id=payload.testsuite_id
+		testsuite_id=request.testsuite_id
 	)
 
 	return launch_testsuite_run(
 		session=session,
 		testsuite=testsuite,
-		mode=payload.mode,
-		llm_model_id=payload.llm_model_id,
+		request=request,
 		user=user
 	)
 

@@ -47,7 +47,7 @@ class S3FileStorage(FileStorage):
             return f"http://localhost:9000/{identifier.bucket}/{identifier.key}"    
         return f"https://{identifier.bucket}.s3.{settings.AWS_REGION}.amazonaws.com/{identifier.key}"
 
-    async def upload(
+    async def upload_bytes(
         self,
         identifier: FileIdentifier,
         file: bytes,
@@ -68,6 +68,31 @@ class S3FileStorage(FileStorage):
                 identifier=identifier,
                 content_type=file_type,
             )
+        except Exception as exc:
+            raise UploadError(f"S3 upload failed for {identifier}") from exc
+
+    async def upload_path(
+        self,
+        identifier: FileIdentifier,
+        path: str,
+        file_type: FileType,
+    ) -> StorageResult:
+        try:
+            self._client.upload_file(
+                path,
+                identifier.bucket,
+                identifier.key,
+                ExtraArgs={
+                    "ContentType": file_type.value
+                }
+            )
+
+            return StorageResult(
+                url=self.get_url(identifier),
+                identifier=identifier,
+                content_type=file_type,
+            )
+
         except Exception as exc:
             raise UploadError(f"S3 upload failed for {identifier}") from exc
 

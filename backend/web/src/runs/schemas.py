@@ -11,11 +11,15 @@ from src.auth.schemas import UserRead
 class TestsuiteStartRunRequest(BaseModel):
     mode: RunMode
     testsuite_id: int
+    use_screenshots: bool = False
+    use_video: bool = False
     llm_model_id: int
 
 class TestcaseStartRunRequest(BaseModel):
     mode: RunMode
     testcase_id: int
+    use_screenshots: bool = False
+    use_video: bool = True
     llm_model_id: int
 
 class StartRunResponse(BaseModel):
@@ -54,12 +58,17 @@ class TestCaseRunRead(BaseModel):
     finished_at: datetime | None = None
     job_uid: str
     mode: RunMode
+    use_screenshots: bool
+    use_video: bool
 
     base_url: str
     name: str
     instruction: str | None = None
     status: RunStatus
     termination_reason: str | None = None
+    
+    video_url: str | None = None
+    video_upload_task_id: str | None = None
     
     testcase_id: int
     testsuite_run_id: int | None = None
@@ -85,6 +94,8 @@ class TestSuiteRunRead(BaseModel):
     name: str
     mode: RunMode
     status: RunStatus
+    use_screenshots: bool
+    use_video: bool
 
     testsuite_id: int
     llm_model: LLMModelRead | None = None

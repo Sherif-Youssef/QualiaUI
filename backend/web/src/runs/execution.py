@@ -16,7 +16,9 @@ from automation_engine import (
 from pydantic import BaseModel, Field
 from sqlmodel import Session
 from src.file_storage.s3 import get_s3_storage, S3FileStorage, FileIdentifier
+from src.file_storage.base import VideoType
 from src.config import settings
+from pathlib import Path
 
 from src.runs.models import (
     RunMode,
@@ -94,11 +96,34 @@ async def upload_screenshot(image: bytes, key: str | None = None) -> str:
     screenshots_bucket = settings.S3_SCREENSHOTS_BUCKET
     s3_storage = get_s3_storage()
     identifier = FileIdentifier(bucket=screenshots_bucket, key=key)
-    result = await s3_storage.upload_image(
+    result = await s3_storage.upload_image_bytes(
         identifier=identifier,
         image=image,
     )
     logger.debug("Uploaded screenshot to %s", result.url)
+    return result.url
+
+async def upload_video(video_path: Path, key: str | None = None) -> str:
+    if not key:
+        key = generate_uuid()
+
+    logger.debug("Uploading video to S3: key=%s path=%s", key, video_path)
+
+    videos_bucket = settings.S3_SCREENSHOTS_BUCKET
+    s3_storage = get_s3_storage()
+
+    identifier = FileIdentifier(
+        bucket=videos_bucket,
+        key=key
+    )
+
+    result = await s3_storage.upload_path(
+        identifier=identifier,
+        path=str(video_path),
+        file_type=VideoType.WEBM,
+    )
+
+    logger.debug("Uploaded video to %s", result.url)
     return result.url
     
 async def stream_step(
@@ -315,13 +340,31 @@ class TestCaseJob:
                     run_session.finalize()
                     run = cast(TestRun, run_session._test_run)
 
+                    if self.testcase_run.use_video:
+                        try:
+                            video_path = await run_session.get_video_path()
+                            if video_path:
+                                from src.runs.tasks import upload_video_task
+                                # We need to pass the video_dir to the task so it can clean it up
+                                # The video_dir is passed to the engine config in tasks.py
+                                video_dir = str(Path(video_path).parent)
+                                task = upload_video_task.delay(self.testcase_run_id, video_path, video_dir)
+                                self.testcase_run.video_upload_task_id = task.id
+                        except Exception:
+                            logger.exception("Failed to initiate video upload task for testcase_run_id=%s", self.testcase_run_id)
+
                 status = to_run_status(run.status)
                 logger.info("Test run finished: testcase_run_id=%s status=%s", self.testcase_run_id, status)
+
+                termination_screenshoot = None
+                if run.groups[-1].final_snapshot:
+                    termination_screenshoot = await upload_screenshot(run.groups[-1].final_snapshot.screenshot)
 
                 # status: running -> passed/failed
                 self.testcase_run.status = status
                 self.testcase_run.finished_at = run.finished_at or datetime.now(timezone.utc)
                 self.testcase_run.termination_reason = run.termination_reason
+                self.testcase_run.termination_screenshot = termination_screenshoot
                 self.db_session.add(self.testcase_run)
                 self.db_session.commit()
                 self._stream_status(status, termination_reason=run.termination_reason)

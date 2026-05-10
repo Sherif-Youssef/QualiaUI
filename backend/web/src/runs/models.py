@@ -46,6 +46,8 @@ class TestSuiteRun(SQLModel, table=True):
     started_at: datetime | None = Field(default=None, nullable=True)
     finished_at: datetime | None = Field(default=None, nullable=True)
     job_uid: str = Field(unique=True, index=True, nullable=False)
+    use_screenshots: bool = Field(default=False)
+    use_video: bool = Field(default=False)
 
     # user
     user_id: int | None = Field(foreign_key="user.id", ondelete="SET NULL", nullable=True)
@@ -81,6 +83,12 @@ class TestCaseRun(SQLModel, table=True):
     finished_at: datetime | None = Field(default=None, nullable=True)
     job_uid: str = Field(unique=True, index=True, nullable=False)
     mode: RunMode
+    use_screenshots: bool = Field(default=False)
+    use_video: bool = Field(default=False)
+
+    termination_screenshot: str | None = Field(default=None, nullable=True)
+    video_url: str | None = Field(default=None, nullable=True)
+    video_upload_task_id: str | None = Field(default=None, nullable=True)
 
     name: str
     base_url: str

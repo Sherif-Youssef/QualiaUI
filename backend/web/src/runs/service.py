@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from sqlmodel import Session
 import logging
 
+from .schemas import TestcaseStartRunRequest, TestsuiteStartRunRequest
 from src.projects.models import Role as ProjectRole, Project
 from src.projects.queries import get_with_link
 from src.llms.models import LLMModel
@@ -80,12 +81,12 @@ def _get_model_or_throw(session: Session, llm_model_id: int):
 def launch_testcase_run(
     session: Session,
     testcase: TestCase,
-    mode: RunMode,
-    llm_model_id: int,
+    request: TestcaseStartRunRequest,
     user: User
 ) -> StartRunResponse:
     
-    llm_model = _get_model_or_throw(session, llm_model_id)
+    llm_model = _get_model_or_throw(session, request.llm_model_id)
+    mode = request.mode
 
     job_uid = _generate_uuid()
     logger.info("Launching testcase run: testcase_id=%s mode=%s job_uid=%s", testcase.id, mode, job_uid)
@@ -99,8 +100,10 @@ def launch_testcase_run(
         name=testcase.name,
         instruction=testcase.instruction,
         testsuite_run_id = None,
-        llm_model_id=llm_model_id,
-        user_id=user.id
+        llm_model_id=request.llm_model_id,
+        user_id=user.id,
+        use_screenshots=request.use_screenshots,
+        use_video=request.use_video
     )
 
     session.add(test_case_run)
@@ -141,11 +144,13 @@ def launch_testcase_run(
 def launch_testsuite_run(
     session: Session,
     testsuite: TestSuite,
-    mode: RunMode,
-    llm_model_id: int,
+    request: TestsuiteStartRunRequest,
     user: User
 ) -> StartRunResponse:
-    llm_model = _get_model_or_throw(session, llm_model_id)
+    llm_model = _get_model_or_throw(
+        session=session, 
+        llm_model_id=request.llm_model_id
+    )
 
     testcases = list(testsuite.testcases)
     if not testcases:
@@ -156,12 +161,14 @@ def launch_testsuite_run(
 
     testsuite_run = TestSuiteRun(
         scope=Scope.TESTSUITE,
-        mode=mode,
+        mode=request.mode,
         job_uid=suite_job_uid,
         testsuite_id=testsuite.id,  # type: ignore[arg-type]
         name=testsuite.name,
-        llm_model_id=llm_model_id,
-        user_id=user.id
+        llm_model_id=request.llm_model_id,
+        user_id=user.id,
+        use_screenshots=request.use_screenshots,
+        use_video=request.use_video
     )
     session.add(testsuite_run)
     session.flush()
@@ -169,15 +176,17 @@ def launch_testsuite_run(
     testcase_runs = [
         TestCaseRun(
             scope=Scope.TESTSUITE,
-            mode=mode,
+            mode=request.mode,
             job_uid=job_uid,
             testcase_id=testcase.id,  # type: ignore[arg-type]
             testsuite_run_id=testsuite_run.id,
             name=testcase.name,
             base_url=testcase.base_url,
             instruction=testcase.instruction,
-            llm_model_id=llm_model_id,
-            user_id=user.id
+            llm_model_id=request.llm_model_id,
+            user_id=user.id,
+            use_screenshots=request.use_screenshots,
+            use_video=request.use_video
         )
         for testcase, job_uid in zip(testcases, testcase_job_uids)
     ]
@@ -202,6 +211,8 @@ def launch_testsuite_run(
         stream_key=stream_key,
         abort_id=testsuite_run_id,
         stream_steps=True,
+        use_screenshots=request.use_screenshots,
+        use_video=request.use_video
     )
     workflow.apply_async(task_id=suite_job_uid)  
 

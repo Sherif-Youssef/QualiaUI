@@ -30,8 +30,32 @@ class ImageType(str, Enum):
                 return member
         raise ValueError(f"Unsupported image extension: {ext!r}")
 
+class VideoType(str, Enum):
+    MP4  = "video/mp4",  ("mp4",)
+    WEBM = "video/webm", ("webm",)
 
-FileType = ImageType
+    def __new__(cls, mime: str, _extensions: tuple[str, ...]) -> "VideoType":
+        obj = str.__new__(cls, mime) 
+        obj._value_ = mime
+        return obj
+
+    def __init__(self, _mime: str, extensions: tuple[str, ...]) -> None:
+        self._extensions = extensions
+
+    @property
+    def extension(self) -> str:
+        """Canonical file extension."""
+        return self._extensions[0]
+
+    @classmethod
+    def from_extension(cls, ext: str) -> "VideoType":
+        key = ext.lstrip(".").lower()
+        for member in cls:
+            if key in member._extensions:
+                return member
+        raise ValueError(f"Unsupported image extension: {ext!r}")
+
+FileType = ImageType | VideoType
 
 @dataclass(frozen=True)
 class FileIdentifier:
@@ -79,25 +103,38 @@ class FileStorage(ABC):
         ...
 
     @abstractmethod
-    async def upload(
+    async def upload_bytes(
         self,
         identifier: FileIdentifier,
         file: bytes,
         file_type: FileType,
     ) -> StorageResult:
         """
-        Upload a file and return a StorageResult.
+        Upload a file given bytes and return a StorageResult.
         Raises UploadError on failure.
         """
         ...
-    
-    async def upload_image(
+
+    @abstractmethod
+    async def upload_path(
+        self,
+        identifier: FileIdentifier,
+        path: str,
+        file_type: FileType,
+    ) -> StorageResult:
+        """
+        Upload a file given path and return a StorageResult.
+        Raises UploadError on failure.
+        """
+        ...
+
+    async def upload_image_bytes(
         self,
         identifier: FileIdentifier,
         image: bytes,
         image_type: ImageType = ImageType.PNG,
     ) -> StorageResult:
-        return await self.upload(
+        return await self.upload_bytes(
             identifier=identifier,
             file=image,
             file_type=image_type
