@@ -58,19 +58,19 @@ class DOMElement(BaseModel):
 
     @property
     def is_disabled(self) -> bool:
-        return self.attributes.get("disabled", False)
+        return "disabled" in self.attributes
 
     @property
     def is_checked(self) -> bool:
-        return self.attributes.get("checked", False)
+        return "checked" in self.attributes
 
     @property
     def is_required(self) -> bool:
-        return self.attributes.get("required", False)
+        return "required" in self.attributes
 
     @property
     def is_selected(self) -> bool:
-        return self.attributes.get("selected", False)
+        return "selected" in self.attributes
 
 
 class PageState(BaseModel):
