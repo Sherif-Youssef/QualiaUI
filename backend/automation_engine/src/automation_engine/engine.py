@@ -186,12 +186,12 @@ class TestingSession:
         logger.info("Finalized run")
         return self._test_run
 
-    async def get_video_path(self) -> Path | None:
+    async def get_video_path(self) -> str | None:
         if not self._engine.config.browser.record_video_dir:
             raise ValueError("Video recording not enabled for this session")
         if not self._test_run.is_finalized:
             raise ValueError("Test run must be finalized to get video path")
-        return await Path(self._browser.page.video.path()) if self._browser and self._browser.page.video else None  
+        return await str(self._browser.page.video.path()) if self._browser and self._browser.page.video else None  
 
     def finalize_group(self) -> TestStepGroup:
         if (
