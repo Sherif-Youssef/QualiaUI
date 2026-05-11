@@ -66,12 +66,8 @@ class ActionCompiler:
     # Helpers
 
     def _sel(self, element_id: int) -> str:
-        selector = self._ctx.dom_index.selector(element_id)
-        page = self._ctx.page
-        if page is not None and page.locator(selector).count() == 0:
-            raise CompilationError(f"Element ID {element_id} resolved to selector '{selector}', but no matching element was found on the page.")
-
-        return selector
+        return f"aria-ref=e{element_id}"
+        # return self._ctx.dom_index.selector(element_id)
 
     def _resolve_js(self, code: str) -> str:
         def _replace(match: re.Match) -> str:

@@ -16,13 +16,20 @@ class BuildModelStateStep:
     def __init__(self):
         self._page_renderer = PageRenderer()
         self._history_renderer = HistoryRenderer()
+    
+    async def _snapshot(self, ctx: IterationContext) -> str:
+        snapshot = await ctx.browser.page.locator("body").aria_snapshot(mode="ai")
+        pattern = r"\[ref=e(\d+)\]"
+        import re
+        return re.sub(pattern, r"[#\1]", snapshot)
+
 
     async def run(self, ctx: IterationContext) -> IterationContext:
         snapshot = ctx.snapshot
 
         ctx.model_state = ModelState(
             instruction=ctx.instruction,
-            page=self._page_renderer.render(snapshot.state),
+            page=await self._snapshot(ctx),
             history=self._history_renderer.render_history(ctx.test_run),
             screenshot=(
                 snapshot.state.screenshot if snapshot.state else None

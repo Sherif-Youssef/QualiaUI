@@ -235,7 +235,8 @@ class PlaywrightBrowser:
             target = self.page.locator(target_selector).locator("xpath=ancestor::select").first
             await target.select_option(
                 value=await self.page.locator(target_selector).get_attribute("value"),
-                timeout=timeout
+                timeout=timeout,
+                force=True
             )
             return
 
@@ -244,7 +245,7 @@ class PlaywrightBrowser:
             kwargs["modifiers"] = modifiers
         if timeout is not None:
             kwargs["timeout"] = timeout
-        await self.page.click(target_selector, **kwargs)
+        await self.page.click(target_selector, **kwargs, force=True)
 
     @register_action(FillExec)
     async def fill(
@@ -259,7 +260,7 @@ class PlaywrightBrowser:
         kwargs = {"timeout": timeout} if timeout else {}
         if clear_first:
             await locator.clear(**kwargs)
-        await locator.fill(value, **kwargs)
+        await locator.fill(value, **kwargs, force=True)
 
     @register_action(HoverExec)
     async def hover(
@@ -269,7 +270,7 @@ class PlaywrightBrowser:
         timeout: float | None = None,
     ) -> None:
         kwargs = {"timeout": timeout} if timeout else {}
-        await self.page.locator(target_selector).hover(**kwargs)
+        await self.page.locator(target_selector).hover(**kwargs, force=True)
 
     @register_action(SelectOptionExec)
     async def select_option(
@@ -292,7 +293,7 @@ class PlaywrightBrowser:
             raise ValueError("Provide at least one of: value, label, index.")
         if timeout is not None:
             kwargs["timeout"] = timeout
-        await self.page.locator(target_selector).select_option(**kwargs)
+        await self.page.locator(target_selector).select_option(**kwargs, force=True)
 
     @register_action(PressExec)
     async def press(
@@ -341,7 +342,7 @@ class PlaywrightBrowser:
         kwargs = {"timeout": timeout} if timeout else {}
         source = self.page.locator(source_selector)
         target = self.page.locator(target_selector)
-        await source.drag_to(target, **kwargs)
+        await source.drag_to(target, **kwargs, force=True)
 
     @register_action(UploadFileExec)
     async def set_input_files(
