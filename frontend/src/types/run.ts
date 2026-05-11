@@ -15,6 +15,8 @@ export interface BaseRun {
     status: RunStatus;
     use_screenshots?: boolean;
     use_video?: boolean;
+    timeout?: number;
+    should_group_actions?: boolean;
     llm_model?: {
         id: number;
         model_name: string;

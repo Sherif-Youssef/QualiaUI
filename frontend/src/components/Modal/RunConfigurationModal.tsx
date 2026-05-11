@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Sparkles, Cpu, Camera, Video } from 'lucide-react';
 import { Button } from '../ui/button';
+import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import {
     Select,
@@ -13,11 +14,17 @@ import { Checkbox } from '../ui/checkbox';
 import { llmService } from '@/services/llmService';
 import { Provider, LLMModel } from '@/types/llm';
 import { ErrorMessage } from '../GeneralComponents';
+import { Timer, Layers } from 'lucide-react';
 
 interface RunConfigurationModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onConfirm: (llmModelId: number, options: { useScreenshots: boolean; useVideo: boolean }) => void;
+    onConfirm: (llmModelId: number, options: { 
+        useScreenshots: boolean; 
+        useVideo: boolean;
+        timeout: number;
+        shouldGroupActions: boolean;
+    }) => void;
     title?: string;
 }
 
@@ -33,6 +40,8 @@ export const RunConfigurationModal: React.FC<RunConfigurationModalProps> = ({
     const [selectedModelId, setSelectedModelId] = useState<string>('');
     const [useScreenshots, setUseScreenshots] = useState(false);
     const [useVideo, setUseVideo] = useState(true);
+    const [timeout, setTimeoutVal] = useState(60000);
+    const [shouldGroupActions, setShouldGroupActions] = useState(false);
     const [isLoadingProviders, setIsLoadingProviders] = useState(false);
     const [isLoadingModels, setIsLoadingModels] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -86,7 +95,12 @@ export const RunConfigurationModal: React.FC<RunConfigurationModalProps> = ({
 
     const handleConfirm = () => {
         if (selectedModelId) {
-            onConfirm(parseInt(selectedModelId), { useScreenshots, useVideo });
+            onConfirm(parseInt(selectedModelId), { 
+                useScreenshots, 
+                useVideo,
+                timeout,
+                shouldGroupActions
+            });
         }
     };
 
@@ -94,9 +108,9 @@ export const RunConfigurationModal: React.FC<RunConfigurationModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/30 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col border border-gray-200 animate-in fade-in zoom-in duration-200">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-hidden flex flex-col border border-gray-200 animate-in fade-in zoom-in duration-200">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-white">
-                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-gray-800 font-sans flex items-center gap-2">
                         <Sparkles className="w-5 h-5 text-primary" />
                         {title}
                     </h2>
@@ -105,7 +119,7 @@ export const RunConfigurationModal: React.FC<RunConfigurationModalProps> = ({
                     </button>
                 </div>
 
-                <div className="p-6 space-y-6 bg-white">
+                <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white [scrollbar-width:thin] [scrollbar-color:#E5E7EB_transparent]">
                     {error && <ErrorMessage message={error} />}
 
                     <div className="space-y-2">
@@ -215,6 +229,53 @@ export const RunConfigurationModal: React.FC<RunConfigurationModalProps> = ({
                                         <p className="text-xs text-gray-500">Record a video of the test execution</p>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div 
+                                className="flex items-center space-x-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+                                onClick={() => setShouldGroupActions(!shouldGroupActions)}
+                            >
+                                <Checkbox 
+                                    id="shouldGroupActions" 
+                                    checked={shouldGroupActions}
+                                    onCheckedChange={(checked) => setShouldGroupActions(!!checked)}
+                                />
+                                <div className="flex items-center gap-2 flex-1">
+                                    <Layers className="w-4 h-4 text-gray-500" />
+                                    <div className="grid gap-0.5">
+                                        <label
+                                            htmlFor="shouldGroupActions"
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                        >
+                                            Group Actions
+                                        </label>
+                                        <p className="text-xs text-gray-500">Allow model to perform multiple actions at once</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 p-3 rounded-lg border border-gray-100 bg-gray-50/30">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Timer className="w-4 h-4 text-gray-500" />
+                                    <Label htmlFor="timeout" className="text-sm font-semibold text-gray-700">
+                                        Step Timeout (ms)
+                                    </Label>
+                                </div>
+                                <div className="relative">
+                                    <Input
+                                        id="timeout"
+                                        type="number"
+                                        value={timeout}
+                                        onChange={(e) => setTimeoutVal(parseInt(e.target.value) || 60000)}
+                                        className="h-10 pl-3 pr-10"
+                                        min={5000}
+                                        step={5000}
+                                    />
+                                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 uppercase">
+                                        ms
+                                    </div>
+                                </div>
+                                <p className="text-[10px] text-gray-400 font-medium">Maximum wait time for each test step</p>
                             </div>
                         </div>
                     </div>

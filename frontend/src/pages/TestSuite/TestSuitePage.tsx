@@ -11,13 +11,14 @@ import { ErrorMessage } from '@/components/GeneralComponents';
 import { useTestSuite } from './hooks/useTestSuite';
 import { RunConfigurationModal } from '@/components/Modal/RunConfigurationModal';
 import { TestSuiteHistoryView } from './TestSuiteHistoryView';
-import { LayoutGrid, History } from 'lucide-react';
+import { LayoutGrid, History, Settings } from 'lucide-react';
+import { TestSuiteManageView } from './TestSuiteManageView';
 
 export const TestSuitePage: React.FC = () => {
     const { projectId, suiteId } = useParams<{ projectId: string; suiteId: string }>();
     const navigate = useNavigate();
     const [isRunConfigModalOpen, setIsRunConfigModalOpen] = React.useState(false);
-    const [activeView, setActiveView] = React.useState<'cases' | 'history'>('cases');
+    const [activeView, setActiveView] = React.useState<'cases' | 'history' | 'manage'>('cases');
 
     const {
         suiteName,
@@ -91,6 +92,17 @@ export const TestSuitePage: React.FC = () => {
                                 <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.3)]" />
                             )}
                         </button>
+                        <button
+                            onClick={() => setActiveView('manage')}
+                            className={`flex items-center gap-2 px-6 py-4 text-sm font-bold transition-all relative ${activeView === 'manage' ? 'text-primary' : 'text-gray-400 hover:text-gray-600'
+                                }`}
+                        >
+                            <Settings className="w-4 h-4" />
+                            Manage
+                            {activeView === 'manage' && (
+                                <div className="absolute bottom-0 left-0 right-0 h-1 bg-primary rounded-t-full shadow-[0_-2px_10px_rgba(var(--primary-rgb),0.3)]" />
+                            )}
+                        </button>
                     </div>
 
                     {activeView === 'cases' && (
@@ -134,9 +146,16 @@ export const TestSuitePage: React.FC = () => {
                             )
                         )}
                     </>
-                ) : (
+                ) : activeView === 'history' ? (
                     projectId && suiteId && (
                         <TestSuiteHistoryView
+                            projectId={projectId}
+                            suiteId={suiteId}
+                        />
+                    )
+                ) : (
+                    projectId && suiteId && (
+                        <TestSuiteManageView
                             projectId={projectId}
                             suiteId={suiteId}
                         />

@@ -11,8 +11,6 @@ interface ProjectTestSuiteViewProps {
     canManageSuites: boolean;
     onAddSuite: () => void;
     onNavigate: (id: string) => void;
-    onEdit: (suite: TestSuite, e: React.MouseEvent) => void;
-    onDelete: (id: string, name: string, e: React.MouseEvent) => void;
 }
 
 export const ProjectTestSuiteView: React.FC<ProjectTestSuiteViewProps> = ({
@@ -22,9 +20,7 @@ export const ProjectTestSuiteView: React.FC<ProjectTestSuiteViewProps> = ({
     isSearchEmpty,
     canManageSuites,
     onAddSuite,
-    onNavigate,
-    onEdit,
-    onDelete
+    onNavigate
 }) => {
     if (isLoading && suites.length === 0) {
         return (
@@ -44,8 +40,6 @@ export const ProjectTestSuiteView: React.FC<ProjectTestSuiteViewProps> = ({
             <TestSuiteList
                 suites={suites}
                 onNavigate={onNavigate}
-                onEdit={onEdit}
-                onDelete={onDelete}
                 canManageSuites={canManageSuites}
             />
             {isSearchEmpty && (

@@ -85,6 +85,35 @@ export const testCaseService = {
         }
     },
 
+    addCookie: async (projectId: string, suiteId: string, caseId: string, cookie: any) => {
+        try {
+            const response = await api.post(`/projects/${projectId}/testsuites/${suiteId}/testcases/${caseId}/cookies`, cookie);
+            return response.data;
+        } catch (error) {
+            console.error(`Service error (addTestCaseCookie ${caseId}):`, error);
+            throw error;
+        }
+    },
+
+    updateCookie: async (projectId: string, suiteId: string, caseId: string, cookieId: string | number, cookie: any) => {
+        try {
+            const response = await api.put(`/projects/${projectId}/testsuites/${suiteId}/testcases/${caseId}/cookies/${cookieId}`, cookie);
+            return response.data;
+        } catch (error) {
+            console.error(`Service error (updateTestCaseCookie ${cookieId}):`, error);
+            throw error;
+        }
+    },
+
+    deleteCookie: async (projectId: string, suiteId: string, caseId: string, cookieId: string | number) => {
+        try {
+            await api.delete(`/projects/${projectId}/testsuites/${suiteId}/testcases/${caseId}/cookies/${cookieId}`);
+        } catch (error) {
+            console.error(`Service error (deleteTestCaseCookie ${cookieId}):`, error);
+            throw error;
+        }
+    },
+
     getAllProjectTestCases: async (projectId: string): Promise<TestCase[]> => {
         try {
             // Limit must be <= 100 per backend PaginationParams

@@ -120,7 +120,12 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
         setIsModalOpen(true);
     };
 
-    const handleRunAll = async (llmModelId?: number, options?: { useScreenshots: boolean; useVideo: boolean }) => {
+    const handleRunAll = async (llmModelId?: number, options?: { 
+        useScreenshots: boolean; 
+        useVideo: boolean;
+        timeout: number;
+        shouldGroupActions: boolean;
+    }) => {
         if (!projectId || !suiteId || isStartingRef.current) return;
 
         isStartingRef.current = true;
@@ -132,7 +137,9 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
                 'NATURAL', 
                 llmModelId,
                 options?.useScreenshots,
-                options?.useVideo
+                options?.useVideo,
+                options?.timeout,
+                options?.shouldGroupActions
             );
             setActiveRunId(run.run_id);
             navigate(`/project/${projectId}/suite/${suiteId}/run/${run.run_id}`);
