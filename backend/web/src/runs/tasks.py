@@ -6,7 +6,8 @@ import tempfile
 import shutil
 import os
 
-from automation_engine import BrowserConfig, EngineConfig, TestingEngine, LLMConfig
+from automation_engine import BrowserConfig, EngineConfig, TestingEngine, LLMConfig, mode_presets
+
 from celery import chord, group, Task
 from celery.canvas import Signature
 from sqlmodel import Session
@@ -30,17 +31,31 @@ from .schemas import RunStatus
 
 logger = logging.getLogger(__name__)
 
-def _build_testing_engine(llm_model: LLMModel, use_screenshots: bool, record_video_dir: str | None = None) -> TestingEngine:
+def _build_testing_engine(
+    llm_model: LLMModel, 
+    use_screenshots: bool, 
+    record_video_dir: str | None = None, 
+    cookies: list[dict] | None = None,
+    timeout: int = 60000,
+    should_group_actions: bool | None = False
+) -> TestingEngine:
     return TestingEngine(
         config=EngineConfig(
-            browser=BrowserConfig(headless=True, record_video_dir=record_video_dir),
+            browser=BrowserConfig(
+                headless=True, 
+                record_video_dir=record_video_dir, 
+                cookies=cookies,
+                default_timeout=timeout,
+                default_navigation_timeout=timeout
+            ),
             llm=LLMConfig(
                 provider=llm_model.provider.provider_type.value,
                 model=llm_model.model_name,
                 api_key=llm_model.provider.api_key,
                 base_url=llm_model.provider.base_url,
                 additional_kwargs=llm_model.provider.additional_config,
-                use_screenshot=use_screenshots
+                use_screenshot=use_screenshots,
+                planning_mode=mode_presets.GROUP_FULL if should_group_actions else mode_presets.SINGLE_FULL
             )
         ),
     )
@@ -102,7 +117,10 @@ class ExecuteTestcaseTask(Task):
             testing_engine = _build_testing_engine(
                 llm_model=testcase_run.llm_model,
                 use_screenshots=testcase_run.use_screenshots,
-                record_video_dir=video_dir
+                record_video_dir=video_dir,
+                cookies=testcase_run.start_cookies,
+                timeout=testcase_run.timeout,
+                should_group_actions=testcase_run.should_group_actions
             )
 
             try:

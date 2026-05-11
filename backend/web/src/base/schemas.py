@@ -1,13 +1,13 @@
 from enum import StrEnum
 
-from typing import Generic, TypeVar, List, Optional, ClassVar, Any
+from typing import Generic, TypeVar, List, Optional, Literal
 
 from sqlalchemy import inspect, Column
 from sqlalchemy.sql.elements import ColumnElement
 from fastapi import Query
 from pydantic import BaseModel
 from sqlmodel import SQLModel
-from enum import Enum
+from enum import Enum, StrEnum
 
 T = TypeVar("T")
 
@@ -84,3 +84,21 @@ class Scope(StrEnum):
     TESTCASE = "TESTCASE"
     TESTSUITE = "TESTSUITE"
     PROJECT = "PROJECT"
+
+class SameSite(StrEnum):
+    LAX = "Lax"
+    NONE = "None"
+    STRICT = "Strict"
+
+class Cookie(BaseModel):
+    id: Optional[int] = None
+    name: str
+    value: str
+    url: Optional[str] = None
+    domain: Optional[str] = None
+    path: Optional[str] = None
+    expires: Optional[float] = None
+    httpOnly: Optional[bool] = None
+    secure: Optional[bool] = None
+    sameSite: Optional[SameSite] = None
+    partitionKey: Optional[str] = None

@@ -12,6 +12,7 @@ from src.projects.models import Role as ProjectRole
 
 from .models import TestCase
 from .queries import get_by_id_with_user_link
+from src.base.models import Cookie as CookieModel
 
 
 def _testcase_dep_factory(minimum_role: ProjectRole):
@@ -42,3 +43,18 @@ get_admin_testcase = _testcase_dep_factory(ProjectRole.ADMIN)
 ViewerTestCaseDep = Annotated[TestCase, Depends(get_viewer_testcase)]
 EditorTestCaseDep = Annotated[TestCase, Depends(get_editor_testcase)]
 AdminTestCaseDep  = Annotated[TestCase, Depends(get_admin_testcase)]
+
+
+def get_testcase_cookie(
+    session: SessionDep,
+    testcase: EditorTestCaseDep,
+    cookie_id: int = Path(...),
+) -> CookieModel:
+    cookie = session.get(CookieModel, cookie_id)
+    
+    if not cookie or cookie.testcase_id != testcase.id:
+        raise HTTPException(status_code=404, detail="Cookie not found")
+    
+    return cookie
+
+TestCaseCookieDep = Annotated[CookieModel, Depends(get_testcase_cookie)]

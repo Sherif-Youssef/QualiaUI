@@ -16,7 +16,7 @@ def get_by_id(
 ) -> TestSuite | None:
     statement = select(TestSuite).where(
         TestSuite.id == testsuite_id,
-    )
+    ).options(selectinload(TestSuite.cookies))
 
     if include_testcases:
         statement = statement.options(selectinload(TestSuite.testcases)) # type: ignore[arg-type]
@@ -39,6 +39,7 @@ def get_by_id_with_user_link(
             ),
         )
         .where(TestSuite.id == testsuite_id)
+        .options(selectinload(TestSuite.cookies))
     )
 
     result = session.exec(statement)
@@ -47,8 +48,8 @@ def get_by_id_with_user_link(
     if row is None:
         return None  # TestSuite not found
 
-    testsuite, user_project_link = row
-    return testsuite, user_project_link  
+    testsuite, user_link = row
+    return testsuite, user_link  
 
 
 def get_all(

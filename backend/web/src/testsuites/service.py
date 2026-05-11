@@ -11,6 +11,8 @@ from src.projects.models import Project
 from .models import TestSuite
 from .queries import count, delete, get_all
 from .schemas import TestSuiteCreate, TestSuiteRead, TestSuiteUpdate
+from src.base.models import Cookie as CookieModel
+from src.base.schemas import Cookie as CookieSchema
 
 
 def list_testsuites(
@@ -24,12 +26,7 @@ def list_testsuites(
 
     return Page(
         items=[
-            TestSuiteRead(
-                id=testsuite.id,  # type: ignore[arg-type]
-                project_id=testsuite.project_id,
-                name=testsuite.name,
-                description=testsuite.description,
-            )
+            TestSuiteRead.model_validate(testsuite, from_attributes=True)
             for testsuite in testsuites
         ],
         offset=pagination_params.offset,
@@ -91,6 +88,44 @@ def update_testsuite(
     session.refresh(testsuite)
 
     return testsuite
+
+
+def add_cookie_to_testsuite(
+    session: Session,
+    testsuite: TestSuite,
+    cookie_create: CookieSchema,
+) -> CookieModel:
+    cookie = CookieModel(
+        **cookie_create.model_dump(),
+        testsuite_id=testsuite.id,
+    )
+    session.add(cookie)
+    session.commit()
+    session.refresh(cookie)
+
+    return cookie
+
+
+def update_testsuite_cookie(
+    session: Session,
+    cookie: CookieModel,
+    cookie_update: CookieSchema,
+) -> CookieModel:
+    for key, value in cookie_update.model_dump(exclude_unset=True).items():
+        setattr(cookie, key, value)
+    
+    session.add(cookie)
+    session.commit()
+    session.refresh(cookie)
+    return cookie
+
+
+def delete_testsuite_cookie(
+    session: Session,
+    cookie: CookieModel,
+) -> None:
+    session.delete(cookie)
+    session.commit()
 
 
 def delete_testsuite(session: Session, testsuite: TestSuite) -> None:

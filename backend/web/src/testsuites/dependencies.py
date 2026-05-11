@@ -11,6 +11,7 @@ from src.projects.models import Role as ProjectRole
 
 from .models import TestSuite
 from .queries import get_by_id_with_user_link
+from src.base.models import Cookie as CookieModel
 
 
 def _testsuite_dep_factory(minimum_role: ProjectRole):
@@ -41,3 +42,18 @@ get_admin_testsuite = _testsuite_dep_factory(ProjectRole.ADMIN)
 ViewerTestSuiteDep = Annotated[TestSuite, Depends(get_viewer_testsuite)]
 EditorTestSuiteDep = Annotated[TestSuite, Depends(get_editor_testsuite)]
 AdminTestSuiteDep  = Annotated[TestSuite, Depends(get_admin_testsuite)]
+
+
+def get_testsuite_cookie(
+    session: SessionDep,
+    testsuite: EditorTestSuiteDep,
+    cookie_id: int = Path(...),
+) -> CookieModel:
+    cookie = session.get(CookieModel, cookie_id)
+    
+    if not cookie or cookie.testsuite_id != testsuite.id:
+        raise HTTPException(status_code=404, detail="Cookie not found")
+    
+    return cookie
+
+TestSuiteCookieDep = Annotated[CookieModel, Depends(get_testsuite_cookie)]

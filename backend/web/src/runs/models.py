@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from enum import StrEnum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, Literal
 
 from sqlmodel import Column, Field, JSON, Relationship, SQLModel
 
@@ -67,6 +67,11 @@ class TestSuiteRun(SQLModel, table=True):
     # lower
     testcase_runs: list["TestCaseRun"] = Relationship(back_populates="testsuite_run", cascade_delete=True)
 
+    start_cookies: list[dict] = Field(default_factory=list, sa_column=Column(JSON))
+
+    timeout: int = 60000
+    should_group_actions: bool = False
+
 
 class TestCaseRun(SQLModel, table=True):
     __tablename__ = "testcase_run"
@@ -113,6 +118,11 @@ class TestCaseRun(SQLModel, table=True):
 
     # lower
     teststep_runs: list["TestStepRun"] = Relationship(back_populates="testcase_run", cascade_delete=True)
+
+    start_cookies: list[dict] = Field(default_factory=list, sa_column=Column(JSON))
+
+    timeout: int = 60000
+    should_group_actions: bool = False
 
 
 class TestStepRun(SQLModel, table=True):

@@ -4,6 +4,7 @@ from sqlmodel import SQLModel, Field, Relationship, JSON, Column
 if TYPE_CHECKING:
     from src.testsuites.models import TestSuite
     from src.runs.models import TestCaseRun
+    from src.base.models import Cookie
 
 
 class TestCase(SQLModel, table=True):
@@ -21,3 +22,4 @@ class TestCase(SQLModel, table=True):
     testsuite: "TestSuite" = Relationship(back_populates="testcases")
 
     runs: list["TestCaseRun"] = Relationship(back_populates="testcase", cascade_delete=True)
+    cookies: list["Cookie"] = Relationship(back_populates="testcase", cascade_delete=True)
