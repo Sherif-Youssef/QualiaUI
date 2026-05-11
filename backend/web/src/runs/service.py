@@ -34,6 +34,22 @@ def _generate_uuid() -> str:
     return str(uuid4())
 
 
+def _get_effective_cookies(testcase: TestCase, testsuite: TestSuite | None = None) -> list[dict]:
+    cookies_dict = {}
+
+    # 1. TestSuite cookies (lower precedence)
+    target_suite = testsuite or testcase.testsuite
+    if target_suite:
+        for cookie in target_suite.cookies:
+            cookies_dict[cookie.name] = cookie.model_dump(exclude={"id", "testcase_id", "testsuite_id"}, exclude_none=True)
+
+    # 2. TestCase cookies (higher precedence)
+    for cookie in testcase.cookies:
+        cookies_dict[cookie.name] = cookie.model_dump(exclude={"id", "testcase_id", "testsuite_id"}, exclude_none=True)
+
+    return list(cookies_dict.values())
+
+
 def _build_testsuite_workflow_signature(
     *,
     testcase_runs_ids: list[int],
@@ -103,7 +119,10 @@ def launch_testcase_run(
         llm_model_id=request.llm_model_id,
         user_id=user.id,
         use_screenshots=request.use_screenshots,
-        use_video=request.use_video
+        use_video=request.use_video,
+        start_cookies=_get_effective_cookies(testcase),
+        timeout=request.timeout,
+        should_group_actions=request.should_group_actions
     )
 
     session.add(test_case_run)
@@ -168,7 +187,10 @@ def launch_testsuite_run(
         llm_model_id=request.llm_model_id,
         user_id=user.id,
         use_screenshots=request.use_screenshots,
-        use_video=request.use_video
+        use_video=request.use_video,
+        start_cookies=[c.model_dump(exclude={"id", "testcase_id", "testsuite_id"}, exclude_none=True) for c in testsuite.cookies],
+        timeout=request.timeout,
+        should_group_actions=request.should_group_actions
     )
     session.add(testsuite_run)
     session.flush()
@@ -186,7 +208,10 @@ def launch_testsuite_run(
             llm_model_id=request.llm_model_id,
             user_id=user.id,
             use_screenshots=request.use_screenshots,
-            use_video=request.use_video
+            use_video=request.use_video,
+            start_cookies=_get_effective_cookies(testcase, testsuite),
+            timeout=request.timeout,
+            should_group_actions=request.should_group_actions
         )
         for testcase, job_uid in zip(testcases, testcase_job_uids)
     ]

@@ -156,7 +156,12 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
         eventSourceRef.current = eventSource;
     }, [caseId, location]);
 
-    const handleRunTest = useCallback(async (llmModelId?: number, options?: { useScreenshots: boolean; useVideo: boolean }) => {
+    const handleRunTest = useCallback(async (llmModelId?: number, options?: { 
+        useScreenshots: boolean; 
+        useVideo: boolean;
+        timeout: number;
+        shouldGroupActions: boolean;
+    }) => {
         if (!caseId || isStartingRef.current) return;
         isStartingRef.current = true;
         setIsRunning(true);
@@ -167,7 +172,9 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
                 'NATURAL', 
                 llmModelId,
                 options?.useScreenshots,
-                options?.useVideo
+                options?.useVideo,
+                options?.timeout,
+                options?.shouldGroupActions
             );
             setActiveRunId(run.run_id);
             setTestCase(prev => prev ? { ...prev, status: 'running', steps: [] } : null);

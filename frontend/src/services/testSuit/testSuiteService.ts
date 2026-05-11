@@ -54,5 +54,31 @@ export const testSuiteService = {
             console.error(`Service error (deleteTestSuite ${suiteId}):`, error);
             throw error;
         }
+    },
+    addCookie: async (projectId: string, suiteId: string, cookie: any) => {
+        try {
+            const response = await api.post(`/projects/${projectId}/testsuites/${suiteId}/cookies`, cookie);
+            return response.data;
+        } catch (error) {
+            console.error(`Service error (addTestSuiteCookie ${suiteId}):`, error);
+            throw error;
+        }
+    },
+    updateCookie: async (projectId: string, suiteId: string, cookieId: string | number, cookie: any) => {
+        try {
+            const response = await api.put(`/projects/${projectId}/testsuites/${suiteId}/cookies/${cookieId}`, cookie);
+            return response.data;
+        } catch (error) {
+            console.error(`Service error (updateTestSuiteCookie ${cookieId}):`, error);
+            throw error;
+        }
+    },
+    deleteCookie: async (projectId: string, suiteId: string, cookieId: string | number) => {
+        try {
+            await api.delete(`/projects/${projectId}/testsuites/${suiteId}/cookies/${cookieId}`);
+        } catch (error) {
+            console.error(`Service error (deleteTestSuiteCookie ${cookieId}):`, error);
+            throw error;
+        }
     }
 };

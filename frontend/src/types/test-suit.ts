@@ -1,9 +1,12 @@
+import { Cookie } from "./cookie";
+
 export interface TestSuite {
     id: string;
     projectId: string;
     name: string;
     description: string;
     createdAt: string;
+    cookies?: Cookie[];
 }
 
 export interface TestSuiteDTO {
@@ -12,4 +15,5 @@ export interface TestSuiteDTO {
     name: string;
     description: string;
     created_at: string;
+    cookies?: Cookie[];
 }

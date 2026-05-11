@@ -1,3 +1,4 @@
+from typing import Optional, Literal
 from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -8,12 +9,15 @@ from src.llms.schemas import LLMModelRead
 from src.auth.schemas import UserRead
 
 
+
 class TestsuiteStartRunRequest(BaseModel):
     mode: RunMode
     testsuite_id: int
     use_screenshots: bool = False
     use_video: bool = False
     llm_model_id: int
+    timeout: int = 60000
+    should_group_actions: bool = False
 
 class TestcaseStartRunRequest(BaseModel):
     mode: RunMode
@@ -21,6 +25,9 @@ class TestcaseStartRunRequest(BaseModel):
     use_screenshots: bool = False
     use_video: bool = True
     llm_model_id: int
+    timeout: int = 60000
+    should_group_actions: bool = False
+
 
 class StartRunResponse(BaseModel):
     scope: str
@@ -74,6 +81,11 @@ class TestCaseRunRead(BaseModel):
     testsuite_run_id: int | None = None
     llm_model: LLMModelRead | None = None
     user: UserRead | None = None
+
+    start_cookies: list[dict] = []
+
+    timeout: int
+    should_group_actions: bool 
     
     model_config = ConfigDict(from_attributes=True)
 
@@ -100,6 +112,11 @@ class TestSuiteRunRead(BaseModel):
     testsuite_id: int
     llm_model: LLMModelRead | None = None
     user: UserRead | None = None
+
+    start_cookies: list[dict] = []
+
+    timeout: int
+    should_group_actions: bool 
 
     model_config = ConfigDict(from_attributes=True)
 

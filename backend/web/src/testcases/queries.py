@@ -1,5 +1,6 @@
 from sqlalchemy import func
 from sqlmodel import Session, col, select, and_
+from sqlalchemy.orm import selectinload
 
 from src.base.schemas import PaginationParams
 from src.projects.models import Project, UserProjectLink
@@ -12,6 +13,7 @@ def get_by_id(session: Session, testsuite_id: int, testcase_id: int) -> TestCase
 	statement = (
 		select(TestCase)
 		.where(TestCase.testsuite_id == testsuite_id, TestCase.id == testcase_id)
+		.options(selectinload(TestCase.cookies))
 	)
 	return session.exec(statement).first()
 
@@ -33,6 +35,7 @@ def get_by_id_with_user_link(
             ),
         )
         .where(col(TestCase.id) == testcase_id)
+        .options(selectinload(TestCase.cookies))
     )
 
     result = session.exec(statement)

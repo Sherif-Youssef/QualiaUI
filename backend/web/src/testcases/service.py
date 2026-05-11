@@ -10,6 +10,8 @@ from src.runs.queries import (
 from .models import TestCase
 from .queries import count, delete, get_all, get_by_id
 from .schemas import TestCaseCreate, TestCaseRead, TestCaseUpdate
+from src.base.models import Cookie as CookieModel
+from src.base.schemas import Cookie as CookieSchema
 
 
 def list_testcases(
@@ -23,15 +25,7 @@ def list_testcases(
 
 	return Page(
 		items=[
-				TestCaseRead(
-				id=testcase.id,  # type: ignore[arg-type]
-				testsuite_id=testcase.testsuite_id,  # type: ignore[arg-type]
-				name=testcase.name,
-				description=testcase.description,
-				base_url=testcase.base_url,
-				instruction=testcase.instruction,
-				executable_steps=testcase.executable_steps,
-			)
+			TestCaseRead.model_validate(testcase, from_attributes=True)
 			for testcase in testcases
 		],
 		offset=pagination_params.offset,
@@ -97,6 +91,44 @@ def update_testcase(
 	session.refresh(testcase)
 
 	return testcase
+
+
+def add_cookie_to_testcase(
+	session: Session,
+	testcase: TestCase,
+	cookie_create: CookieSchema,
+) -> CookieModel:
+	cookie = CookieModel(
+		**cookie_create.model_dump(),
+		testcase_id=testcase.id,
+	)
+	session.add(cookie)
+	session.commit()
+	session.refresh(cookie)
+
+	return cookie
+
+
+def update_testcase_cookie(
+	session: Session,
+	cookie: CookieModel,
+	cookie_update: CookieSchema,
+) -> CookieModel:
+	for key, value in cookie_update.model_dump(exclude_unset=True).items():
+		setattr(cookie, key, value)
+	
+	session.add(cookie)
+	session.commit()
+	session.refresh(cookie)
+	return cookie
+
+
+def delete_testcase_cookie(
+	session: Session,
+	cookie: CookieModel,
+) -> None:
+	session.delete(cookie)
+	session.commit()
 
 
 def delete_testcase(session: Session, testcase: TestCase) -> None:

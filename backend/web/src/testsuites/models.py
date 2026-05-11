@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from src.projects.models import Project
     from src.testcases.models import TestCase
     from src.runs.models import TestSuiteRun
+    from src.base.models import Cookie
 
 class TestSuite(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
@@ -16,3 +17,4 @@ class TestSuite(SQLModel, table=True):
     testcases: list["TestCase"] = Relationship(back_populates="testsuite", cascade_delete=True)
 
     runs: list["TestSuiteRun"] = Relationship(back_populates="testsuite", cascade_delete=True)
+    cookies: list["Cookie"] = Relationship(back_populates="testsuite", cascade_delete=True)

@@ -1,3 +1,5 @@
+import { Cookie } from './cookie';
+
 export type TestStatus = 'idle' | 'running' | 'passed' | 'failed' | 'success' | 'failure' | 'executed' | 'error' | 'aborted';
 
 export interface TestCaseDTO {
@@ -14,6 +16,7 @@ export interface TestCaseDTO {
     run_version?: string;
     created_at?: string;
     last_run_duration?: string;
+    cookies?: Cookie[];
 }
 
 export interface TestCase {
@@ -36,6 +39,7 @@ export interface TestCase {
     runVersion?: string;
     createdAt?: string;
     lastRunDuration?: string;
+    cookies?: Cookie[];
 }
 
 export interface TestCaseStep {

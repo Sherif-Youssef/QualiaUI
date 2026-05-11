@@ -29,16 +29,12 @@ export const ProjectPage: React.FC = () => {
         debouncedSearch,
         isModalOpen, setIsModalOpen,
         isAddMemberModalOpen, setIsAddMemberModalOpen,
-        editingSuite, setEditingSuite,
-        deleteConfirmation, setDeleteConfirmation,
         modalLoading,
         modalError, setModalError,
         canManageSuites,
         canManageProject,
         itemsPerPage,
         handleAddTestSuite,
-        handleEditTestSuite,
-        confirmDelete,
         handleMemberAdd,
         handleMemberRemove,
     } = useProjectWorkspace({ projectId });
@@ -74,8 +70,6 @@ export const ProjectPage: React.FC = () => {
                             canManageSuites={canManageSuites}
                             onAddSuite={() => setIsModalOpen(true)}
                             onNavigate={(id) => navigate(`/project/${projectId}/suite/${id}`)}
-                            onEdit={(suite, e) => { e.stopPropagation(); setEditingSuite(suite); setIsModalOpen(true); }}
-                            onDelete={(id, name, e) => { e.stopPropagation(); setDeleteConfirmation({ id, name }); }}
                         />
                     )}
 
@@ -102,13 +96,8 @@ export const ProjectPage: React.FC = () => {
             modals={
                 <ProjectModals
                     isSuiteModalOpen={isModalOpen}
-                    onCloseSuiteModal={() => { setIsModalOpen(false); setEditingSuite(null); }}
-                    editingSuite={editingSuite}
+                    onCloseSuiteModal={() => setIsModalOpen(false)}
                     onAddSuite={handleAddTestSuite}
-                    onEditSuite={handleEditTestSuite}
-                    deleteConfirmation={deleteConfirmation}
-                    onCloseDeleteModal={() => setDeleteConfirmation(null)}
-                    onConfirmDelete={confirmDelete}
                     isAddMemberModalOpen={isAddMemberModalOpen}
                     onCloseMemberModal={() => setIsAddMemberModalOpen(false)}
                     onAddMember={handleMemberAdd}

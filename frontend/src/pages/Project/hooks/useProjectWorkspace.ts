@@ -33,8 +33,6 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
     // Modal State
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
-    const [editingSuite, setEditingSuite] = useState<TestSuite | null>(null);
-    const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
     const [modalLoading, setModalLoading] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
 
@@ -110,35 +108,6 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
         }
     };
 
-    const handleEditTestSuite = async (id: string, data: any) => {
-        if (!projectId) return;
-        setModalLoading(true);
-        try {
-            await testSuiteService.updateTestSuite(projectId, id, data);
-            setIsModalOpen(false);
-            setEditingSuite(null);
-            fetchData();
-        } catch (err: any) {
-            setModalError(err.response?.data?.detail || 'Failed to update suite.');
-        } finally {
-            setModalLoading(false);
-        }
-    };
-
-    const confirmDelete = async () => {
-        if (!deleteConfirmation || !projectId) return;
-        setModalLoading(true);
-        try {
-            await testSuiteService.deleteTestSuite(projectId, deleteConfirmation.id);
-            setDeleteConfirmation(null);
-            fetchData();
-        } catch (err: any) {
-            setModalError(err.response?.data?.detail || 'Failed to delete suite.');
-        } finally {
-            setModalLoading(false);
-        }
-    };
-
     const handleMemberAdd = async (userId: any, role: string) => {
         if (!projectId) return;
         setModalLoading(true);
@@ -179,16 +148,12 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
         debouncedSearch,
         isModalOpen, setIsModalOpen,
         isAddMemberModalOpen, setIsAddMemberModalOpen,
-        editingSuite, setEditingSuite,
-        deleteConfirmation, setDeleteConfirmation,
         modalLoading,
         modalError, setModalError,
         canManageSuites,
         canManageProject,
         itemsPerPage,
         handleAddTestSuite,
-        handleEditTestSuite,
-        confirmDelete,
         handleMemberAdd,
         handleMemberRemove,
     };

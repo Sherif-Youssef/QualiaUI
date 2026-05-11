@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, status, Query
 
 from src.auth.dependencies import UserDep
-from src.base.schemas import Page, PaginationParams
+from src.base.schemas import Page, PaginationParams, Cookie as CookieSchema
 from src.database import SessionDep
-from src.testsuites.dependencies import ViewerTestSuiteDep, EditorTestSuiteDep, AdminTestSuiteDep
+from src.testsuites.dependencies import ViewerTestSuiteDep, EditorTestSuiteDep, AdminTestSuiteDep, TestSuiteCookieDep
 from src.projects.dependencies import ViewerProjectDep, EditorProjectDep
 
 from .schemas import TestSuiteCreate, TestSuiteRead, TestSuiteUpdate
@@ -13,6 +13,9 @@ from .service import (
 	list_testsuites,
 	update_testsuite,
 	list_testsuite_runs,
+	add_cookie_to_testsuite,
+	update_testsuite_cookie,
+	delete_testsuite_cookie,
 )
 from src.runs.schemas import TestSuiteRunRead
 
@@ -78,6 +81,40 @@ async def update_testsuite_route(
 		testsuite=testsuite,
 		testsuite_update=testsuite_update,
 	)
+
+
+@router.post("/{testsuite_id}/cookies", status_code=status.HTTP_201_CREATED, response_model=CookieSchema)
+async def add_cookie_to_testsuite_route(
+	session: SessionDep,
+	testsuite: EditorTestSuiteDep,
+	cookie_create: CookieSchema,
+):
+	return add_cookie_to_testsuite(
+		session=session,
+		testsuite=testsuite,
+		cookie_create=cookie_create,
+	)
+
+
+@router.put("/{testsuite_id}/cookies/{cookie_id}", response_model=CookieSchema)
+async def update_testsuite_cookie_route(
+	session: SessionDep,
+	cookie: TestSuiteCookieDep,
+	cookie_update: CookieSchema,
+):
+	return update_testsuite_cookie(
+		session=session,
+		cookie=cookie,
+		cookie_update=cookie_update,
+	)
+
+
+@router.delete("/{testsuite_id}/cookies/{cookie_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_testsuite_cookie_route(
+	session: SessionDep,
+	cookie: TestSuiteCookieDep,
+):
+	delete_testsuite_cookie(session=session, cookie=cookie)
 
 
 @router.delete("/{testsuite_id}", status_code=status.HTTP_204_NO_CONTENT)

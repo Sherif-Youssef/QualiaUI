@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from src.base.schemas import Cookie
 
 
 class TestCaseBase(BaseModel):
@@ -14,6 +15,7 @@ class TestCaseBase(BaseModel):
 class TestCaseRead(TestCaseBase):
 	id: int
 	testsuite_id: int
+	cookies: list[Cookie] = []
 
 
 class TestCaseCreate(BaseModel):

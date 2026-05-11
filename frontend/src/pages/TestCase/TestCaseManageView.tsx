@@ -10,6 +10,9 @@ import { Save, Trash2, CheckCircle2 } from 'lucide-react';
 import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
 import { useNavigate } from 'react-router-dom';
 
+import { CookieManager } from '@/components/GeneralComponents/CookieManager';
+import { Cookie } from '@/types/cookie';
+
 interface TestCaseManageViewProps {
     projectId: string;
     suiteId: string;
@@ -40,29 +43,65 @@ export const TestCaseManageView: React.FC<TestCaseManageViewProps> = ({
         plainText: ''
     });
 
-    useEffect(() => {
-        const fetchTestCase = async () => {
-            try {
-                setLoading(true);
-                const data = await testCaseService.getTestCaseById(projectId, suiteId, caseId);
-                setTestCase(data);
-                setFormData({
-                    name: data.name,
-                    description: data.description || '',
-                    preconditions: data.preconditions || '',
-                    objectives: data.objectives || '',
-                    url: data.url,
-                    plainText: data.plainText || ''
-                });
-            } catch (err) {
-                setError('Failed to load test case details');
-            } finally {
-                setLoading(false);
-            }
-        };
+    const [cookies, setCookies] = useState<Cookie[]>([]);
 
+    const fetchTestCase = async () => {
+        try {
+            setLoading(true);
+            const data = await testCaseService.getTestCaseById(projectId, suiteId, caseId);
+            setTestCase(data);
+            setFormData({
+                name: data.name,
+                description: data.description || '',
+                preconditions: data.preconditions || '',
+                objectives: data.objectives || '',
+                url: data.url,
+                plainText: data.plainText || ''
+            });
+            setCookies(data.cookies || []);
+        } catch (err) {
+            setError('Failed to load test case details');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         fetchTestCase();
     }, [projectId, suiteId, caseId]);
+
+    const handleAddCookie = async (cookie: Omit<Cookie, 'id'>) => {
+        await testCaseService.addCookie(projectId, suiteId, caseId, cookie);
+        const data = await testCaseService.getTestCaseById(projectId, suiteId, caseId);
+        setCookies(data.cookies || []);
+    };
+
+    const handleUpdateCookie = async (id: number, cookie: Omit<Cookie, 'id'>) => {
+        await testCaseService.updateCookie(projectId, suiteId, caseId, id, cookie);
+        const data = await testCaseService.getTestCaseById(projectId, suiteId, caseId);
+        setCookies(data.cookies || []);
+    };
+
+    const handleDeleteCookie = async (id: number) => {
+        await testCaseService.deleteCookie(projectId, suiteId, caseId, id);
+        const data = await testCaseService.getTestCaseById(projectId, suiteId, caseId);
+        setCookies(data.cookies || []);
+    };
+
+    const handleImportCookies = async (importedCookies: Omit<Cookie, 'id'>[]) => {
+        try {
+            setError(null);
+            for (const cookie of importedCookies) {
+                await testCaseService.addCookie(projectId, suiteId, caseId, cookie);
+            }
+            const data = await testCaseService.getTestCaseById(projectId, suiteId, caseId);
+            setCookies(data.cookies || []);
+            setSuccess(true);
+            setTimeout(() => setSuccess(false), 3000);
+        } catch (err) {
+            setError('Failed to import cookies');
+        }
+    };
 
     const handleSave = async () => {
         if (!formData.name.trim() || !formData.url.trim() || !formData.plainText.trim()) {
@@ -231,6 +270,16 @@ export const TestCaseManageView: React.FC<TestCaseManageViewProps> = ({
                         placeholder="Describe your test scenario... (e.g., Navigate to login, fill email and pass, then click sign in)"
                         className="min-h-[250px] border-gray-200 focus:border-primary focus:ring-primary/20 font-mono text-sm leading-relaxed"
                         disabled={saving || deleting}
+                    />
+                </div>
+
+                <div className="pt-8 border-t border-gray-100">
+                    <CookieManager
+                        cookies={cookies}
+                        onAdd={handleAddCookie}
+                        onUpdate={handleUpdateCookie}
+                        onDelete={handleDeleteCookie}
+                        onImport={handleImportCookies}
                     />
                 </div>
             </div>

@@ -104,6 +104,7 @@ export const mapTestSuiteToViewModel = (dto: TestSuiteDTO): TestSuite => ({
     name: dto.name,
     description: dto.description,
     createdAt: dto.created_at,
+    cookies: dto.cookies || [],
 });
 export const mapTestCaseToViewModel = (dto: TestCaseDTO): TestCase => ({
     id: String(dto.id),
@@ -122,6 +123,7 @@ export const mapTestCaseToViewModel = (dto: TestCaseDTO): TestCase => ({
     runVersion: dto.run_version,
     createdAt: dto.created_at,
     lastRunDuration: dto.last_run_duration,
+    cookies: dto.cookies || [],
 });
 export const mapUserToViewModel = (dto: UserDTO): UserProfile => ({
     id: String(dto.id),
