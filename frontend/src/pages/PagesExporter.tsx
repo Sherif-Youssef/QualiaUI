@@ -1,17 +1,11 @@
-import { LoginPage } from './Auth/LoginPage';
-import { ProjectsPage } from './Projects/ProjectsPage';
-import { ProjectPage } from './Project/ProjectPage';
-import { TestSuitePage } from './TestSuite/TestSuitePage';
-import { TestCasePage } from './TestCase/TestCasePage';
-import { TestCaseRunPage } from './TestCase/TestCaseRunPage';
-import { TestSuiteManagerPage } from './TestSuiteManager/TestSuiteManagerPage';
-import { ProfilePage } from './Profile/Profile';
-import { AuthCallbackPage } from './Auth/AuthCallbackPage';
-import { ForgotPasswordPage } from './Auth/ForgotPasswordPage';
-import { AdminUsersPage } from './Admin/AdminUsersPage';
-import { SiteSettingsPage } from './Admin/SiteSettings/SiteSettingsPage';
-import { ProjectMembersPage } from './Project/ProjectMembersPage';
-import { TestSuiteRunDashboardPage } from './TestSuite/TestSuiteRunDashboardPage';
+import { LoginPage, AuthCallbackPage, ForgotPasswordPage } from './Auth';
+import { ProjectsPage } from './Projects';
+import { ProjectPage } from './Project';
+import { TestSuitePage, TestSuiteRunDashboardPage } from './TestSuite';
+import { TestCasePage, TestCaseRunPage } from './TestCase';
+import { TestSuiteManagerPage } from './TestSuiteManager';
+import { ProfilePage } from './Profile';
+import { AdminUsersPage, SiteSettingsPage } from './Admin';
 import { LandingPage } from './Landing';
 
 export {
@@ -27,7 +21,7 @@ export {
     TestSuiteManagerPage,
     AdminUsersPage,
     SiteSettingsPage,
-    ProjectMembersPage,
     TestSuiteRunDashboardPage,
     LandingPage
 }
+

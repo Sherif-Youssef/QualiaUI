@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import { ZoomIn, ZoomOut, Camera } from 'lucide-react';
 import { Button } from './ui/button';
-import { ActionStep } from '@/types/test-case';
+import { ActionStep } from "@/types";
 import gsap from 'gsap';
 
 interface ScreenshotViewerProps {
@@ -29,7 +29,6 @@ export const ScreenshotViewer: React.FC<ScreenshotViewerProps> = ({
   const [screenshotType, setScreenshotType] = React.useState<'before' | 'after'>('after');
 
   useEffect(() => {
-    // Reset to 'after' when step changes if after exists
     if (selectedStep?.screenshot_after) {
       setScreenshotType('after');
     } else if (selectedStep?.screenshot_before) {

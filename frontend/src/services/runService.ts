@@ -7,10 +7,10 @@ import {
     TestSuiteRun,
     TestCaseRun,
     TestStepRun
-} from "@/types/run";
+} from "@/types";
 
 export const runService = {
-    // --- Starting Runs ---
+    
 
     startTestCaseRun: async (
         testcaseId: number, 
@@ -56,7 +56,7 @@ export const runService = {
 
 
 
-    // --- Aborting Runs ---
+    
 
     abortTestCaseRun: async (runId: number): Promise<void> => {
         await api.post(`/runs/testcases/${runId}/abort`);
@@ -68,7 +68,7 @@ export const runService = {
 
 
 
-    // --- Run History Listing ---
+    
 
     getProjectRuns: async (projectId: string | number, offset = 0, limit = 10): Promise<{ runs: ProjectRun[]; total: number }> => {
         const response = await api.get<ApiResponse<ProjectRun>>(`/projects/${projectId}/runs`, {
@@ -100,7 +100,7 @@ export const runService = {
         };
     },
 
-    // --- Run Details ---
+    
     getProjectRunDetails: async (runId: number, force = false): Promise<ProjectRun & { testsuite_runs: TestSuiteRun[] }> => {
         try {
             const response = await getDeduplicated<ProjectRun & { testsuite_runs: TestSuiteRun[] }>(
@@ -175,7 +175,7 @@ export const runService = {
 
         eventSource.onerror = (err) => {
             console.error("SSE Connection Error:", err);
-            // Don't close manually; let the browser attempt reconnection
+            
         };
 
         return eventSource;

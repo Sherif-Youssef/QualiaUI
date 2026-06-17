@@ -1,6 +1,6 @@
 import React from 'react';
 import { Settings, Play, History } from 'lucide-react';
-import { TestCase } from '@/types/test-case';
+import { TestCase } from "@/types";
 
 interface TestCaseTableProps {
     testCases: TestCase[];

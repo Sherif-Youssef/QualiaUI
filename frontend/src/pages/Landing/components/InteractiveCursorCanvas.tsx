@@ -89,12 +89,10 @@ export const InteractiveCursorCanvas: React.FC = () => {
             ref={containerRef}
             className="relative w-full bg-white overflow-hidden py-44 flex flex-col items-center justify-center border-y border-gray-100"
         >
-            {/*  Animation Layer (Behind Everything)  */}
             <div className="absolute inset-0 z-0 opacity-60 pointer-events-none">
                 <canvas ref={canvasRef} className="w-full h-full" />
             </div>
 
-            {/*  Content Layer (In Front)  */}
             <div className="relative z-10 text-center px-4 pointer-events-none max-w-5xl">
                 <h2 className="text-5xl md:text-7xl font-black text-slate-900 mb-8 tracking-tighter leading-none">
                     YOUR COMPLETE PLATFORM FOR <br />

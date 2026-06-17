@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Layers, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TestCaseCard } from '../TestCaseCard';
-import { TestCase, ActionStep } from '@/types/test-case';
+import { TestCase, ActionStep } from "@/types";
 import { motion, AnimatePresence } from 'framer-motion';
 
 export interface SuiteWithCases {

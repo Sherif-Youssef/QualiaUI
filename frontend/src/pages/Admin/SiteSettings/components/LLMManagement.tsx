@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { SearchBar } from '@/components/SearchBar';
 import { Pagination } from '@/components/Pagination';
 import { llmService } from '@/services/llmService';
-import { Provider, LLMModel, ProviderDisplayNames } from '@/types/llm';
+import { Provider, LLMModel, ProviderDisplayNames } from "@/types";
 import { ProviderFormModal } from './ProviderFormModal';
 import { ModelFormModal } from './ModelFormModal';
 import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
@@ -25,7 +25,7 @@ export const LLMManagement: React.FC = () => {
     const [isModelsLoading, setIsModelsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Modals state
+    
     const [isProviderModalOpen, setIsProviderModalOpen] = useState(false);
     const [isModelModalOpen, setIsModelModalOpen] = useState(false);
     const [editingProvider, setEditingProvider] = useState<Provider | undefined>();
@@ -75,7 +75,7 @@ export const LLMManagement: React.FC = () => {
         fetchModels();
     }, [fetchModels]);
 
-    // Reset page when filters change
+    
     useEffect(() => {
         setProviderPage(1);
     }, [searchQuery]);
@@ -121,7 +121,7 @@ export const LLMManagement: React.FC = () => {
             await llmService.createModel(data);
             setIsModelModalOpen(false);
             fetchModels();
-            // Also refresh provider list to update model counts if needed
+            
             fetchProviders();
         } catch (err: any) {
             setModalError(err.response?.data?.detail || 'Failed to create model');
@@ -245,11 +245,9 @@ export const LLMManagement: React.FC = () => {
                 </div>
             </div>
 
-            {/* Right Side: Provider Details & Models */}
             <div className="flex-grow flex flex-col min-w-0">
                 {selectedProvider ? (
                     <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col h-full overflow-hidden">
-                        {/* Provider Details Header */}
                         <div className="p-8 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
                             <div className="flex items-center gap-6">
                                 <div className="w-16 h-16 rounded-2xl bg-white border border-gray-100 flex items-center justify-center text-primary shadow-sm">
@@ -287,7 +285,6 @@ export const LLMManagement: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Models Section */}
                         <div className="flex-grow flex flex-col p-8 gap-6 overflow-hidden">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
@@ -367,7 +364,6 @@ export const LLMManagement: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Provider Footer / Summary */}
                         <div className="px-8 py-4 bg-gray-50/50 border-t border-gray-50 flex items-center gap-8 text-[10px] font-black uppercase tracking-widest text-gray-400">
                             <div className="flex items-center gap-2">
                                 <ShieldCheck className={`w-4 h-4 ${selectedProvider.has_api_key ? 'text-emerald-500' : 'text-gray-300'}`} />
@@ -392,7 +388,6 @@ export const LLMManagement: React.FC = () => {
                 )}
             </div>
 
-            {/* Modals */}
             <ProviderFormModal
                 isOpen={isProviderModalOpen}
                 onClose={() => setIsProviderModalOpen(false)}

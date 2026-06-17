@@ -7,13 +7,12 @@ import {
     RefreshCw,
     AlertCircle,
     FileText,
-    Bot,
-    User
+    Bot
 } from 'lucide-react';
 import { formatDate, parseUTCDate } from '@/utils/formatters';
 import { runService } from '@/services/runService';
 import { useNavigate } from 'react-router-dom';
-import { TestCaseRun } from '@/types/run';
+import { TestCaseRun } from "@/types";
 import { Pagination } from '@/components/Pagination';
 
 interface TestCaseHistoryViewProps {

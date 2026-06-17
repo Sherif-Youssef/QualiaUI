@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TestCase, ActionStep } from '@/types/test-case';
+import { TestCase, ActionStep } from "@/types";
 import { EditStepModal } from './Modal/EditStepModal';
 import { ExpandableStepText } from './ExpandableStepText';
 

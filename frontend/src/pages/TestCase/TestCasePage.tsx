@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { LayoutGrid, History, Settings } from 'lucide-react';
-import { TestCaseLiveView } from './TestCaseLiveView';
+import { TestCaseRunView } from './components/TestCaseRunView';
 import { TestCaseHistoryView } from './TestCaseHistoryView';
 import { TestCaseManageView } from './TestCaseManageView';
 import { TopNav } from '@/components/TopNav';
@@ -10,8 +10,6 @@ export const TestCasePage: React.FC = () => {
     const { projectId, suiteId, caseId } = useParams<{ projectId: string; suiteId: string; caseId: string }>();
     const navigate = useNavigate();
     const location = useLocation();
-
-    // Check for view parameter in URL
     const searchParams = new URLSearchParams(location.search);
     const initialView = (searchParams.get('view') as 'live' | 'history' | 'manage') || 'live';
 
@@ -78,7 +76,7 @@ export const TestCasePage: React.FC = () => {
 
             <div className="flex-1 flex flex-col overflow-hidden min-h-0">
                 {activeView === 'live' && projectId && suiteId && caseId ? (
-                    <TestCaseLiveView
+                    <TestCaseRunView
                         projectId={projectId}
                         suiteId={suiteId}
                         caseId={caseId}

@@ -3,10 +3,10 @@ import {
     Provider, ProviderCreate, ProviderUpdate, 
     LLMModel, LLMModelCreate, LLMModelUpdate,
     ProviderType
-} from "@/types/llm";
+} from "@/types";
 
 export const llmService = {
-    // Providers
+    
     listProviders: async (offset = 0, limit = 10, displayName?: string, providerType?: ProviderType): Promise<ApiResponse<Provider>> => {
         const response = await api.get<ApiResponse<Provider>>('/llms/providers', {
             params: { offset, limit, display_name: displayName, provider_type: providerType }
@@ -42,7 +42,7 @@ export const llmService = {
         await api.put(`/llms/providers/${providerId}/api-key`, { api_key: apiKey });
     },
 
-    // Models
+    
     listModels: async (offset = 0, limit = 10, displayName?: string, providerId?: number): Promise<ApiResponse<LLMModel>> => {
         const response = await api.get<ApiResponse<LLMModel>>('/llms/models', {
             params: { offset, limit, display_name: displayName, provider_id: providerId }

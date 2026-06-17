@@ -1,5 +1,5 @@
 import api, { ApiResponse, getDeduplicated } from "@/lib/api";
-import { TestSuiteDTO, TestSuite } from "@/types/test-suit";
+import { TestSuiteDTO, TestSuite } from "@/types";
 import { mapTestSuiteToViewModel } from "@/utils/mappers";
 
 export const testSuiteService = {

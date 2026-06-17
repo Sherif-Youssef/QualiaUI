@@ -3,13 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { SearchBar } from '@/components/SearchBar';
 import { Pagination } from '@/components/Pagination';
 import { ErrorMessage } from '@/components/GeneralComponents';
+import { AddTestSuiteModal } from '@/components/Modal/AddTestSuiteModal';
+import { AddMemberModal } from '@/components/Modal/AddMemberModal';
+import { ViewTestSuiteModal } from '@/components/Modal/ViewTestSuiteModal';
+import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
 
 import { ProjectLayout } from './ProjectLayout';
 import { ProjectHeader } from './ProjectHeader';
 import { ProjectTabs } from './ProjectTabs';
 import { ProjectTestSuiteView } from './ProjectTestSuiteView';
 import { ProjectTeamView } from './ProjectTeamView';
-import { ProjectModals } from './ProjectModals';
 import { useProjectWorkspace } from './hooks/useProjectWorkspace';
 
 export const ProjectPage: React.FC = () => {
@@ -34,7 +37,16 @@ export const ProjectPage: React.FC = () => {
         canManageSuites,
         canManageProject,
         itemsPerPage,
+        viewingSuite, setViewingSuite,
+        isViewSuiteModalOpen, setIsViewSuiteModalOpen,
+        editingSuite, setEditingSuite,
+        deleteSuiteConfirmation, setDeleteSuiteConfirmation,
         handleAddTestSuite,
+        handleViewSuiteClick,
+        handleEditSuiteClick,
+        handleEditTestSuite,
+        handleDeleteSuiteClick,
+        handleDeleteTestSuite,
         handleMemberAdd,
         handleMemberRemove,
     } = useProjectWorkspace({ projectId });
@@ -44,7 +56,11 @@ export const ProjectPage: React.FC = () => {
                 <ProjectHeader
                     projectName={projectName}
                     onBack={() => navigate('/projects')}
-                    onAddSuite={() => setIsModalOpen(true)}
+                    onAddSuite={() => {
+                        setEditingSuite(null);
+                        setModalError(null);
+                        setIsModalOpen(true);
+                    }}
                 />
             }
             searchBar={
@@ -68,8 +84,15 @@ export const ProjectPage: React.FC = () => {
                             isTrulyEmpty={totalItems === 0 && debouncedSearch === '' && !isLoading}
                             isSearchEmpty={testSuites.length === 0 && debouncedSearch !== '' && !isLoading}
                             canManageSuites={canManageSuites}
-                            onAddSuite={() => setIsModalOpen(true)}
+                            onAddSuite={() => {
+                                setEditingSuite(null);
+                                setModalError(null);
+                                setIsModalOpen(true);
+                            }}
                             onNavigate={(id) => navigate(`/project/${projectId}/suite/${id}`)}
+                            onViewDetails={handleViewSuiteClick}
+                            onEdit={handleEditSuiteClick}
+                            onDelete={handleDeleteSuiteClick}
                         />
                     )}
 
@@ -94,17 +117,56 @@ export const ProjectPage: React.FC = () => {
                 />
             )}
             modals={
-                <ProjectModals
-                    isSuiteModalOpen={isModalOpen}
-                    onCloseSuiteModal={() => setIsModalOpen(false)}
-                    onAddSuite={handleAddTestSuite}
-                    isAddMemberModalOpen={isAddMemberModalOpen}
-                    onCloseMemberModal={() => setIsAddMemberModalOpen(false)}
-                    onAddMember={handleMemberAdd}
-                    isLoading={modalLoading}
-                    error={modalError}
-                    onClearError={() => setModalError(null)}
-                />
+                <>
+                    <ViewTestSuiteModal
+                        isOpen={isViewSuiteModalOpen}
+                        onClose={() => {
+                            setIsViewSuiteModalOpen(false);
+                            setViewingSuite(null);
+                        }}
+                        suite={viewingSuite}
+                    />
+
+                    <AddTestSuiteModal
+                        isOpen={isModalOpen}
+                        onClose={() => {
+                            setIsModalOpen(false);
+                            setEditingSuite(null);
+                            setModalError(null);
+                        }}
+                        onAdd={handleAddTestSuite}
+                        editingSuite={editingSuite}
+                        onEdit={handleEditTestSuite}
+                        error={modalError}
+                        onClearError={() => setModalError(null)}
+                        isLoading={modalLoading}
+                    />
+
+                    <DeleteConfirmationModal
+                        isOpen={deleteSuiteConfirmation !== null}
+                        onClose={() => {
+                            setDeleteSuiteConfirmation(null);
+                            setModalError(null);
+                        }}
+                        onConfirm={handleDeleteTestSuite}
+                        itemName={deleteSuiteConfirmation?.name}
+                        error={modalError}
+                        onClearError={() => setModalError(null)}
+                        isLoading={modalLoading}
+                    />
+
+                    <AddMemberModal
+                        isOpen={isAddMemberModalOpen}
+                        onClose={() => {
+                            setIsAddMemberModalOpen(false);
+                            setModalError(null);
+                        }}
+                        onAdd={handleMemberAdd}
+                        isLoading={modalLoading}
+                        error={modalError}
+                        onClearError={() => setModalError(null)}
+                    />
+                </>
             }
         />
     );

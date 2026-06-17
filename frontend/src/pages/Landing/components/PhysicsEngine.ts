@@ -1,4 +1,4 @@
-/* PHYSICS ENGINE CLASSES */
+
 export class Oscillator {
     phase: number;
     offset: number;

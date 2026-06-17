@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import { UserProfile, UserDTO } from "@/types/user";
+import { UserProfile, UserDTO } from "@/types";
 import { mapUserToViewModel, mapProfileToDTO } from "@/utils/mappers";
 
 export const profileService = {

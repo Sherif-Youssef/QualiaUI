@@ -15,7 +15,6 @@ export const Hero: React.FC<HeroProps> = ({ onRun }) => {
             <AuraBackground />
 
             <div className="relative z-10 flex flex-col items-center text-center max-w-4xl mx-auto">
-                {/* Badge */}
                 <div
                     className="feature-chip inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-semibold text-cyan-700 mb-8 border border-cyan-200/80"
                     style={{ background: 'rgba(6,182,212,0.07)', animationDelay: '0s' }}
@@ -24,7 +23,6 @@ export const Hero: React.FC<HeroProps> = ({ onRun }) => {
                     AI-Powered Web Testing
                 </div>
 
-                {/* Headline */}
                 <h1 className="font-sans font-bold text-gray-900 mb-5 leading-tight" style={{ fontSize: 'clamp(2.4rem, 5.5vw, 4.2rem)', letterSpacing: '-0.03em' }}>
                     Test anything.{' '}
                     <span
@@ -46,7 +44,6 @@ export const Hero: React.FC<HeroProps> = ({ onRun }) => {
                     No scripts. No setup. Just results.
                 </p>
 
-                {/*Chat Input Box */}
                 <div className="chat-container w-full max-w-2xl rounded-2xl bg-white/90 backdrop-blur-sm border border-gray-200/80 p-4">
                     <textarea
                         rows={3}

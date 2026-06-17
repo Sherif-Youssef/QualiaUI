@@ -1,10 +1,10 @@
 import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
-import { Project } from '@/types/project';
-
+import { Pencil, Trash2, Info } from 'lucide-react';
+import { Project } from "@/types";
 interface ProjectsTableProps {
     projects: Project[];
     onNavigate: (id: string) => void;
+    onViewDetails: (project: Project, e: React.MouseEvent) => void;
     onEdit: (project: Project, e: React.MouseEvent) => void;
     onDelete: (id: string, name: string, e: React.MouseEvent) => void;
     isAdmin: boolean;
@@ -13,6 +13,7 @@ interface ProjectsTableProps {
 export const ProjectsTable: React.FC<ProjectsTableProps> = ({
     projects,
     onNavigate,
+    onViewDetails,
     onEdit,
     onDelete,
     isAdmin
@@ -48,18 +49,11 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
                                     : 'opacity-60 cursor-not-allowed bg-gray-50/30'}`}
                             >
                                 <td className="px-6 py-5">
-                                    <div className="flex flex-col max-w-[400px]">
+                                    <div className="flex flex-col max-w-[400px] w-full min-w-0">
                                         <span className={`text-sm font-black transition-all ${hasProjectAccess ? 'text-gray-900 group-hover:text-primary' : 'text-gray-400'}`}>
                                             {project.name}
                                         </span>
-                                        {project.description && (
-                                            <p
-                                                className="text-[11px] font-medium text-gray-400 mt-1 line-clamp-2 leading-relaxed"
-                                                title={project.description}
-                                            >
-                                                {project.description}
-                                            </p>
-                                        )}
+
                                     </div>
                                 </td>
                                 <td className="px-6 py-5 text-center">
@@ -76,7 +70,13 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
                                 </td>
                                 <td className="px-6 py-5">
                                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        { }
+                                        <button
+                                            onClick={(e) => onViewDetails(project, e)}
+                                            className="p-2.5 rounded-xl hover:bg-white border border-transparent hover:border-gray-100 text-gray-400 hover:text-primary transition-all shadow-none hover:shadow-sm"
+                                            title="View Details"
+                                        >
+                                            <Info className="w-4 h-4" strokeWidth={2} />
+                                        </button>
                                         {effectiveIsAdmin && (
                                             <button
                                                 onClick={(e) => onEdit(project, e)}
@@ -86,7 +86,6 @@ export const ProjectsTable: React.FC<ProjectsTableProps> = ({
                                                 <Pencil className="w-4 h-4" strokeWidth={2} />
                                             </button>
                                         )}
-                                        { }
                                         {effectiveIsAdmin && (
                                             <button
                                                 onClick={(e) => onDelete(project.id, project.name, e)}

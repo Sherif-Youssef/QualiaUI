@@ -13,7 +13,7 @@ import {
 import { formatDate, parseUTCDate } from '@/utils/formatters';
 import { runService } from '@/services/runService';
 import { useNavigate } from 'react-router-dom';
-import { TestSuiteRun } from '@/types/run';
+import { TestSuiteRun } from "@/types";
 import { Pagination } from '@/components/Pagination';
 
 interface TestSuiteHistoryViewProps {

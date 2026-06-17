@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { TestCase, ActionStep } from '@/types/test-case';
+import { TestCase, ActionStep, Scope } from '@/types';
 import { testCaseService } from '@/services/testCase/testCaseService';
 import { runService } from '@/services/runService';
-import { Scope } from '@/types/run';
 import { SuiteWithCases } from '@/components/TestSuiteManager';
 import { mapActiveStepToActionStep } from '@/utils/mappers';
 
@@ -124,10 +123,10 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
 
                 setTestCases(prev => {
                     return prev.map(tc => {
-                        // Match if:
-                        // 1. Definition IDs match (testcase_id)
-                        // 2. Specific Run IDs match (testcase_run_id)
-                        // 3. We are in a single-case view and the event belongs to the active run we subscribed to
+                        
+                        
+                        
+                        
                         const isMatch = (testcaseId && String(tc.id) === testcaseId) ||
                             (testcaseRunId && String((tc as any).runId) === testcaseRunId) ||
                             (testcaseRunId && String(runId) === testcaseRunId && prev.length === 1);
@@ -146,7 +145,7 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
                             newSteps.push(mappedStep);
                         }
 
-                        // Auto-follow logic for the large screenshot viewer
+                        
                         const currentActiveId = activeCaseIdRef.current;
                         const isCurrentlyViewed = currentActiveId ? String(tc.id) === String(currentActiveId) : true;
 
@@ -179,7 +178,7 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
         }
     }, [activeRunId, runScope, subscribeToRun, location.state?.parentSuiteRunId, isRunning]);
 
-    // Cleanup on unmount
+    
     useEffect(() => {
         return () => {
             if (eventSourceRef.current) {
@@ -219,7 +218,7 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
                 let rId = location.state?.runId ? Number(location.state.runId) : undefined;
                 let scope = (location.state?.scope as Scope) || 'TESTSUITE';
 
-                // Aggressive Reconnect: Fallback to suite run if active
+                
                 try {
                     if (!rId && suiteId) {
                         const suiteRuns = await runService.getTestSuiteRuns(projectId, suiteId, 0, 1);
@@ -245,13 +244,13 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
                 if (currentRunId) {
                     try {
                         let runDetails: any;
-                        // Use parent suite details if available to avoid the 500 error on the testcase endpoint
+                        
                         if (parentSuiteRunId) {
                             runDetails = await runService.getTestSuiteRunDetails(parentSuiteRunId);
                         } else if (currentScope === 'TESTSUITE') {
                             runDetails = await runService.getTestSuiteRunDetails(currentRunId);
                         } else if (currentScope === 'TESTCASE') {
-                            // Only attempt direct fetch if there is no parent suite
+                            
                             try {
                                 const tcr = await runService.getTestCaseRunDetails(currentRunId);
                                 runDetails = { testcase_runs: [tcr], status: tcr.status };
@@ -317,7 +316,7 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
 
     const lastInitializedKey = useRef<string | null>(null);
 
-    // Lightweight effect to fetch steps for the active testcase if they haven't been loaded via SSE or initial fetch
+    
     useEffect(() => {
         if (!activeCaseId) return;
 
@@ -329,7 +328,7 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
 
         lastInitializedKey.current = initializationKey;
 
-        // If we already have execution steps loaded (e.g. from SSE or initial fetch), just update the UI
+        
         if (tc.steps && tc.steps.length > 0 && ('status' in tc.steps[0])) {
             const lastStep = tc.steps[tc.steps.length - 1] as ActionStep;
             if (lastStep.screenshot) setCurrentScreenshot(lastStep.screenshot);
@@ -338,8 +337,8 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
             return;
         }
 
-        // Otherwise, fetch them from backend
-        // Use a silent catch to avoid cluttering the console with 500 errors from nested suite runs
+        
+        
         runService.getTestCaseRunDetails(Number(tc.runId)).then((details: any) => {
             if (details?.teststep_runs && Array.isArray(details.teststep_runs) && details.teststep_runs.length > 0) {
                 const apiSteps = details.teststep_runs.map((stepRun: any, idx: number) =>
@@ -354,7 +353,7 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
                 setSelectedStep(lastStep);
             }
         }).catch(() => {
-            // Silently ignore 500 errors for suite-nested runs as they are currently expected from the backend
+            
         });
     }, [activeCaseId, testCases]);
 
@@ -465,7 +464,7 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
             const sId = suiteId || tc.suiteId;
             if (!sId) return;
 
-            // Pass full test case data to avoid clearing other fields
+            
             await testCaseService.updateTestCase(projectId, sId, testId, {
                 ...tc,
                 prompt: newInstruction,
@@ -491,7 +490,7 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
 
             const updatedSteps = (testCase.steps || []).map(s => s.id === stepId ? { ...s, text: newText } : s);
 
-            // Pass full test case data to avoid clearing other fields
+            
             await testCaseService.updateTestCase(projectId, sId, testId, {
                 ...testCase,
                 steps: updatedSteps

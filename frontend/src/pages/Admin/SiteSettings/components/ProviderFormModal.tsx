@@ -10,7 +10,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Provider, ProviderCreate, ProviderUpdate, ProviderType, ProviderDisplayNames } from '@/types/llm';
+import { Provider, ProviderCreate, ProviderUpdate, ProviderType, ProviderDisplayNames } from "@/types";
 
 interface ProviderFormModalProps {
     isOpen: boolean;
@@ -44,7 +44,7 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
     const [apiKey, setApiKey] = useState('');
     const [configPairs, setConfigPairs] = useState<ConfigPair[]>([]);
     
-    // API Key management states
+    
     const [isApiKeyRevealed, setIsApiKeyRevealed] = useState(false);
     const [revealedApiKey, setRevealedApiKey] = useState<string | null>(null);
     const [isUpdatingApiKey, setIsUpdatingApiKey] = useState(false);
@@ -55,13 +55,13 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
             setDisplayName(editingProvider.display_name);
             setProviderType(editingProvider.provider_type);
             setBaseUrl(editingProvider.base_url || '');
-            setApiKey(''); // We don't get the key from ProviderRead
+            setApiKey(''); 
             setIsApiKeyRevealed(false);
             setRevealedApiKey(null);
             setIsUpdatingApiKey(false);
             setNewApiKey('');
             
-            // Convert JSON object to pairs for the UI
+            
             const pairs = Object.entries(editingProvider.additional_config || {}).map(([key, value]) => ({
                 key,
                 value: typeof value === 'object' ? JSON.stringify(value) : String(value)
@@ -73,7 +73,7 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
             setBaseUrl('');
             setApiKey('');
             setConfigPairs([{ key: '', value: '' }]);
-            setIsApiKeyRevealed(true); // Normal field for new providers
+            setIsApiKeyRevealed(true); 
         }
     }, [editingProvider, isOpen]);
 
@@ -121,17 +121,17 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Convert pairs back to JSON object
+        
         const additional_config: Record<string, any> = {};
         configPairs.forEach(pair => {
             if (pair.key.trim()) {
                 let val: any = pair.value;
-                // Try to parse as JSON if it looks like an object/array, otherwise keep as string
+                
                 if ((val.startsWith('{') && val.endsWith('}')) || (val.startsWith('[') && val.endsWith(']'))) {
                     try {
                         val = JSON.parse(val);
                     } catch (e) {
-                        // If parsing fails, treat as string
+                        
                     }
                 }
                 additional_config[pair.key.trim()] = val;
@@ -142,7 +142,7 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
             display_name: displayName,
             provider_type: providerType,
             base_url: baseUrl || undefined,
-            api_key: !editingProvider ? apiKey : undefined, // Only send api_key on create
+            api_key: !editingProvider ? apiKey : undefined, 
             additional_config
         };
 
@@ -180,7 +180,6 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
                     )}
 
                     <form id="provider-form" onSubmit={handleSubmit} className="space-y-8">
-                        {/* Basic Info */}
                         <div className="grid grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Display Name</label>
@@ -215,7 +214,6 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
                             </div>
                         </div>
 
-                        {/* Connection Info */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest pl-1">Base URL (Optional)</label>
@@ -313,7 +311,6 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
                             </div>
                         </div>
 
-                        {/* Advanced Config Section */}
                         <div className="space-y-4 pt-4 border-t border-gray-50">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2 text-gray-900">

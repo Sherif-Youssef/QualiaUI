@@ -14,7 +14,6 @@ import {
   TestSuiteManagerPage,
   AdminUsersPage,
   SiteSettingsPage,
-  ProjectMembersPage,
   TestSuiteRunDashboardPage,
   LandingPage,
   TestCaseRunPage
@@ -62,8 +61,6 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/project/:projectId" element={<ProjectPage />} />
-            <Route path="/project/:projectId/members" element={<ProjectMembersPage />} />
-
             <Route path="/project/:projectId/suite/:suiteId" element={<TestSuitePage />} />
             <Route path="/project/:projectId/suite/:suiteId/run/:runId" element={<TestSuiteRunDashboardPage />} />
             <Route path="/project/:projectId/suite/:suiteId/case/:caseId" element={<TestCasePage />} />

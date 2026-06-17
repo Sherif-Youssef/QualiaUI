@@ -1,5 +1,5 @@
 import api, { ApiResponse } from "@/lib/api";
-import { UserDTO } from "@/types/user";
+import { UserDTO } from "@/types";
 
 export interface UserManagementDTO extends UserDTO {
     id: number | string;

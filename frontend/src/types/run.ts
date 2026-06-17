@@ -70,6 +70,4 @@ export interface StartRunResponse {
     created_at: string;
 }
 
-// Legacy types for compatibility (optional, can be phased out)
-export type TestStatus = RunStatus;
-export type TestRunMode = RunMode;
+

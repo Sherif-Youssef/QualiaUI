@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { TestSuite } from '@/types/test-suit';
+import { TestSuite } from "@/types";
 import { testSuiteService } from '@/services/testSuit/testSuiteService';
 import { projectService } from '@/services/project/projectService';
 import { useProjectPermissions } from '@/hooks/useProjectPermissions';
@@ -14,14 +14,10 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
     const [searchParams, setSearchParams] = useSearchParams();
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    
-    // Initialize activeView from URL search params
     const activeView = (searchParams.get('tab') as ProjectView) || 'suites';
     const setActiveView = (view: ProjectView) => {
         setSearchParams({ tab: view }, { replace: true });
     };
-
-    // Data State
     const [projectName, setProjectName] = useState<string>('');
     const [testSuites, setTestSuites] = useState<TestSuite[]>([]);
     const [projectMembers, setProjectMembers] = useState<any[]>([]);
@@ -30,16 +26,21 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
     const [error, setError] = useState<string | null>(null);
     const [debouncedSearch, setDebouncedSearch] = useState('');
 
-    // Modal State
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
     const [modalLoading, setModalLoading] = useState(false);
     const [modalError, setModalError] = useState<string | null>(null);
 
+    const [viewingSuite, setViewingSuite] = useState<TestSuite | null>(null);
+    const [isViewSuiteModalOpen, setIsViewSuiteModalOpen] = useState(false);
+    const [editingSuite, setEditingSuite] = useState<TestSuite | null>(null);
+    const [deleteSuiteConfirmation, setDeleteSuiteConfirmation] = useState<{ id: string; name: string } | null>(null);
+
     const { canManageSuites, canManageProject } = useProjectPermissions(projectId);
     const itemsPerPage = 6;
 
-    // Search Debounce
+
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(searchQuery);
@@ -93,7 +94,7 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
         fetchData();
     }, [fetchData]);
 
-    // Handlers
+
     const handleAddTestSuite = async (data: any) => {
         if (!projectId) return;
         setModalLoading(true);
@@ -103,6 +104,54 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
             fetchData();
         } catch (err: any) {
             setModalError(err.response?.data?.detail || 'Failed to create suite.');
+        } finally {
+            setModalLoading(false);
+        }
+    };
+
+    const handleViewSuiteClick = (suite: TestSuite, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setViewingSuite(suite);
+        setIsViewSuiteModalOpen(true);
+    };
+
+    const handleEditSuiteClick = (suite: TestSuite, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setEditingSuite(suite);
+        setModalError(null);
+        setIsModalOpen(true);
+    };
+
+    const handleEditTestSuite = async (id: string, data: { name: string; description: string }) => {
+        if (!projectId) return;
+        setModalLoading(true);
+        try {
+            await testSuiteService.updateTestSuite(projectId, id, data);
+            setIsModalOpen(false);
+            setEditingSuite(null);
+            fetchData();
+        } catch (err: any) {
+            setModalError(err.response?.data?.detail || 'Failed to update suite.');
+        } finally {
+            setModalLoading(false);
+        }
+    };
+
+    const handleDeleteSuiteClick = (id: string, name: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setModalError(null);
+        setDeleteSuiteConfirmation({ id, name });
+    };
+
+    const handleDeleteTestSuite = async () => {
+        if (!projectId || !deleteSuiteConfirmation) return;
+        setModalLoading(true);
+        try {
+            await testSuiteService.deleteTestSuite(projectId, deleteSuiteConfirmation.id);
+            setDeleteSuiteConfirmation(null);
+            fetchData();
+        } catch (err: any) {
+            setModalError(err.response?.data?.detail || 'Failed to delete suite.');
         } finally {
             setModalLoading(false);
         }
@@ -153,7 +202,16 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
         canManageSuites,
         canManageProject,
         itemsPerPage,
+        viewingSuite, setViewingSuite,
+        isViewSuiteModalOpen, setIsViewSuiteModalOpen,
+        editingSuite, setEditingSuite,
+        deleteSuiteConfirmation, setDeleteSuiteConfirmation,
         handleAddTestSuite,
+        handleViewSuiteClick,
+        handleEditSuiteClick,
+        handleEditTestSuite,
+        handleDeleteSuiteClick,
+        handleDeleteTestSuite,
         handleMemberAdd,
         handleMemberRemove,
     };

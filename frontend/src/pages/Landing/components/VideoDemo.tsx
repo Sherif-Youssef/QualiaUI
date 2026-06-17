@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FadeIn } from './FadeIn';
-// @ts-ignore
+
 import qualiaDemo from '../../../assets/videos/qualiademo.mp4';
 
 export const VideoDemo: React.FC = () => {

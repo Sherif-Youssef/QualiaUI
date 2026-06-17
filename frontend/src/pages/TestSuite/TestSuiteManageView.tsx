@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TestSuite } from '@/types/test-suit';
+import { TestSuite } from "@/types";
 import { testSuiteService } from '@/services/testSuit/testSuiteService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationMo
 import { useNavigate } from 'react-router-dom';
 
 import { CookieManager } from '@/components/GeneralComponents/CookieManager';
-import { Cookie } from '@/types/cookie';
+import { Cookie } from "@/types";
 
 interface TestSuiteManageViewProps {
     projectId: string;
@@ -31,7 +31,7 @@ export const TestSuiteManageView: React.FC<TestSuiteManageViewProps> = ({
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
-    // Form state
+    
     const [formData, setFormData] = useState({
         name: '',
         description: ''

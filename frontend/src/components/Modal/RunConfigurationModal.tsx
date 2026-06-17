@@ -12,7 +12,7 @@ import {
 } from "../ui/select";
 import { Checkbox } from '../ui/checkbox';
 import { llmService } from '@/services/llmService';
-import { Provider, LLMModel } from '@/types/llm';
+import { Provider, LLMModel } from "@/types";
 import { ErrorMessage } from '../GeneralComponents';
 import { Timer, Layers } from 'lucide-react';
 

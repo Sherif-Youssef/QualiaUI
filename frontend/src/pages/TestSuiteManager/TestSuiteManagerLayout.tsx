@@ -1,5 +1,4 @@
 import React from 'react';
-import { TopNav } from '@/components/TopNav';
 
 interface TestSuiteManagerLayoutProps {
     sidebar: React.ReactNode;

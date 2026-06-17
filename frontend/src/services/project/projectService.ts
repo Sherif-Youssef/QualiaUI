@@ -1,5 +1,5 @@
 import api, { ApiResponse } from "@/lib/api";
-import { ProjectDTO, Project } from "@/types/project";
+import { ProjectDTO, Project } from "@/types";
 import { mapProjectToViewModel } from "@/utils/mappers";
 
 const projectPromises = new Map<string, Promise<Project>>();

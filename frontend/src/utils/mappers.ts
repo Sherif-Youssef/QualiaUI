@@ -1,10 +1,12 @@
-import { ProjectDTO, Project } from "@/types/project";
-import { TestSuiteDTO, TestSuite } from "@/types/test-suit";
-import { TestCaseDTO, TestCase, ActionStep } from "@/types/test-case";
-import { UserDTO, UserProfile, PasswordDTO, UpdatePasswordForm } from "@/types/user";
-import { NotificationDTO, NotificationViewModel } from "@/types/notification";
-import { DashboardDTO, DashboardData } from "@/types/dashboard";
-import { TestCaseRun, TestStepRun } from "@/types/run";
+import {
+    ProjectDTO, Project,
+    TestSuiteDTO, TestSuite,
+    TestCaseDTO, TestCase, ActionStep,
+    UserDTO, UserProfile, PasswordDTO, UpdatePasswordForm,
+    DashboardDTO, DashboardData,
+    TestCaseRun, TestStepRun,
+    Cookie
+} from "@/types";
 
 const formatScreenshot = (screenshot: string | null | undefined): string => {
     if (!screenshot) return '';
@@ -104,7 +106,7 @@ export const mapTestSuiteToViewModel = (dto: TestSuiteDTO): TestSuite => ({
     name: dto.name,
     description: dto.description,
     createdAt: dto.created_at,
-    cookies: dto.cookies || [],
+    cookies: dto.cookies || ([] as Cookie[]),
 });
 export const mapTestCaseToViewModel = (dto: TestCaseDTO): TestCase => ({
     id: String(dto.id),
@@ -123,7 +125,7 @@ export const mapTestCaseToViewModel = (dto: TestCaseDTO): TestCase => ({
     runVersion: dto.run_version,
     createdAt: dto.created_at,
     lastRunDuration: dto.last_run_duration,
-    cookies: dto.cookies || [],
+    cookies: dto.cookies || ([] as Cookie[]),
 });
 export const mapUserToViewModel = (dto: UserDTO): UserProfile => ({
     id: String(dto.id),
@@ -163,14 +165,6 @@ export const mapProfileToDTO = (profile: Partial<UserProfile>): Partial<UserDTO>
 export const mapPasswordToDTO = (form: UpdatePasswordForm): PasswordDTO => ({
     current_password: form.currentPassword,
     new_password: form.newPassword,
-});
-export const mapNotificationToViewModel = (dto: NotificationDTO): NotificationViewModel => ({
-    id: dto.id,
-    title: dto.title,
-    description: dto.description,
-    type: dto.type,
-    time: dto.created_at,
-    isRead: dto.is_read
 });
 export const mapDashboardToViewModel = (dto: DashboardDTO): DashboardData => ({
     metrics: {

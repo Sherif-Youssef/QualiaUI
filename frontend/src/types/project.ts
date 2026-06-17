@@ -9,17 +9,7 @@ export interface ProjectDTO {
         role: 'admin' | 'editor' | 'viewer' | 'guest';
         joined_at: string;
     }>;
-}
-
-export interface TestSuiteDTO {
-    id: number | string;
-    project_id: number | string;
-    name: string;
-    description: string;
-    created_at?: string;
-}
-
-export interface Project {
+}export interface Project {
     id: string;
     name: string;
     description: string;
@@ -33,11 +23,4 @@ export interface Project {
     }>;
 }
 
-export interface TestSuite {
-    id: string;
-    projectId: string;
-    name: string;
-    description: string;
-    createdAt?: string;
-}
 

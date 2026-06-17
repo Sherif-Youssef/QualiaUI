@@ -1,5 +1,5 @@
 import api from "@/lib/api";
-import { UpdatePasswordForm } from "@/types/user";
+import { UpdatePasswordForm } from "@/types";
 import { mapPasswordToDTO } from "@/utils/mappers";
 
 export const passwordService = {

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { testCaseService } from '@/services/testCase/testCaseService';
 import { testSuiteService } from '@/services/testSuit/testSuiteService';
 import { runService } from '@/services/runService';
-import { TestCase } from '@/types/test-case';
+import { TestCase } from "@/types";
 import { useProjectPermissions } from '@/hooks/useProjectPermissions';
 import { useNavigate } from 'react-router-dom';
 import { useRunStreaming } from '@/hooks/useRunStreaming';

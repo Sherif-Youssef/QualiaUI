@@ -19,7 +19,7 @@ export const TestCaseRunPage: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     
-    // Check for view parameter in URL
+    
     const searchParams = new URLSearchParams(location.search);
     const initialView = (searchParams.get('view') as 'steps' | 'video' | 'details') || 'steps';
     const [activeView, setActiveView] = useState<'steps' | 'video' | 'details'>(initialView);

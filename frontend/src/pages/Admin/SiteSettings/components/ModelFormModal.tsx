@@ -9,7 +9,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { LLMModel, LLMModelCreate, LLMModelUpdate, Provider } from '@/types/llm';
+import { LLMModel, LLMModelCreate, LLMModelUpdate, Provider } from "@/types";
 
 interface ModelFormModalProps {
     isOpen: boolean;
@@ -46,7 +46,7 @@ export const ModelFormModal: React.FC<ModelFormModalProps> = ({
         } else {
             setModelName('');
             setDisplayName('');
-            // If we have a limited list of providers (e.g. just the active one), use it.
+            
             if (providers.length === 1) {
                 setProviderId(String(providers[0].id));
             } else if (providers.length > 0) {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { runService } from '@/services/runService';
-import { Scope } from '@/types/run';
+import { Scope } from "@/types";
 
 interface UseRunStreamingProps {
     scope: Scope;
@@ -40,7 +40,7 @@ export const useRunStreaming = ({
                 const event = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
                 if (cbStatus) cbStatus(event);
 
-                // If the main entity (PROJECT/TESTSUITE) is finished
+                
                 const eventElement = (event.element || '').toUpperCase();
                 const scopeElement = scope.toUpperCase();
 
@@ -68,7 +68,7 @@ export const useRunStreaming = ({
         });
 
         eventSourceRef.current = eventSource;
-    }, [scope]); // Only depend on scope now
+    }, [scope]); 
 
     useEffect(() => {
         if (runId && runId !== 'standalone') {

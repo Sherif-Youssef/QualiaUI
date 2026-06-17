@@ -1,5 +1,5 @@
 import api, { ApiResponse, getDeduplicated } from "@/lib/api";
-import { TestCaseDTO, TestCase } from "@/types/test-case";
+import { TestCaseDTO, TestCase } from "@/types";
 import { testSuiteService } from "../testSuit/testSuiteService";
 import { mapTestCaseToViewModel } from "@/utils/mappers";
 
@@ -20,10 +20,12 @@ export const testCaseService = {
         }
     },
 
-    getTestCaseById: async (projectId: string, suiteId: string, caseId: string): Promise<TestCase> => {
+    getTestCaseById: async (projectId: string, suiteId: string, caseId: string, force = false): Promise<TestCase> => {
         try {
             const response = await getDeduplicated<TestCaseDTO>(
-                `/projects/${projectId}/testsuites/${suiteId}/testcases/${caseId}`
+                `/projects/${projectId}/testsuites/${suiteId}/testcases/${caseId}`,
+                undefined,
+                force
             );
             return mapTestCaseToViewModel(response.data);
         } catch (error) {
@@ -116,7 +118,7 @@ export const testCaseService = {
 
     getAllProjectTestCases: async (projectId: string): Promise<TestCase[]> => {
         try {
-            // Limit must be <= 100 per backend PaginationParams
+            
             const suitesRes = await testSuiteService.getTestSuites(projectId, 0, 100);
             const allCases: TestCase[] = [];
 
@@ -128,7 +130,7 @@ export const testCaseService = {
             return allCases;
         } catch (error: any) {
             console.error('Service error (getAllProjectTestCases):', error);
-            // Extract meaningful error message from 422 validation errors
+            
             if (error.response?.status === 422) {
                 const detail = error.response.data.detail;
                 const message = Array.isArray(detail)

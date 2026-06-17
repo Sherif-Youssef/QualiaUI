@@ -3,6 +3,7 @@ import { SearchBar } from '@/components/SearchBar';
 import { Pagination } from '@/components/Pagination';
 import { AddProjectModal } from '@/components/Modal/AddProjectModal';
 import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
+import { ViewProjectModal } from '@/components/Modal/ViewProjectModal';
 import { ErrorMessage } from '@/components/GeneralComponents';
 
 import { ProjectsLayout } from "./ProjectsLayout";
@@ -16,6 +17,8 @@ export const ProjectsPage: React.FC = () => {
         searchQuery, setSearchQuery,
         currentPage, setCurrentPage,
         isModalOpen, setIsModalOpen,
+        viewingProject, setViewingProject,
+        isViewModalOpen, setIsViewModalOpen,
         editingProject, setEditingProject,
         deleteConfirmation, setDeleteConfirmation,
         projects,
@@ -32,6 +35,7 @@ export const ProjectsPage: React.FC = () => {
         isSearchEmpty,
         handleDeleteClick,
         confirmDelete,
+        handleViewDetailsClick,
         handleEditClick,
         handleEditProject,
         handleAddProject,
@@ -75,6 +79,7 @@ export const ProjectsPage: React.FC = () => {
                             <ProjectsTable
                                 projects={projects}
                                 onNavigate={(id) => navigate(`/project/${id}`)}
+                                onViewDetails={handleViewDetailsClick}
                                 onEdit={handleEditClick}
                                 onDelete={handleDeleteClick}
                                 isAdmin={isAdminState}
@@ -99,6 +104,15 @@ export const ProjectsPage: React.FC = () => {
             )}
             modals={
                 <>
+                    <ViewProjectModal
+                        isOpen={isViewModalOpen}
+                        onClose={() => {
+                            setIsViewModalOpen(false);
+                            setViewingProject(null);
+                        }}
+                        project={viewingProject}
+                    />
+
                     <AddProjectModal
                         isOpen={isModalOpen}
                         onClose={() => {

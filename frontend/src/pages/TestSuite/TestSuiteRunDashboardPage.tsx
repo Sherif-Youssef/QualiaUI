@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useRunStreaming } from '@/hooks/useRunStreaming';
 import { runService } from '@/services/runService';
-import { TestSuiteRun, TestCaseRun } from '@/types/run';
+import { TestSuiteRun, TestCaseRun } from "@/types";
 import { parseUTCDate, formatDate } from '@/utils/formatters';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
@@ -193,7 +193,7 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
 
     useEffect(() => {
         if (!suiteRun) setIsLoading(true);
-        fetchRunDetails(); // Initial fetch
+        fetchRunDetails(); 
         return () => {
             if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         };

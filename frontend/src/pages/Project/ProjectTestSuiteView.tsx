@@ -1,5 +1,5 @@
 import React from 'react';
-import { TestSuite } from '@/types/test-suit';
+import { TestSuite } from "@/types";
 import { TestSuiteList } from './TestSuiteList';
 import { TestSuiteEmptyState } from './TestSuiteEmptyState';
 
@@ -11,6 +11,9 @@ interface ProjectTestSuiteViewProps {
     canManageSuites: boolean;
     onAddSuite: () => void;
     onNavigate: (id: string) => void;
+    onViewDetails: (suite: TestSuite, e: React.MouseEvent) => void;
+    onEdit: (suite: TestSuite, e: React.MouseEvent) => void;
+    onDelete: (id: string, name: string, e: React.MouseEvent) => void;
 }
 
 export const ProjectTestSuiteView: React.FC<ProjectTestSuiteViewProps> = ({
@@ -20,7 +23,10 @@ export const ProjectTestSuiteView: React.FC<ProjectTestSuiteViewProps> = ({
     isSearchEmpty,
     canManageSuites,
     onAddSuite,
-    onNavigate
+    onNavigate,
+    onViewDetails,
+    onEdit,
+    onDelete
 }) => {
     if (isLoading && suites.length === 0) {
         return (
@@ -41,6 +47,9 @@ export const ProjectTestSuiteView: React.FC<ProjectTestSuiteViewProps> = ({
                 suites={suites}
                 onNavigate={onNavigate}
                 canManageSuites={canManageSuites}
+                onViewDetails={onViewDetails}
+                onEdit={onEdit}
+                onDelete={onDelete}
             />
             {isSearchEmpty && (
                 <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">

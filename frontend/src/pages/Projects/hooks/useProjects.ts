@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Project } from '@/types/project';
+import { Project } from "@/types";
 import { projectService } from '@/services/project/projectService';
 import { authService } from '@/services/auth/auth';
 
@@ -9,6 +9,8 @@ export const useProjects = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [viewingProject, setViewingProject] = useState<Project | null>(null);
+    const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [editingProject, setEditingProject] = useState<Project | null>(null);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
     const [projects, setProjects] = useState<Project[]>([]);
@@ -88,6 +90,12 @@ export const useProjects = () => {
         }
     };
 
+    const handleViewDetailsClick = (project: Project, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setViewingProject(project);
+        setIsViewModalOpen(true);
+    };
+
     const handleEditClick = (project: Project, e: React.MouseEvent) => {
         e.stopPropagation();
         setEditingProject(project);
@@ -142,6 +150,8 @@ export const useProjects = () => {
         searchQuery, setSearchQuery,
         currentPage, setCurrentPage,
         isModalOpen, setIsModalOpen,
+        viewingProject, setViewingProject,
+        isViewModalOpen, setIsViewModalOpen,
         editingProject, setEditingProject,
         deleteConfirmation, setDeleteConfirmation,
         projects,
@@ -159,6 +169,7 @@ export const useProjects = () => {
         isSearchEmpty,
         handleDeleteClick,
         confirmDelete,
+        handleViewDetailsClick,
         handleEditClick,
         handleEditProject,
         handleAddProject,

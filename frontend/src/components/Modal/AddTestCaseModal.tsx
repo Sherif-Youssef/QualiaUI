@@ -3,7 +3,7 @@ import { X } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { TestCase } from '@/types/test-case';
+import { TestCase } from "@/types";
 import { Textarea } from '../ui/textarea';
 import { ErrorMessage } from '../GeneralComponents';
 
