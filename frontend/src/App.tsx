@@ -9,7 +9,6 @@ import {
   ProjectsPage,
   TestCasePage,
   TestSuitePage,
-  AuthCallbackPage,
   ForgotPasswordPage,
   TestSuiteManagerPage,
   AdminUsersPage,
@@ -57,7 +56,6 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/project/:projectId" element={<ProjectPage />} />
