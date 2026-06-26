@@ -5,6 +5,8 @@ import { testCaseService } from '@/services/testCase/testCaseService';
 import { runService } from '@/services/runService';
 import { SuiteWithCases } from '@/components/TestSuiteManager';
 import { mapActiveStepToActionStep } from '@/utils/mappers';
+import { useTestSuiteRun } from './useTestSuiteRun';
+import { useTestCaseOperations } from './useTestCaseOperations';
 
 interface UseTestSuiteManagerProps {
     projectId?: string;
@@ -19,26 +21,55 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
     const [currentScreenshot, setCurrentScreenshot] = useState('');
     const [currentUrl, setCurrentUrl] = useState('');
     const [zoomLevel, setZoomLevel] = useState(100);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
-    const [isRunning, setIsRunning] = useState<boolean>(!!location.state?.runId);
-    const [activeRunId, setActiveRunId] = useState<number | null>(location.state?.runId || null);
     const [error, setError] = useState<string | null>(null);
-    const [modalLoading, setModalLoading] = useState(false);
-    const [modalError, setModalError] = useState<string | null>(null);
-    const [editingTestCase, setEditingTestCase] = useState<TestCase | null>(null);
     const [selectedStep, setSelectedStep] = useState<ActionStep | null>(null);
     const [activeCaseId, setActiveCaseId] = useState<string | null>(caseId || null);
     const activeCaseIdRef = useRef<string | null>(caseId || null);
-    const [runScope, setRunScope] = useState<Scope | null>(location.state?.scope || null);
-    const [isAborting, setIsAborting] = useState(false);
-    const isStartingRef = useRef(false);
 
     useEffect(() => {
         activeCaseIdRef.current = activeCaseId;
     }, [activeCaseId]);
 
-    const eventSourceRef = useRef<EventSource | null>(null);
+    const {
+        isRunning, setIsRunning,
+        setActiveRunId,
+        setRunScope,
+        isAborting,
+        handleRunAllTests,
+        handleRunSingleTest,
+        handleAbortRun,
+    } = useTestSuiteRun({
+        projectId,
+        suiteId,
+        initialRunId: location.state?.runId || null,
+        initialScope: location.state?.scope || null,
+        initialIsRunning: !!location.state?.runId,
+        parentSuiteRunId: location.state?.parentSuiteRunId,
+        setTestCases,
+        setCurrentScreenshot,
+        setCurrentUrl,
+        setSelectedStep,
+        activeCaseIdRef,
+        setError,
+    });
+
+    const {
+        isModalOpen, setIsModalOpen,
+        modalLoading,
+        modalError, setModalError,
+        editingTestCase, setEditingTestCase,
+        handleSaveTestCase,
+        handleInstructionChange,
+        handleStepTextChange,
+    } = useTestCaseOperations({
+        projectId,
+        suiteId,
+        testCases,
+        setTestCases,
+        setError,
+    });
+
     const suites = useMemo((): SuiteWithCases[] | undefined => {
         if (suiteId || caseId) return undefined;
         const grouped: Record<string, TestCase[]> = {};
@@ -54,238 +85,6 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
             testCases: cases
         }));
     }, [testCases, suiteId, caseId]);
-
-    const subscribeToRun = useCallback((runId: number, scope: Scope) => {
-        if (eventSourceRef.current) {
-            console.log(`[SSE] Closing previous connection before subscribing to new run ${runId}`);
-            eventSourceRef.current.close();
-            eventSourceRef.current = null;
-        }
-        setIsRunning(true);
-
-        const eventSource = runService.subscribeToRunProgress(
-            scope,
-            runId,
-            (data: any) => {
-                console.log(`[SSE] Received event type: ${data.type} for run ${runId}`);
-                if (data.type === 'STATUS_CHANGE') {
-                    const event = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
-                    const element = (event.element || '').toUpperCase();
-                    const status = (event.status || '').toUpperCase();
-                    const eventId = event.id;
-
-                    console.log(`[SSE] Status Change: ${element} ${status} (ID: ${eventId})`);
-
-                    if (element === 'TESTCASE' || element === 'TESTCASE_RUN') {
-                        const eventTestCaseId = String(event.testcase_id || (event.element_data?.testcase_id) || '');
-
-                        setTestCases(prev => prev.map(tc => {
-                            const isMatch = (eventTestCaseId && String(tc.id) === eventTestCaseId) ||
-                                (element === 'TESTCASE' && eventId && String(tc.id) === String(eventId)) ||
-                                (element === 'TESTCASE_RUN' && eventId && String((tc as any).runId) === String(eventId));
-
-                            if (!isMatch) return tc;
-
-                            let tcStatus: TestCase['status'] = 'running';
-                            if (['PASSED', 'SUCCESS', 'EXECUTED', 'COMPLETED', 'FINISHED'].includes(status)) {
-                                tcStatus = 'passed';
-                            } else if (['FAILED', 'FAILURE', 'STOPPED'].includes(status)) {
-                                tcStatus = 'failed';
-                            } else if (status === 'ABORTED') {
-                                tcStatus = 'aborted';
-                            } else if (status === 'ERROR') {
-                                tcStatus = 'error';
-                            } else if (['QUEUED', 'PENDING', 'IDLE'].includes(status)) {
-                                tcStatus = 'idle';
-                            }
-
-                            return {
-                                ...tc,
-                                status: tcStatus,
-                                terminationReason: event.termination_reason || tc.terminationReason,
-                                runId: (element === 'TESTCASE_RUN' ? eventId : (tc as any).runId),
-                                steps: tcStatus === 'running' && tc.status !== 'running' ? [] : tc.steps
-                            };
-                        }));
-                    }
-
-                    if ((element === scope || element === `${scope}_RUN`) &&
-                        ['PASSED', 'FAILED', 'ABORTED', 'ERROR', 'SUCCESS', 'FAILURE'].includes(status)) {
-                        eventSource.close();
-                        setIsRunning(false);
-                        isStartingRef.current = false;
-                        setIsAborting(false);
-                        setActiveRunId(null);
-                    }
-                }
-
-                if (data.type === 'TEST_STEP') {
-                    const stepData = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
-                    const testcaseId = String(stepData.testcase_id || '');
-                    const testcaseRunId = String(stepData.testcase_run_id || stepData.run_id || '');
-
-                    setTestCases(prev => {
-                        return prev.map(tc => {
-                            
-                            
-                            
-                            
-                            const isMatch = (testcaseId && String(tc.id) === testcaseId) ||
-                                (testcaseRunId && String((tc as any).runId) === testcaseRunId) ||
-                                (testcaseRunId && String(runId) === testcaseRunId && prev.length === 1);
-
-                            if (!isMatch) return tc;
-
-                            const steps = tc.steps || [];
-                            const stepExistsIndex = steps.findIndex(s => String(s.id) === String(stepData.id));
-
-                            let newSteps = [...steps];
-                            const mappedStep = mapActiveStepToActionStep(stepData, stepExistsIndex >= 0 ? stepExistsIndex : steps.length);
-
-                            if (stepExistsIndex >= 0) {
-                                newSteps[stepExistsIndex] = mappedStep;
-                            } else {
-                                newSteps.push(mappedStep);
-                            }
-
-                            
-                            const currentActiveId = activeCaseIdRef.current;
-                            const isCurrentlyViewed = currentActiveId ? String(tc.id) === String(currentActiveId) : true;
-
-                            if (isCurrentlyViewed && (mappedStep.screenshot || mappedStep.text)) {
-                                if (mappedStep.screenshot) setCurrentScreenshot(mappedStep.screenshot);
-                                setCurrentUrl(tc.url || '');
-                                setSelectedStep(mappedStep);
-                            }
-
-                            return {
-                                ...tc,
-                                steps: newSteps,
-                            };
-                        });
-                    });
-                }
-            },
-            (err) => {
-                console.error(`[SSE] SSE stream error for run ${runId}:`, err);
-                eventSource.close();
-                setIsRunning(false);
-                isStartingRef.current = false;
-                setIsAborting(false);
-                setActiveRunId(null);
-                
-                const fetchFinalDetails = async () => {
-                    try {
-                        let finalTestCasesStatus: Record<string, { status: TestCase['status'], reason?: string, steps?: any[] }> = {};
-                        if (scope === 'TESTSUITE') {
-                            const details = await runService.getTestSuiteRunDetails(runId, true);
-                            if (details && details.testcase_runs) {
-                                details.testcase_runs.forEach((run: any) => {
-                                    let status: TestCase['status'] = 'error';
-                                    const s = (run.status || '').toUpperCase();
-                                    if (['PASSED', 'EXECUTED', 'SUCCESS', 'COMPLETED', 'FINISHED'].includes(s)) status = 'passed';
-                                    else if (['FAILED', 'FAILURE', 'STOPPED'].includes(s)) status = 'failed';
-                                    else if (s === 'ABORTED') status = 'aborted';
-                                    else if (s === 'ERROR') status = 'error';
-                                    else if (['QUEUED', 'PENDING', 'IDLE'].includes(s)) status = 'idle';
-
-                                    finalTestCasesStatus[String(run.testcase_id)] = {
-                                        status,
-                                        reason: run.termination_reason || undefined,
-                                        steps: run.teststep_runs?.map((stepRun: any, idx: number) =>
-                                            mapActiveStepToActionStep(stepRun, idx)
-                                        )
-                                    };
-                                });
-                            }
-                        } else if (scope === 'TESTCASE') {
-                            const tcr = await runService.getTestCaseRunDetails(runId, true);
-                            if (tcr) {
-                                let status: TestCase['status'] = 'error';
-                                const s = (tcr.status || '').toUpperCase();
-                                if (['PASSED', 'EXECUTED', 'SUCCESS', 'COMPLETED', 'FINISHED'].includes(s)) status = 'passed';
-                                else if (['FAILED', 'FAILURE', 'STOPPED'].includes(s)) status = 'failed';
-                                else if (s === 'ABORTED') status = 'aborted';
-                                else if (s === 'ERROR') status = 'error';
-                                else if (['QUEUED', 'PENDING', 'IDLE'].includes(s)) status = 'idle';
-
-                                finalTestCasesStatus[String(tcr.testcase_id)] = {
-                                    status,
-                                    reason: tcr.termination_reason || undefined,
-                                    steps: tcr.teststep_runs?.map((stepRun: any, idx: number) =>
-                                        mapActiveStepToActionStep(stepRun, idx)
-                                    )
-                                };
-                            }
-                        }
-
-                        setTestCases(prev => prev.map(tc => {
-                            const finalInfo = finalTestCasesStatus[String(tc.id)];
-                            if (finalInfo) {
-                                let finalStatus = finalInfo.status;
-                                let finalReason = finalInfo.reason;
-                                if (['running', 'queued', 'pending', 'idle'].includes(finalStatus || '')) {
-                                    finalStatus = 'error';
-                                    finalReason = 'Connection to run progress stream lost. The backend execution may have crashed.';
-                                }
-                                return {
-                                    ...tc,
-                                    status: finalStatus,
-                                    terminationReason: finalReason || tc.terminationReason,
-                                    steps: finalInfo.steps && finalInfo.steps.length > 0 ? finalInfo.steps : tc.steps
-                                };
-                            }
-                            if (tc.status === 'running' || tc.status === 'idle') {
-                                return {
-                                    ...tc,
-                                    status: 'error',
-                                    terminationReason: 'Connection to run progress stream lost.'
-                                };
-                            }
-                            return tc;
-                        }));
-                    } catch (e) {
-                        console.error("Failed to fetch final suite run details on SSE error:", e);
-                        setTestCases(prev => prev.map(tc => {
-                            if (tc.status === 'running' || tc.status === 'idle') {
-                                return {
-                                    ...tc,
-                                    status: 'error',
-                                    terminationReason: 'Connection to run progress stream lost.'
-                                };
-                            }
-                            return tc;
-                        }));
-                    }
-                };
-                fetchFinalDetails();
-            }
-        );
-
-        eventSourceRef.current = eventSource;
-    }, []);
-
-    useEffect(() => {
-        const parentSuiteRunId = location.state?.parentSuiteRunId;
-        const effectiveRunId = parentSuiteRunId || activeRunId;
-        const effectiveScope = parentSuiteRunId ? 'TESTSUITE' : runScope;
-
-        if (effectiveRunId && effectiveScope && isRunning) {
-            console.log(`[SSE] Managing connection for run ${effectiveRunId} (${effectiveScope})`);
-            subscribeToRun(effectiveRunId, effectiveScope);
-        }
-    }, [activeRunId, runScope, subscribeToRun, location.state?.parentSuiteRunId, isRunning]);
-
-    
-    useEffect(() => {
-        return () => {
-            if (eventSourceRef.current) {
-                console.log('[SSE] Cleaning up connection');
-                eventSourceRef.current.close();
-                eventSourceRef.current = null;
-            }
-        };
-    }, [suiteId, activeRunId]);
 
     useEffect(() => {
         if (caseId) {
@@ -316,7 +115,6 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
                 let rId = location.state?.runId ? Number(location.state.runId) : undefined;
                 let scope = (location.state?.scope as Scope) || 'TESTSUITE';
 
-                
                 try {
                     if (!rId && suiteId) {
                         const suiteRuns = await runService.getTestSuiteRuns(projectId, suiteId, 0, 1);
@@ -348,7 +146,6 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
                         } else if (currentScope === 'TESTSUITE') {
                             runDetails = await runService.getTestSuiteRunDetails(currentRunId);
                         } else if (currentScope === 'TESTCASE') {
-                            
                             try {
                                 const tcr = await runService.getTestCaseRunDetails(currentRunId);
                                 runDetails = { testcase_runs: [tcr], status: tcr.status };
@@ -411,11 +208,10 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
             }
         };
         fetchContextData();
-    }, [projectId, suiteId, caseId, location.state?.runId, location.state?.scope, location.state?.parentSuiteRunId, subscribeToRun]);
+    }, [projectId, suiteId, caseId, location.state?.runId, location.state?.scope, location.state?.parentSuiteRunId]);
 
     const lastInitializedKey = useRef<string | null>(null);
 
-    
     useEffect(() => {
         if (!activeCaseId) return;
 
@@ -427,7 +223,6 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
 
         lastInitializedKey.current = initializationKey;
 
-        
         if (tc.steps && tc.steps.length > 0 && ('status' in tc.steps[0])) {
             const lastStep = tc.steps[tc.steps.length - 1] as ActionStep;
             if (lastStep.screenshot) setCurrentScreenshot(lastStep.screenshot);
@@ -436,8 +231,6 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
             return;
         }
 
-        
-        
         runService.getTestCaseRunDetails(Number(tc.runId)).then((details: any) => {
             if (details?.teststep_runs && Array.isArray(details.teststep_runs) && details.teststep_runs.length > 0) {
                 const apiSteps = details.teststep_runs.map((stepRun: any, idx: number) =>
@@ -455,153 +248,6 @@ export const useTestSuiteManager = ({ projectId, suiteId, caseId }: UseTestSuite
             
         });
     }, [activeCaseId, testCases]);
-
-    const handleSaveTestCase = useCallback(async (data: any) => {
-        if (!projectId || !suiteId) return;
-        setModalLoading(true);
-        setModalError(null);
-        try {
-            if (editingTestCase) {
-                const updated = await testCaseService.updateTestCase(projectId, suiteId, editingTestCase.id, {
-                    ...editingTestCase,
-                    ...data
-                });
-                setTestCases(prev => prev.map(tc => tc.id === editingTestCase.id ? { ...tc, ...updated } : tc));
-            } else {
-                const newCase = await testCaseService.createTestCase(projectId, suiteId, data);
-                setTestCases(prev => [...prev, newCase]);
-            }
-            setIsModalOpen(false);
-            setEditingTestCase(null);
-        } catch (err: any) {
-            setModalError(err.response?.data?.detail || `Failed to ${editingTestCase ? 'update' : 'create'} test case.`);
-        } finally {
-            setModalLoading(false);
-        }
-    }, [projectId, suiteId, editingTestCase]);
-
-    const handleRunAllTests = useCallback(async (llmModelId?: number, options?: { useScreenshots: boolean; useVideo: boolean }) => {
-        if (!projectId || !suiteId || isStartingRef.current) return;
-        isStartingRef.current = true;
-        setIsRunning(true);
-        try {
-            const run = await runService.startTestSuiteRun(
-                parseInt(suiteId), 
-                'NATURAL', 
-                llmModelId,
-                options?.useScreenshots,
-                options?.useVideo
-            );
-            const details = await runService.getTestSuiteRunDetails(run.run_id);
-
-            setActiveRunId(run.run_id);
-            setRunScope('TESTSUITE');
-            setTestCases(prev => prev.map(tc => {
-                const caseRun = details.testcase_runs?.find((r: any) => String(r.testcase_id) === String(tc.id));
-                return {
-                    ...tc,
-                    status: 'running',
-                    runId: caseRun?.id || undefined,
-                    steps: [],
-                    terminationReason: undefined
-                };
-            }));
-        } catch (err: any) {
-            setIsRunning(false);
-            isStartingRef.current = false;
-            setError(err.response?.data?.detail || 'Failed to start the run.');
-        }
-    }, [projectId, suiteId, subscribeToRun]);
-
-    const handleRunSingleTest = useCallback(async (testId: string, llmModelId?: number, options?: { useScreenshots: boolean; useVideo: boolean }) => {
-        if (isStartingRef.current) return;
-        isStartingRef.current = true;
-        setIsRunning(true);
-        try {
-            const run = await runService.startTestCaseRun(
-                parseInt(testId), 
-                'NATURAL', 
-                llmModelId,
-                options?.useScreenshots,
-                options?.useVideo
-            );
-            setActiveRunId(run.run_id);
-            setRunScope('TESTCASE');
-
-            setTestCases(prev => prev.map(tc => {
-                if (tc.id === testId) {
-                    return { ...tc, status: 'running', runId: run.run_id, steps: [], terminationReason: undefined };
-                }
-                return tc;
-            }));
-        } catch (err: any) {
-            setIsRunning(false);
-            isStartingRef.current = false;
-            setError(err.response?.data?.detail || 'Failed to start test case run.');
-        }
-    }, [subscribeToRun]);
-
-    const handleAbortRun = useCallback(async () => {
-        if (!activeRunId || !runScope) return;
-        setIsAborting(true);
-        try {
-            if (runScope === 'TESTCASE') {
-                await runService.abortTestCaseRun(activeRunId);
-            } else if (runScope === 'TESTSUITE') {
-                await runService.abortTestSuiteRun(activeRunId);
-            }
-        } catch (err: any) {
-            console.error("Failed to abort run:", err);
-            setIsAborting(false);
-        }
-    }, [activeRunId, runScope]);
-
-    const handleInstructionChange = useCallback(async (testId: string, newInstruction: string) => {
-        if (!projectId) return;
-        try {
-            const tc = testCases.find(t => t.id === testId);
-            if (!tc) return;
-            const sId = suiteId || tc.suiteId;
-            if (!sId) return;
-
-            
-            await testCaseService.updateTestCase(projectId, sId, testId, {
-                ...tc,
-                prompt: newInstruction,
-                plainText: newInstruction
-            });
-
-            setTestCases(prev => prev.map(tc =>
-                tc.id === testId ? { ...tc, prompt: newInstruction, plainText: newInstruction } : tc
-            ));
-        } catch (err) {
-            console.error("Failed to update instruction:", err);
-            setError("Failed to update instruction.");
-        }
-    }, [projectId, suiteId, testCases]);
-
-    const handleStepTextChange = useCallback(async (testId: string, stepId: string, newText: string) => {
-        if (!projectId) return;
-        try {
-            const testCase = testCases.find(tc => tc.id === testId);
-            if (!testCase) return;
-            const sId = suiteId || testCase.suiteId;
-            if (!sId) return;
-
-            const updatedSteps = (testCase.steps || []).map(s => s.id === stepId ? { ...s, text: newText } : s);
-
-            
-            await testCaseService.updateTestCase(projectId, sId, testId, {
-                ...testCase,
-                steps: updatedSteps
-            });
-
-            setTestCases(prev => prev.map(tc => tc.id === testId ? { ...tc, steps: updatedSteps as ActionStep[] } : tc));
-        } catch (err) {
-            console.error("Failed to update step text:", err);
-            setError("Failed to update step text.");
-        }
-    }, [projectId, suiteId, testCases]);
 
     const handleStepClick = useCallback((step: any, tc: TestCase) => {
         setActiveCaseId(tc.id);

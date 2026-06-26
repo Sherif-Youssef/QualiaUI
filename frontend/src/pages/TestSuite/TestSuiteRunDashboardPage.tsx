@@ -6,16 +6,15 @@ import { TestSuiteRun, TestCaseRun } from "@/types";
 import { parseUTCDate, formatDate } from '@/utils/formatters';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
-import { 
-    CheckCircle2, 
-    XCircle, 
-    AlertCircle, 
-    ChevronLeft, 
-    ArrowRight, 
-    Clock, 
-    FileText, 
-    StopCircle, 
-    Loader2, 
+import {
+    CheckCircle2,
+    XCircle,
+    ChevronLeft,
+    ArrowRight,
+    Clock,
+    FileText,
+    StopCircle,
+    Loader2,
     Download,
     LayoutGrid,
     Info,
@@ -26,11 +25,9 @@ import {
     Video,
     Hash,
     Calendar,
-    Globe,
     Layers
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { TopNav } from '@/components/TopNav';
 import { TestSuiteLayout } from './TestSuiteLayout';
 
 const DetailItem: React.FC<{ label: string; value: React.ReactNode; icon: React.ReactNode }> = ({ label, value, icon }) => (
@@ -58,43 +55,43 @@ const RunDetailsView: React.FC<{ suiteRun: TestSuiteRun & { testcase_runs: TestC
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <DetailItem 
-                    label="Run ID" 
-                    value={suiteRun.id} 
-                    icon={<Hash className="w-5 h-5" />} 
+                <DetailItem
+                    label="Run ID"
+                    value={suiteRun.id}
+                    icon={<Hash className="w-5 h-5" />}
                 />
-                <DetailItem 
-                    label="Scope" 
-                    value={suiteRun.scope} 
-                    icon={<Layers className="w-5 h-5" />} 
+                <DetailItem
+                    label="Scope"
+                    value={suiteRun.scope}
+                    icon={<Layers className="w-5 h-5" />}
                 />
-                <DetailItem 
-                    label="Created At" 
-                    value={formatDate(suiteRun.created_at)} 
-                    icon={<Calendar className="w-5 h-5" />} 
+                <DetailItem
+                    label="Created At"
+                    value={formatDate(suiteRun.created_at)}
+                    icon={<Calendar className="w-5 h-5" />}
                 />
-                <DetailItem 
-                    label="Duration" 
-                    value={calculateDuration(suiteRun.started_at, suiteRun.finished_at)} 
-                    icon={<Clock className="w-5 h-5" />} 
+                <DetailItem
+                    label="Duration"
+                    value={calculateDuration(suiteRun.started_at, suiteRun.finished_at)}
+                    icon={<Clock className="w-5 h-5" />}
                 />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <DetailItem 
-                    label="Run Mode" 
-                    value={suiteRun.mode} 
-                    icon={<Settings className="w-5 h-5" />} 
+                <DetailItem
+                    label="Run Mode"
+                    value={suiteRun.mode}
+                    icon={<Settings className="w-5 h-5" />}
                 />
-                <DetailItem 
-                    label="LLM Model" 
-                    value={suiteRun.llm_model?.display_name || suiteRun.llm_model?.model_name} 
-                    icon={<Cpu className="w-5 h-5" />} 
+                <DetailItem
+                    label="LLM Model"
+                    value={suiteRun.llm_model?.display_name || suiteRun.llm_model?.model_name}
+                    icon={<Cpu className="w-5 h-5" />}
                 />
-                <DetailItem 
-                    label="Initiated By" 
-                    value={suiteRun.user ? `${suiteRun.user.first_name} ${suiteRun.user.last_name}` : '--'} 
-                    icon={<User className="w-5 h-5" />} 
+                <DetailItem
+                    label="Initiated By"
+                    value={suiteRun.user ? `${suiteRun.user.first_name} ${suiteRun.user.last_name}` : '--'}
+                    icon={<User className="w-5 h-5" />}
                 />
             </div>
 
@@ -193,7 +190,7 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
 
     useEffect(() => {
         if (!suiteRun) setIsLoading(true);
-        fetchRunDetails(); 
+        fetchRunDetails();
         return () => {
             if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
         };
