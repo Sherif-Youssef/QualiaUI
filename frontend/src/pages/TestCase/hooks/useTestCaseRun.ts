@@ -36,6 +36,62 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
 
     const [runDetails, setRunDetails] = useState<any>(null);
 
+    const handleSSEError = useCallback(async (runId: number) => {
+        const streamErrorMessage = 'Connection to run progress stream lost. The backend execution may have crashed or timed out.';
+        try {
+            let currentStatus: TestCase['status'] = 'error';
+            let reason = streamErrorMessage;
+            let steps: ActionStep[] = [];
+
+            if (parentSuiteRunId) {
+                try {
+                    const suiteDetails = await runService.getTestSuiteRunDetails(Number(parentSuiteRunId), true);
+                    const runDetails = suiteDetails.testcase_runs?.find((r: any) => String(r.id) === String(runId));
+                    if (runDetails) {
+                        currentStatus = (runDetails.status?.toLowerCase() as TestCase['status']) || currentStatus;
+                        reason = runDetails.termination_reason || reason;
+                    }
+                } catch (e) {
+                    console.warn("Failed to fetch suite details on SSE error");
+                }
+            } else {
+                const fullDetails = await runService.getTestCaseRunDetails(runId, true);
+                if (fullDetails) {
+                    if (fullDetails.teststep_runs) {
+                        steps = fullDetails.teststep_runs.map((s: any, i: number) => mapTestStepRunToActionStep(s, i));
+                    }
+                    currentStatus = (fullDetails.status?.toLowerCase() as TestCase['status']) || currentStatus;
+                    reason = fullDetails.termination_reason || reason;
+                }
+            }
+
+            if (['running', 'queued', 'pending', 'idle'].includes(currentStatus || '')) {
+                currentStatus = 'error';
+                reason = streamErrorMessage;
+            }
+
+            setTestCase(prev => {
+                if (!prev) return null;
+                return {
+                    ...prev,
+                    status: currentStatus,
+                    terminationReason: reason,
+                    steps: steps.length > 0 ? steps : prev.steps
+                };
+            });
+        } catch (err) {
+            console.error("Failed to fetch final run details on SSE error:", err);
+            setTestCase(prev => {
+                if (!prev) return null;
+                return {
+                    ...prev,
+                    status: 'error',
+                    terminationReason: prev.terminationReason || streamErrorMessage
+                };
+            });
+        }
+    }, [parentSuiteRunId]);
+
     const { subscribeToRun, closeStream } = useTestCaseRunSSE({
         caseId,
         parentSuiteRunId,
@@ -45,6 +101,7 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
         setCurrentScreenshot,
         setSelectedStep,
         isStartingRef,
+        onSSEError: handleSSEError,
     });
 
     const handleRunTest = useCallback(async (llmModelId?: number, options?: {
@@ -68,7 +125,7 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
                 options?.shouldGroupActions
             );
             setActiveRunId(run.run_id);
-            setTestCase(prev => prev ? { ...prev, status: 'running', steps: [] } : null);
+            setTestCase(prev => prev ? { ...prev, status: 'running', steps: [], terminationReason: undefined } : null);
             subscribeToRun(run.run_id);
         } catch (err: any) {
             setIsRunning(false);
@@ -152,7 +209,7 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
                                 currentSteps = fullDetails.teststep_runs.map((s: any, i: number) => mapTestStepRunToActionStep(s, i));
                             }
                             currentStatus = (fullDetails.status?.toLowerCase() as TestCase['status']) || currentStatus;
-                            reason = fullDetails.termination_reason || reason;
+                            reason = fullDetails.termination_reason || undefined;
                         }
 
                         if (['running', 'queued', 'pending'].includes(currentStatus || '')) {
@@ -176,7 +233,7 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
                     return {
                         ...tcData,
                         status: currentStatus || (isSameCase ? prev?.status : null) || tcData.status,
-                        terminationReason: reason || (isSameCase ? prev?.terminationReason : null) || tcData.terminationReason,
+                        terminationReason: runIdToFetch ? (reason || undefined) : (reason || (isSameCase ? prev?.terminationReason : undefined) || tcData.terminationReason),
                         steps: finalSteps
                     };
                 });
@@ -205,7 +262,7 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
         return () => {
             closeStream();
         };
-    }, [closeStream]);
+    }, [caseId, closeStream]);
 
     return {
         testCase,

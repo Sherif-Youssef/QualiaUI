@@ -25,8 +25,21 @@ export const TestCaseRunPage: React.FC = () => {
     const [activeView, setActiveView] = useState<'steps' | 'video' | 'details'>(initialView);
 
     const {
+        testCase,
         runDetails,
+        currentScreenshot, setCurrentScreenshot,
+        currentUrl,
+        zoomLevel, setZoomLevel,
         isLoading,
+        error,
+        isRunning,
+        isAborting,
+        isSuiteRun,
+        isReadOnly,
+        selectedStep,
+        setSelectedStep,
+        handleRunTest,
+        handleAbort,
     } = useTestCaseRun({ projectId, suiteId, caseId, runId });
 
     useEffect(() => {
@@ -92,10 +105,21 @@ export const TestCaseRunPage: React.FC = () => {
             <div className="flex-1 flex flex-col overflow-hidden min-h-0">
                 {activeView === 'steps' ? (
                     <TestCaseRunView 
-                        projectId={projectId}
-                        suiteId={suiteId}
-                        caseId={caseId}
-                        runId={runId}
+                        testCase={testCase}
+                        currentScreenshot={currentScreenshot}
+                        setCurrentScreenshot={setCurrentScreenshot}
+                        currentUrl={currentUrl}
+                        zoomLevel={zoomLevel}
+                        setZoomLevel={setZoomLevel}
+                        error={error}
+                        isRunning={isRunning}
+                        isAborting={isAborting}
+                        isSuiteRun={isSuiteRun}
+                        isReadOnly={isReadOnly}
+                        selectedStep={selectedStep}
+                        setSelectedStep={setSelectedStep}
+                        handleRunTest={handleRunTest}
+                        handleAbort={handleAbort}
                     />
                 ) : activeView === 'video' ? (
                     <TestCaseRunVideoView 

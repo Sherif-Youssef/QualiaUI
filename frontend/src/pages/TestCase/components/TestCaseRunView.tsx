@@ -4,45 +4,48 @@ import { TestCaseCard } from '@/components/TestCaseCard';
 import { ScreenshotViewer } from '@/components/ScreenshotViewer';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { TestSuiteManagerLayout } from '../../TestSuiteManager/TestSuiteManagerLayout';
-import { TestSuiteManagerLoading } from '../../TestSuiteManager/TestSuiteManagerLoading';
-import { useTestCaseRun } from '../hooks/useTestCaseRun';
+import { TestCase, ActionStep } from '@/types';
 import { Button } from '@/components/ui/button';
 import { RunConfigurationModal } from '@/components/Modal/RunConfigurationModal';
 
 interface TestCaseRunViewProps {
-    projectId?: string;
-    suiteId?: string;
-    caseId?: string;
-    runId?: string;
+    testCase: TestCase | null;
+    currentScreenshot: string;
+    setCurrentScreenshot: React.Dispatch<React.SetStateAction<string>>;
+    currentUrl: string;
+    zoomLevel: number;
+    setZoomLevel: React.Dispatch<React.SetStateAction<number>>;
+    error: string | null;
+    isRunning: boolean;
+    isAborting: boolean;
+    isSuiteRun: boolean;
+    isReadOnly: boolean;
+    selectedStep: ActionStep | null;
+    setSelectedStep: React.Dispatch<React.SetStateAction<ActionStep | null>>;
+    handleRunTest: (llmModelId?: number, options?: { useScreenshots: boolean; useVideo: boolean; timeout: number; shouldGroupActions: boolean }) => Promise<void>;
+    handleAbort: () => Promise<void>;
 }
 
 export const TestCaseRunView: React.FC<TestCaseRunViewProps> = ({
-    projectId,
-    suiteId,
-    caseId,
-    runId
+    testCase,
+    currentScreenshot,
+    setCurrentScreenshot,
+    currentUrl,
+    zoomLevel,
+    setZoomLevel,
+    error,
+    isRunning,
+    isAborting,
+    isSuiteRun,
+    isReadOnly,
+    selectedStep,
+    setSelectedStep,
+    handleRunTest,
+    handleAbort,
 }) => {
     const [isRunConfigModalOpen, setIsRunConfigModalOpen] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
 
-    const {
-        testCase,
-        currentScreenshot, setCurrentScreenshot,
-        currentUrl,
-        zoomLevel, setZoomLevel,
-        isLoading,
-        error,
-        isRunning,
-        isAborting,
-        isSuiteRun,
-        isReadOnly,
-        selectedStep,
-        setSelectedStep,
-        handleRunTest,
-        handleAbort,
-    } = useTestCaseRun({ projectId, suiteId, caseId, runId });
-
-    if (isLoading) return <TestSuiteManagerLoading />;
 
     return (
         <TestSuiteManagerLayout
@@ -150,7 +153,7 @@ export const TestCaseRunView: React.FC<TestCaseRunViewProps> = ({
                                     setSelectedStep(step);
                                     if (step.screenshot) setCurrentScreenshot(step.screenshot);
                                 }}
-                                onStepTextChange={(testId, stepId, newText) => { }}
+                                onStepTextChange={() => { }}
                                 isReadOnly={true}
                                 selectedStepId={selectedStep ? String(selectedStep.id) : undefined}
                             />

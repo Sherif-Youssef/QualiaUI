@@ -5,6 +5,8 @@ import { TestCaseRunView } from './components/TestCaseRunView';
 import { TestCaseHistoryView } from './TestCaseHistoryView';
 import { TestCaseManageView } from './TestCaseManageView';
 import { TopNav } from '@/components/TopNav';
+import { useTestCaseRun } from './hooks/useTestCaseRun';
+import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
 
 export const TestCasePage: React.FC = () => {
     const { projectId, suiteId, caseId } = useParams<{ projectId: string; suiteId: string; caseId: string }>();
@@ -14,6 +16,23 @@ export const TestCasePage: React.FC = () => {
     const initialView = (searchParams.get('view') as 'live' | 'history' | 'manage') || 'live';
 
     const [activeView, setActiveView] = useState<'live' | 'history' | 'manage'>(initialView);
+
+    const {
+        testCase,
+        currentScreenshot, setCurrentScreenshot,
+        currentUrl,
+        zoomLevel, setZoomLevel,
+        isLoading,
+        error,
+        isRunning,
+        isAborting,
+        isSuiteRun,
+        isReadOnly,
+        selectedStep,
+        setSelectedStep,
+        handleRunTest,
+        handleAbort,
+    } = useTestCaseRun({ projectId, suiteId, caseId });
 
     useEffect(() => {
         const view = new URLSearchParams(location.search).get('view') as 'live' | 'history' | 'manage';
@@ -75,11 +94,25 @@ export const TestCasePage: React.FC = () => {
             </div>
 
             <div className="flex-1 flex flex-col overflow-hidden min-h-0">
-                {activeView === 'live' && projectId && suiteId && caseId ? (
+                {activeView === 'live' && isLoading ? (
+                    <TestSuiteManagerLoading />
+                ) : activeView === 'live' && projectId && suiteId && caseId ? (
                     <TestCaseRunView
-                        projectId={projectId}
-                        suiteId={suiteId}
-                        caseId={caseId}
+                        testCase={testCase}
+                        currentScreenshot={currentScreenshot}
+                        setCurrentScreenshot={setCurrentScreenshot}
+                        currentUrl={currentUrl}
+                        zoomLevel={zoomLevel}
+                        setZoomLevel={setZoomLevel}
+                        error={error}
+                        isRunning={isRunning}
+                        isAborting={isAborting}
+                        isSuiteRun={isSuiteRun}
+                        isReadOnly={isReadOnly}
+                        selectedStep={selectedStep}
+                        setSelectedStep={setSelectedStep}
+                        handleRunTest={handleRunTest}
+                        handleAbort={handleAbort}
                     />
                 ) : activeView === 'history' && projectId && suiteId && caseId ? (
                     <TestCaseHistoryView

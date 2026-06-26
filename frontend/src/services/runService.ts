@@ -10,13 +10,11 @@ import {
 } from "@/types";
 
 export const runService = {
-    
-
     startTestCaseRun: async (
-        testcaseId: number, 
-        mode: RunMode, 
-        llm_model_id?: number, 
-        use_screenshots = false, 
+        testcaseId: number,
+        mode: RunMode,
+        llm_model_id?: number,
+        use_screenshots = false,
         use_video = false,
         timeout = 60000,
         should_group_actions = false
@@ -34,10 +32,10 @@ export const runService = {
     },
 
     startTestSuiteRun: async (
-        testsuiteId: number, 
-        mode: RunMode, 
-        llm_model_id?: number, 
-        use_screenshots = false, 
+        testsuiteId: number,
+        mode: RunMode,
+        llm_model_id?: number,
+        use_screenshots = false,
         use_video = false,
         timeout = 60000,
         should_group_actions = false
@@ -56,7 +54,7 @@ export const runService = {
 
 
 
-    
+
 
     abortTestCaseRun: async (runId: number): Promise<void> => {
         await api.post(`/runs/testcases/${runId}/abort`);
@@ -68,7 +66,7 @@ export const runService = {
 
 
 
-    
+
 
     getProjectRuns: async (projectId: string | number, offset = 0, limit = 10): Promise<{ runs: ProjectRun[]; total: number }> => {
         const response = await api.get<ApiResponse<ProjectRun>>(`/projects/${projectId}/runs`, {
@@ -100,7 +98,7 @@ export const runService = {
         };
     },
 
-    
+
     getProjectRunDetails: async (runId: number, force = false): Promise<ProjectRun & { testsuite_runs: TestSuiteRun[] }> => {
         try {
             const response = await getDeduplicated<ProjectRun & { testsuite_runs: TestSuiteRun[] }>(
@@ -155,7 +153,12 @@ export const runService = {
     },
 
 
-    subscribeToRunProgress: (scope: Scope, runId: number, onMessage: (data: any) => void): EventSource => {
+    subscribeToRunProgress: (
+        scope: Scope, 
+        runId: number, 
+        onMessage: (data: any) => void,
+        onError?: (err: Event) => void
+    ): EventSource => {
         const token = localStorage.getItem('token');
         const url = `/api/v1/runs/${scope.toLowerCase()}s/${runId}/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`;
         const eventSource = new EventSource(url);
@@ -175,7 +178,9 @@ export const runService = {
 
         eventSource.onerror = (err) => {
             console.error("SSE Connection Error:", err);
-            
+            if (onError) {
+                onError(err);
+            }
         };
 
         return eventSource;

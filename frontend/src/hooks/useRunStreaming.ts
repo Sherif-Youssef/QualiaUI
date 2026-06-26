@@ -33,39 +33,50 @@ export const useRunStreaming = ({
         setIsRunning(true);
         console.log(`[Streaming] Subscribing to ${scope} run ${id}`);
 
-        const eventSource = runService.subscribeToRunProgress(scope, id, (data: any) => {
-            const { onStatusChange: cbStatus, onStepUpdate: cbStep, onComplete: cbComplete } = callbacksRef.current;
+        const eventSource = runService.subscribeToRunProgress(
+            scope,
+            id,
+            (data: any) => {
+                const { onStatusChange: cbStatus, onStepUpdate: cbStep, onComplete: cbComplete } = callbacksRef.current;
 
-            if (data.type === 'STATUS_CHANGE') {
-                const event = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
-                if (cbStatus) cbStatus(event);
+                if (data.type === 'STATUS_CHANGE') {
+                    const event = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
+                    if (cbStatus) cbStatus(event);
 
-                
-                const eventElement = (event.element || '').toUpperCase();
-                const scopeElement = scope.toUpperCase();
 
-                if (eventElement === scopeElement && ['PASSED', 'FAILED', 'ABORTED', 'ERROR', 'SUCCESS', 'FAILURE'].includes(event.status?.toUpperCase())) {
-                    console.log(`[Streaming] ${scope} run ${id} completed with status ${event.status}`);
-                    eventSource.close();
-                    setIsRunning(false);
-                    if (cbComplete) cbComplete();
+                    const eventElement = (event.element || '').toUpperCase();
+                    const scopeElement = scope.toUpperCase();
+
+                    if (eventElement === scopeElement && ['PASSED', 'FAILED', 'ABORTED', 'ERROR', 'SUCCESS', 'FAILURE'].includes(event.status?.toUpperCase())) {
+                        console.log(`[Streaming] ${scope} run ${id} completed with status ${event.status}`);
+                        eventSource.close();
+                        setIsRunning(false);
+                        if (cbComplete) cbComplete();
+                    }
                 }
-            }
 
-            if (data.type === 'TEST_STEP') {
-                const stepData = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
-                if (cbStep) cbStep(stepData);
-            }
+                if (data.type === 'TEST_STEP') {
+                    const stepData = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
+                    if (cbStep) cbStep(stepData);
+                }
 
-            if (data.type === 'TEST_TERMINATION') {
-                const terminationData = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
-                if (cbStatus) cbStatus({
-                    ...terminationData,
-                    id: terminationData.testcase_id,
-                    element: 'TESTCASE'
-                });
+                if (data.type === 'TEST_TERMINATION') {
+                    const terminationData = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
+                    if (cbStatus) cbStatus({
+                        ...terminationData,
+                        id: terminationData.testcase_id,
+                        element: 'TESTCASE'
+                    });
+                }
+            },
+            (err) => {
+                console.error(`[Streaming] SSE stream error for run ${id}:`, err);
+                eventSource.close();
+                setIsRunning(false);
+                const { onComplete: cbComplete } = callbacksRef.current;
+                if (cbComplete) cbComplete();
             }
-        });
+        );
 
         eventSourceRef.current = eventSource;
     }, [scope]); 
