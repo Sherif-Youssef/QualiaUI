@@ -32,7 +32,6 @@ export const TopNav: React.FC = () => {
         setRole(userRole.charAt(0).toUpperCase() + userRole.slice(1));
         setIsAdmin(isUserAdmin);
       } catch (err) {
-        console.error("Error fetching nav data:", err);
         setUserName('Guest User');
       }
     };

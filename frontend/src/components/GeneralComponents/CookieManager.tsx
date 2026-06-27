@@ -80,7 +80,7 @@ export const CookieManager: React.FC<CookieManagerProps> = ({
             try {
                 const content = e.target?.result as string;
                 const parsed = JSON.parse(content);
-                
+
                 if (Array.isArray(parsed)) {
                     const sanitized = parsed.map((raw: any): Omit<Cookie, 'id'> => {
                         let sameSite: SameSite | undefined = undefined;

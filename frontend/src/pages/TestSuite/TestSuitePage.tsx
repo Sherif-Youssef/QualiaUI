@@ -7,18 +7,28 @@ import { SearchBar } from '@/components/SearchBar';
 import { Pagination } from '@/components/Pagination';
 import { AddTestCaseModal } from '@/components/Modal/AddTestCaseModal';
 import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
+import { ViewTestCaseModal } from '@/components/Modal/ViewTestCaseModal';
 import { ErrorMessage } from '@/components/GeneralComponents';
 import { useTestSuite } from './hooks/useTestSuite';
 import { RunConfigurationModal } from '@/components/Modal/RunConfigurationModal';
 import { TestSuiteHistoryView } from './TestSuiteHistoryView';
 import { LayoutGrid, History, Settings } from 'lucide-react';
 import { TestSuiteManageView } from './TestSuiteManageView';
+import { TestCase } from '@/types';
 
 export const TestSuitePage: React.FC = () => {
     const { projectId, suiteId } = useParams<{ projectId: string; suiteId: string }>();
     const navigate = useNavigate();
     const [isRunConfigModalOpen, setIsRunConfigModalOpen] = React.useState(false);
+    const [isViewCaseModalOpen, setIsViewCaseModalOpen] = React.useState(false);
+    const [viewingTestCase, setViewingTestCase] = React.useState<TestCase | null>(null);
     const [activeView, setActiveView] = React.useState<'cases' | 'history' | 'manage'>('cases');
+
+    const handleViewCaseClick = (testCase: TestCase, e: React.MouseEvent) => {
+        e.stopPropagation();
+        setViewingTestCase(testCase);
+        setIsViewCaseModalOpen(true);
+    };
 
     const {
         suiteName,
@@ -39,9 +49,7 @@ export const TestSuitePage: React.FC = () => {
         pageError,
         isTrulyEmpty,
         isSearchEmpty,
-        handleDeleteClick,
         confirmDelete,
-        handleEditClick,
         handleRunAll,
         handleAbortSuite,
         isRunningSuite,
@@ -135,6 +143,7 @@ export const TestSuitePage: React.FC = () => {
                                         onNavigate={(caseId) => navigate(`/project/${projectId}/suite/${suiteId}/case/${caseId}?view=live`)}
                                         onHistory={(caseId) => navigate(`/project/${projectId}/suite/${suiteId}/case/${caseId}?view=history`)}
                                         onManage={(caseId) => navigate(`/project/${projectId}/suite/${suiteId}/case/${caseId}?view=manage`)}
+                                        onViewDetails={handleViewCaseClick}
                                         canManageCases={canManageCases}
                                     />
                                     {isSearchEmpty && (
@@ -206,6 +215,15 @@ export const TestSuitePage: React.FC = () => {
                             setIsRunConfigModalOpen(false);
                         }}
                         title={`Run Suite: ${suiteName || 'Test Suite'}`}
+                    />
+
+                    <ViewTestCaseModal
+                        isOpen={isViewCaseModalOpen}
+                        onClose={() => {
+                            setIsViewCaseModalOpen(false);
+                            setViewingTestCase(null);
+                        }}
+                        testCase={viewingTestCase}
                     />
                 </>
             }

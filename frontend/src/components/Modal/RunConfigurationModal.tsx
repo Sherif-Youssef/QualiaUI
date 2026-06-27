@@ -67,7 +67,6 @@ export const RunConfigurationModal: React.FC<RunConfigurationModalProps> = ({
             setProviders(response.items);
         } catch (err) {
             setError("Failed to load providers");
-            console.error(err);
         } finally {
             setIsLoadingProviders(false);
         }
@@ -81,7 +80,6 @@ export const RunConfigurationModal: React.FC<RunConfigurationModalProps> = ({
             setModels(response.items);
         } catch (err) {
             setError("Failed to load models for selected provider");
-            console.error(err);
         } finally {
             setIsLoadingModels(false);
         }

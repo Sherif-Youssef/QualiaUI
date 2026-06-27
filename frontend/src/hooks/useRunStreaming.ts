@@ -31,7 +31,6 @@ export const useRunStreaming = ({
         }
 
         setIsRunning(true);
-        console.log(`[Streaming] Subscribing to ${scope} run ${id}`);
 
         const eventSource = runService.subscribeToRunProgress(
             scope,
@@ -42,8 +41,6 @@ export const useRunStreaming = ({
                 if (data.type === 'STATUS_CHANGE') {
                     const event = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
                     
-                    console.log(`[DEBUG STREAMING] RAW EVENT RECEIVED:`, event);
-                    
                     if (cbStatus) cbStatus(event);
 
 
@@ -51,7 +48,6 @@ export const useRunStreaming = ({
                     const scopeElement = scope.toUpperCase();
 
                     if (eventElement === scopeElement && ['PASSED', 'FAILED', 'ABORTED', 'ERROR', 'SUCCESS', 'FAILURE'].includes(event.status?.toUpperCase())) {
-                        console.log(`[Streaming] ${scope} run ${id} completed with status ${event.status}`);
                         eventSource.close();
                         setIsRunning(false);
                         if (cbComplete) cbComplete();

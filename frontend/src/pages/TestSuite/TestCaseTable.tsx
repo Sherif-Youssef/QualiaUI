@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Play, History } from 'lucide-react';
+import { Settings, Play, History, Info } from 'lucide-react';
 import { TestCase } from "@/types";
 
 interface TestCaseTableProps {
@@ -7,6 +7,7 @@ interface TestCaseTableProps {
     onNavigate: (id: string) => void;
     onHistory: (id: string) => void;
     onManage: (id: string) => void;
+    onViewDetails: (testCase: TestCase, e: React.MouseEvent) => void;
     canManageCases: boolean;
 }
 
@@ -14,7 +15,8 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
     testCases,
     onNavigate,
     onHistory,
-    onManage
+    onManage,
+    onViewDetails
 }) => {
     return (
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
@@ -37,18 +39,20 @@ export const TestCaseTable: React.FC<TestCaseTableProps> = ({
                                     <span className="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors">
                                         {testCase.name}
                                     </span>
-                                    {testCase.description && (
-                                        <p
-                                            className="text-[11px] text-gray-400 mt-1 line-clamp-2 leading-relaxed"
-                                            title={testCase.description}
-                                        >
-                                            {testCase.description}
-                                        </p>
-                                    )}
                                 </div>
                             </td>
                             <td className="px-6 py-5 text-right">
                                 <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onViewDetails(testCase, e);
+                                        }}
+                                        className="p-2 text-gray-400 hover:text-primary transition-all active:scale-90"
+                                        title="View Details"
+                                    >
+                                        <Info className="w-4 h-4" />
+                                    </button>
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation();
