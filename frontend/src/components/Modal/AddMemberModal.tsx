@@ -125,8 +125,6 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
                                 </div>
                             )}
                         </div>
-
-                        { }
                         {suggestions.length > 0 && (
                             <div className="absolute z-[1001] top-full left-0 right-0 mt-2 bg-white rounded-2xl border border-gray-100 shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                                 {suggestions.map((user) => (
@@ -166,9 +164,6 @@ export const AddMemberModal: React.FC<AddMemberModalProps> = ({
                                 </SelectTrigger>
                             </div>
                             <SelectContent side="bottom" sideOffset={1} className="rounded-2xl border-gray-100 shadow-xl overflow-hidden z-[10000]">
-                                <SelectItem value="guest" className="py-2.5 font-bold text-gray-600 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
-                                    Guest (Limited access)
-                                </SelectItem>
                                 <SelectItem value="viewer" className="py-2.5 font-bold text-gray-600 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
                                     Viewer (Read-only access)
                                 </SelectItem>

@@ -45,6 +45,7 @@ export const projectService = {
     },
     updateProject: async (id: string, data: { name?: string; description?: string; members?: Array<{ user_id: number | string; role: string }> }): Promise<Project> => {
         try {
+            projectPromises.delete(id);
             const response = await api.put<ProjectDTO>(`/projects/${id}`, data);
             return mapProjectToViewModel(response.data);
         } catch (error) {
@@ -53,10 +54,9 @@ export const projectService = {
     },
     addMember: async (projectId: string, userId: number | string, role: string): Promise<Project> => {
         try {
-            const response = await api.get<ProjectDTO>(`/projects/${projectId}`);
-            const projectDTO = response.data;
-            const existingMembers = (projectDTO.members || []).map((m: any) => ({
-                user_id: m.user.id,
+            const project = await projectService.getProjectById(projectId);
+            const existingMembers = (project.members || []).map((m: any) => ({
+                user_id: Number(m.user.id),
                 role: m.role
             }));
 
@@ -71,13 +71,12 @@ export const projectService = {
     },
     removeMember: async (projectId: string, userEmail: string): Promise<Project> => {
         try {
-            const response = await api.get<ProjectDTO>(`/projects/${projectId}`);
-            const projectDTO = response.data;
+            const project = await projectService.getProjectById(projectId);
 
-            const updatedMembers = (projectDTO.members || [])
+            const updatedMembers = (project.members || [])
                 .filter((m: any) => m.user.email !== userEmail)
                 .map((m: any) => ({
-                    user_id: m.user.id,
+                    user_id: Number(m.user.id),
                     role: m.role
                 }));
 
@@ -90,6 +89,7 @@ export const projectService = {
     },
     deleteProject: async (id: string) => {
         try {
+            projectPromises.delete(id);
             await api.delete(`/projects/${id}`);
         } catch (error) {
             throw error;

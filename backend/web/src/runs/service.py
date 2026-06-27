@@ -131,6 +131,9 @@ def launch_testcase_run(
     testcase_run_id = cast(int, test_case_run.id)
     stream_key = get_stream_key(Scope.TESTCASE, testcase_run_id)  
     
+    from src.runs.stream import get_redis_client
+    get_redis_client().delete(stream_key)
+
     app.send_task(
         "runs.execute_testcase",
         kwargs={
@@ -228,6 +231,9 @@ def launch_testsuite_run(
     session.commit()
 
     stream_key = get_stream_key(Scope.TESTSUITE, testsuite_run_id)
+
+    from src.runs.stream import get_redis_client
+    get_redis_client().delete(stream_key)
 
     workflow = _build_testsuite_workflow_signature(
         testcase_runs_ids=testcase_runs_ids,

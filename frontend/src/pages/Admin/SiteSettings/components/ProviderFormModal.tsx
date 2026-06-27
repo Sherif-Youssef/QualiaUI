@@ -1,3 +1,9 @@
+/**
+ * @file ProviderFormModal.tsx
+ * @description Modal form component for creating or editing LLM Providers.
+ * Manages configuration attributes, credentials key reveal/update actions, and custom key-value settings.
+ */
+
 import React, { useEffect, useState } from 'react';
 import { X, Server, Globe, Key, Plus, Trash2, Settings2, Eye, EyeOff, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';

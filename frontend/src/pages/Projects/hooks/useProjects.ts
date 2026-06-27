@@ -90,9 +90,15 @@ export const useProjects = () => {
         }
     };
 
-    const handleViewDetailsClick = (project: Project, e: React.MouseEvent) => {
+    const handleViewDetailsClick = async (project: Project, e: React.MouseEvent) => {
         e.stopPropagation();
-        setViewingProject(project);
+        try {
+            const fullProject = await projectService.getProjectById(project.id);
+            setViewingProject(fullProject);
+        } catch (err) {
+            console.error('Failed to fetch full project details:', err);
+            setViewingProject(project);
+        }
         setIsViewModalOpen(true);
     };
 

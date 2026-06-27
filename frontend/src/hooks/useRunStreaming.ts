@@ -41,6 +41,9 @@ export const useRunStreaming = ({
 
                 if (data.type === 'STATUS_CHANGE') {
                     const event = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
+                    
+                    console.log(`[DEBUG STREAMING] RAW EVENT RECEIVED:`, event);
+                    
                     if (cbStatus) cbStatus(event);
 
 
@@ -79,7 +82,7 @@ export const useRunStreaming = ({
         );
 
         eventSourceRef.current = eventSource;
-    }, [scope]); 
+    }, [scope]);
 
     useEffect(() => {
         if (runId && runId !== 'standalone') {

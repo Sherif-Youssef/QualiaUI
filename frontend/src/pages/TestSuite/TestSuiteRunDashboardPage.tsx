@@ -175,19 +175,22 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
 
     const debouncedFetchRunDetails = useCallback(() => {
         if (debounceTimerRef.current) {
-            clearTimeout(debounceTimerRef.current);
+            return;
         }
         debounceTimerRef.current = setTimeout(async () => {
-            if (isFetchingRef.current) return;
+            debounceTimerRef.current = null;
+            if (isFetchingRef.current) {
+                setTimeout(debouncedFetchRunDetails, 500);
+                return;
+            }
             isFetchingRef.current = true;
             try {
                 await fetchRunDetails();
             } finally {
                 isFetchingRef.current = false;
             }
-        }, 1000);
+        }, 500);
     }, [fetchRunDetails]);
-
     useEffect(() => {
         if (!suiteRun) setIsLoading(true);
         fetchRunDetails();
@@ -199,12 +202,12 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
     const handleStatusChange = useCallback(() => {
         debouncedFetchRunDetails();
     }, [debouncedFetchRunDetails]);
-
     useRunStreaming({
         scope: 'TESTSUITE',
         runId: runId!,
         onStatusChange: handleStatusChange,
-        onStepUpdate: handleStatusChange
+        onStepUpdate: handleStatusChange,
+        onComplete: handleStatusChange,
     });
 
     const handleAbort = async () => {

@@ -120,8 +120,8 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
         setIsModalOpen(true);
     };
 
-    const handleRunAll = async (llmModelId?: number, options?: { 
-        useScreenshots: boolean; 
+    const handleRunAll = async (llmModelId?: number, options?: {
+        useScreenshots: boolean;
         useVideo: boolean;
         timeout: number;
         shouldGroupActions: boolean;
@@ -133,8 +133,8 @@ export const useTestSuite = ({ projectId, suiteId }: UseTestSuiteProps) => {
         setError(null);
         try {
             const run = await runService.startTestSuiteRun(
-                parseInt(suiteId), 
-                'NATURAL', 
+                parseInt(suiteId),
+                'NATURAL',
                 llmModelId,
                 options?.useScreenshots,
                 options?.useVideo,
