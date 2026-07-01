@@ -3,14 +3,14 @@ name = "automation_engine"
 version = "1.1.0"
 
 dependencies = [
-  "playwright>=1.55.0,<2.0.0",
-  "pydantic>=2.12.5,<3.0.0",
-  "python-dotenv>=1.2.1,<2.0.0",
-  "pydantic_ai",
-  "logfire",
-  "rapidfuzz",
-  "playwright_stealth",
-  "genai-prices",
+  "playwright==1.59.0",
+  "pydantic==2.13.4",
+  "python-dotenv==1.2.2",
+  "pydantic_ai==1.100.0",
+  "logfire==4.32.1",
+  "RapidFuzz==3.14.5",
+  "playwright-stealth==2.0.3",
+  "genai-prices==0.0.59",
 ]
 
 [tool.setuptools]

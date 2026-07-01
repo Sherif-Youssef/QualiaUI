@@ -1,8 +1,8 @@
-python-dotenv
-pydantic
-playwright
-pydantic_ai
-logfire
-rapidfuzz
-playwright_stealth
-genai-prices
+python-dotenv==1.2.2
+pydantic==2.13.4
+playwright==1.59.0
+pydantic_ai==1.100.0
+logfire==4.32.1
+RapidFuzz==3.14.5
+playwright-stealth==2.0.3
+genai-prices==0.0.59
