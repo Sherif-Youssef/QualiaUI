@@ -47,10 +47,10 @@
     --color-gray-700: 210 8% 30%;
     --color-gray-800: 210 10% 20%;
     --color-gray-900: 210 15% 10%;
-    
+
     --font-sans: "DM Sans", sans-serif;
     --font-body: "Inter", sans-serif;
-    
+
     --radius-lg: 12px;
     --radius-md: 10px;
     --radius-sm: 8px;
@@ -67,7 +67,12 @@
     min-height: 100vh;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-sans text-foreground;
   }
 }

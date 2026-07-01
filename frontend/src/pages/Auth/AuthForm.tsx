@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Eye, EyeOff } from 'lucide-react';
 
 export interface AuthField {
     id: string;
@@ -27,6 +28,8 @@ export const AuthForm: React.FC<AuthFormProps> = ({
     submitLabel,
     isLoading
 }) => {
+    const [showPassword, setShowPassword] = useState(false);
+
     return (
         <form onSubmit={onSubmit} className="space-y-5">
             {fields.map((field) => (
@@ -37,15 +40,26 @@ export const AuthForm: React.FC<AuthFormProps> = ({
                         </Label>
                         {field.rightElement}
                     </div>
-                    <Input
-                        id={field.id}
-                        type={field.type}
-                        placeholder={field.placeholder}
-                        value={field.value}
-                        onChange={(e) => field.onChange(e.target.value)}
-                        required={field.required !== false}
-                        className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                    />
+                    <div className="relative">
+                        <Input
+                            id={field.id}
+                            type={field.type === 'password' && showPassword ? 'text' : field.type}
+                            placeholder={field.placeholder}
+                            value={field.value}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            required={field.required !== false}
+                            className={`w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all ${field.type === 'password' ? 'pr-10' : ''}`}
+                        />
+                        {field.type === 'password' && (
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                            >
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                        )}
+                    </div>
                 </div>
             ))}
             <Button

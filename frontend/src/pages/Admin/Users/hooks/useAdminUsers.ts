@@ -7,6 +7,7 @@ export const useAdminUsers = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<UserViewModel | null>(null);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
+    const [regenerateConfirmation, setRegenerateConfirmation] = useState<{ id: string; name: string } | null>(null);
     const [users, setUsers] = useState<UserViewModel[]>([]);
 
     const [isLoading, setIsLoading] = useState(true);
@@ -122,16 +123,22 @@ export const useAdminUsers = () => {
         }
     };
 
-    const handleRegeneratePassword = async (userId: string, name: string) => {
-        if (!window.confirm(`Are you sure you want to regenerate a temporary password for ${name}?`)) return;
+    const handleRegeneratePassword = (userId: string, name: string) => {
+        setModalError(null);
+        setRegenerateConfirmation({ id: userId, name });
+    };
+
+    const confirmRegeneratePassword = async () => {
+        if (!regenerateConfirmation) return;
 
         setModalLoading(true);
         setModalError(null);
         try {
-            const result = await adminService.regenerateTempPassword(userId);
-            setPasswordModal({ pass: result.temporary_password, name: name, title: 'Password Regenerated' });
+            const result = await adminService.regenerateTempPassword(regenerateConfirmation.id);
+            setPasswordModal({ pass: result.temporary_password, name: regenerateConfirmation.name, title: 'Password Regenerated' });
+            setRegenerateConfirmation(null);
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to regenerate temporary password.');
+            setModalError(err.response?.data?.detail || 'Failed to regenerate temporary password.');
         } finally {
             setModalLoading(false);
         }
@@ -163,6 +170,8 @@ export const useAdminUsers = () => {
         handleEditClick,
         handleUpdateUser,
         handleAddUser,
+        regenerateConfirmation, setRegenerateConfirmation,
+        confirmRegeneratePassword,
         handleRegeneratePassword
     };
 };

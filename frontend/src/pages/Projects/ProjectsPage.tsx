@@ -6,7 +6,7 @@ import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationMo
 import { ViewProjectModal } from '@/components/Modal/ViewProjectModal';
 import { ErrorMessage } from '@/components/GeneralComponents';
 
-import { ProjectsLayout } from "./ProjectsLayout";
+import { DashboardLayout } from "@/components/Layout/DashboardLayout";
 import { ProjectsHeader } from "./ProjectsHeader";
 import { ProjectsEmptyState } from "./ProjectsEmptyState";
 import { ProjectsTable } from "./ProjectsTable";
@@ -43,7 +43,7 @@ export const ProjectsPage: React.FC = () => {
     } = useProjects();
 
     return (
-        <ProjectsLayout
+        <DashboardLayout
             header={(
                 <ProjectsHeader
                     onAddProject={() => {

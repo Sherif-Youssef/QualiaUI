@@ -40,10 +40,7 @@ export const useRunStreaming = ({
 
                 if (data.type === 'STATUS_CHANGE') {
                     const event = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
-                    
                     if (cbStatus) cbStatus(event);
-
-
                     const eventElement = (event.element || '').toUpperCase();
                     const scopeElement = scope.toUpperCase();
 
@@ -58,7 +55,6 @@ export const useRunStreaming = ({
                     const stepData = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
                     if (cbStep) cbStep(stepData);
                 }
-
                 if (data.type === 'TEST_TERMINATION') {
                     const terminationData = typeof data.event === 'string' ? JSON.parse(data.event) : data.event;
                     if (cbStatus) cbStatus({

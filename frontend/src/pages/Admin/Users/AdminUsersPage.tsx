@@ -2,14 +2,15 @@ import React from 'react';
 import { SearchBar } from '@/components/SearchBar';
 import { Pagination } from '@/components/Pagination';
 import { DeleteConfirmationModal } from '@/components/Modal/DeleteConfirmationModal';
+import { RegeneratePasswordConfirmationModal } from '@/components/Modal/RegeneratePasswordConfirmationModal';
 import { ErrorMessage } from '@/components/GeneralComponents';
-import { ProjectsLayout } from "@/pages/Projects/ProjectsLayout";
+import { DashboardLayout } from "@/components/Layout/DashboardLayout";
 import { AddUserModal } from '@/components/Modal/AddUserModal';
 import { TempPasswordModal } from '@/components/Modal/TempPasswordModal';
 
-import { AdminUsersHeader } from './AdminUsersHeader';
-import { AdminUsersTable } from './UsersTable/AdminUsersTable';
-import { AdminUsersEmptyState } from './AdminUsersEmptyState';
+import { AdminUsersHeader } from './components/AdminUsersHeader';
+import { AdminUsersTable } from './components/AdminUsersTable';
+import { AdminUsersEmptyState } from './components/AdminUsersEmptyState';
 import { useAdminUsers } from './hooks/useAdminUsers';
 
 export const AdminUsersPage: React.FC = () => {
@@ -25,6 +26,7 @@ export const AdminUsersPage: React.FC = () => {
         isModalOpen, setIsModalOpen,
         editingUser, setEditingUser,
         deleteConfirmation, setDeleteConfirmation,
+        regenerateConfirmation, setRegenerateConfirmation,
         modalLoading,
         modalError, setModalError,
         passwordModal, setPasswordModal,
@@ -32,6 +34,7 @@ export const AdminUsersPage: React.FC = () => {
         isSearchEmpty,
         handleDeleteClick,
         confirmDelete,
+        confirmRegeneratePassword,
         handleEditClick,
         handleUpdateUser,
         handleAddUser,
@@ -39,7 +42,7 @@ export const AdminUsersPage: React.FC = () => {
     } = useAdminUsers();
 
     return (
-        <ProjectsLayout
+        <DashboardLayout
             header={<AdminUsersHeader onAddUser={() => {
                 setModalError(null);
                 setIsModalOpen(true);
@@ -117,6 +120,19 @@ export const AdminUsersPage: React.FC = () => {
                         }}
                         onConfirm={confirmDelete}
                         itemName={deleteConfirmation?.name}
+                        error={modalError}
+                        onClearError={() => setModalError(null)}
+                        isLoading={modalLoading}
+                    />
+
+                    <RegeneratePasswordConfirmationModal
+                        isOpen={regenerateConfirmation !== null}
+                        onClose={() => {
+                            setRegenerateConfirmation(null);
+                            setModalError(null);
+                        }}
+                        onConfirm={confirmRegeneratePassword}
+                        userName={regenerateConfirmation?.name}
                         error={modalError}
                         onClearError={() => setModalError(null)}
                         isLoading={modalLoading}

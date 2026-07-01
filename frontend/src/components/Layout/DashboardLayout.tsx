@@ -1,7 +1,7 @@
 import React from 'react';
 import { TopNav } from '@/components/TopNav';
 
-interface ProjectsLayoutProps {
+interface DashboardLayoutProps {
     header: React.ReactNode;
     searchBar: React.ReactNode;
     content: React.ReactNode;
@@ -9,7 +9,7 @@ interface ProjectsLayoutProps {
     modals: React.ReactNode;
 }
 
-export const ProjectsLayout: React.FC<ProjectsLayoutProps> = ({
+export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     header,
     searchBar,
     content,

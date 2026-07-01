@@ -172,9 +172,6 @@ export const AddUserModal: React.FC<AddUserModalProps> = ({
                                     </SelectTrigger>
                                 </div>
                                 <SelectContent side="bottom" sideOffset={1} className="rounded-2xl border-gray-100 shadow-xl overflow-hidden z-[10000]">
-                                    <SelectItem value="guest" className="py-2.5 font-bold text-gray-600 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
-                                        Guest (Limited access)
-                                    </SelectItem>
                                     <SelectItem value="viewer" className="py-2.5 font-bold text-gray-600 focus:bg-primary/5 focus:text-primary transition-colors cursor-pointer">
                                         Viewer (Read-only access)
                                     </SelectItem>

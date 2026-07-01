@@ -1,9 +1,3 @@
-/**
- * @file ProviderList.tsx
- * @description Sidebar list component for selecting LLM Providers.
- * Displays provider details search input, paginated provider items, and action to launch the creation modal.
- */
-
 import React from 'react';
 import { Plus, Server, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -72,8 +66,8 @@ export const ProviderList: React.FC<ProviderListProps> = ({
                                 key={provider.id}
                                 onClick={() => onSelectProvider(provider.id)}
                                 className={`w-full text-left p-4 rounded-2xl border transition-all flex items-center justify-between group ${selectedProviderId === provider.id
-                                        ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
-                                        : 'bg-white border-gray-100 text-gray-900 hover:border-primary/20 hover:shadow-sm'
+                                    ? 'bg-primary border-primary text-white shadow-lg shadow-primary/20'
+                                    : 'bg-white border-gray-100 text-gray-900 hover:border-primary/20 hover:shadow-sm'
                                     }`}
                             >
                                 <div className="flex items-center gap-3">

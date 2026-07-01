@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutGrid, Users, History } from 'lucide-react';
+import { LayoutGrid, Users } from 'lucide-react';
 
 export type ProjectView = 'suites' | 'team';
 

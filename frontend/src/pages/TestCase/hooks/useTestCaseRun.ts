@@ -38,6 +38,9 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
 
     const handleSSEError = useCallback(async (runId: number) => {
         const streamErrorMessage = 'Connection to run progress stream lost. The backend execution may have crashed or timed out.';
+
+        await new Promise(resolve => setTimeout(resolve, 800));
+
         try {
             let currentStatus: TestCase['status'] = 'error';
             let reason = streamErrorMessage;
@@ -67,7 +70,9 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
 
             if (['running', 'queued', 'pending', 'idle'].includes(currentStatus || '')) {
                 currentStatus = 'error';
-                reason = streamErrorMessage;
+                if (!reason || reason === streamErrorMessage) {
+                    reason = streamErrorMessage;
+                }
             }
 
             setTestCase(prev => {

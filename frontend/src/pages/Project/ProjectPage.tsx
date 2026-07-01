@@ -48,7 +48,9 @@ export const ProjectPage: React.FC = () => {
         handleDeleteSuiteClick,
         handleDeleteTestSuite,
         handleMemberAdd,
-        handleMemberRemove,
+        removeMemberConfirmation, setRemoveMemberConfirmation,
+        handleRemoveMemberClick,
+        confirmRemoveMember,
     } = useProjectWorkspace({ projectId });
     return (
         <ProjectLayout
@@ -102,7 +104,7 @@ export const ProjectPage: React.FC = () => {
                             isLoading={isLoading}
                             canManageProject={canManageProject}
                             onInvite={() => setIsAddMemberModalOpen(true)}
-                            onRemoveMember={handleMemberRemove}
+                            onRemoveMember={handleRemoveMemberClick}
                         />
                     )}
                 </>
@@ -165,6 +167,19 @@ export const ProjectPage: React.FC = () => {
                         isLoading={modalLoading}
                         error={modalError}
                         onClearError={() => setModalError(null)}
+                    />
+
+                    <DeleteConfirmationModal
+                        isOpen={removeMemberConfirmation !== null}
+                        onClose={() => {
+                            setRemoveMemberConfirmation(null);
+                            setModalError(null);
+                        }}
+                        onConfirm={confirmRemoveMember}
+                        itemName={removeMemberConfirmation?.name}
+                        error={modalError}
+                        onClearError={() => setModalError(null)}
+                        isLoading={modalLoading}
                     />
                 </>
             }
