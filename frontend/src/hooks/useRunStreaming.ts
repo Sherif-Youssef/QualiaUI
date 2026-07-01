@@ -43,7 +43,6 @@ export const useRunStreaming = ({
                     if (cbStatus) cbStatus(event);
                     const eventElement = (event.element || '').toUpperCase();
                     const scopeElement = scope.toUpperCase();
-
                     if (eventElement === scopeElement && ['PASSED', 'FAILED', 'ABORTED', 'ERROR', 'SUCCESS', 'FAILURE'].includes(event.status?.toUpperCase())) {
                         eventSource.close();
                         setIsRunning(false);

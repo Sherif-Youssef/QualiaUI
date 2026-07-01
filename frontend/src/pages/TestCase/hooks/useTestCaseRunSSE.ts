@@ -47,7 +47,6 @@ export const useTestCaseRunSSE = ({
         setIsRunning(true);
 
         const scope = parentSuiteRunId ? 'TESTSUITE' : 'TESTCASE';
-        console.log(`[TestCaseRun] Subscribing to ${scope} run ${subscriptionId} (Targeting TC Run ${runId})`);
 
         const eventSource = runService.subscribeToRunProgress(
             scope as Scope,
@@ -70,7 +69,6 @@ export const useTestCaseRunSSE = ({
                     }
 
                     const status = (event.status || '').toUpperCase();
-                    console.log(`[TestCaseRun] Status change: ${status}`, event);
 
                     const terminalReason = event.termination_reason || event.reason;
 
@@ -80,10 +78,6 @@ export const useTestCaseRunSSE = ({
                     else if (status === 'ABORTED') tcStatus = 'aborted';
                     else if (status === 'ERROR') tcStatus = 'error';
                     else if (status === 'RUNNING') tcStatus = 'running';
-
-                    if (tcStatus) {
-                        console.log(`[TestCaseRunSSE] Setting status: ${tcStatus}`);
-                    }
                     setTestCase(prev => {
                         if (!prev) return null;
                         return {
@@ -94,7 +88,6 @@ export const useTestCaseRunSSE = ({
                     });
 
                     if (['PASSED', 'FAILED', 'ABORTED', 'ERROR', 'SUCCESS', 'FAILURE', 'COMPLETED', 'FINISHED'].includes(status)) {
-                        console.log(`[TestCaseRun] Closing stream for status: ${status}`);
                         eventSource.close();
                         setIsRunning(false);
                         isStartingRef.current = false;
@@ -116,8 +109,6 @@ export const useTestCaseRunSSE = ({
                         return;
                     }
 
-                    console.log(`[TestCaseRun] New step received:`, stepData);
-
                     const incomingStep = mapActiveStepToActionStep(stepData, 0);
 
                     setTestCase(prev => {
@@ -136,7 +127,6 @@ export const useTestCaseRunSSE = ({
                         } else {
                             newSteps.push(finalStep);
                         }
-
                         setSelectedStep(finalStep);
                         return { ...prev, steps: newSteps };
                     });

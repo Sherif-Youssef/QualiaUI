@@ -10,7 +10,6 @@ import {
   TestCasePage,
   TestSuitePage,
   ForgotPasswordPage,
-  TestSuiteManagerPage,
   AdminUsersPage,
   SiteSettingsPage,
   TestSuiteRunDashboardPage,
@@ -52,6 +51,7 @@ function App() {
           />
         )}
         <Routes>
+          <Route path="/" element={<Navigate to="/projects" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route element={<ProtectedRoute />}>
@@ -60,9 +60,6 @@ function App() {
             <Route path="/project/:projectId/suite/:suiteId" element={<TestSuitePage />} />
             <Route path="/project/:projectId/suite/:suiteId/run/:runId" element={<TestSuiteRunDashboardPage />} />
             <Route path="/project/:projectId/suite/:suiteId/case/:caseId" element={<TestCasePage />} />
-            <Route path="/project/:projectId/suite/:suiteId/manager" element={<TestSuiteManagerPage />} />
-            <Route path="/project/:projectId/manager" element={<TestSuiteManagerPage />} />
-            <Route path="/project/:projectId/case/:caseId/manager" element={<TestSuiteManagerPage />} />
             <Route path="/project/:projectId/case/:caseId/run" element={<TestCaseRunPage />} />
             <Route path="/project/:projectId/suite/:suiteId/case/:caseId/run" element={<TestCasePage />} />
             <Route path="/project/:projectId/suite/:suiteId/case/:caseId/run/:runId" element={<TestCaseRunPage />} />

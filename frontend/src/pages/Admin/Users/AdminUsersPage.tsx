@@ -24,7 +24,6 @@ export const AdminUsersPage: React.FC = () => {
         isLoading,
         error, setError,
         isModalOpen, setIsModalOpen,
-        editingUser, setEditingUser,
         deleteConfirmation, setDeleteConfirmation,
         regenerateConfirmation, setRegenerateConfirmation,
         modalLoading,
@@ -35,8 +34,6 @@ export const AdminUsersPage: React.FC = () => {
         handleDeleteClick,
         confirmDelete,
         confirmRegeneratePassword,
-        handleEditClick,
-        handleUpdateUser,
         handleAddUser,
         handleRegeneratePassword
     } = useAdminUsers();
@@ -72,7 +69,6 @@ export const AdminUsersPage: React.FC = () => {
                         <>
                             <AdminUsersTable
                                 users={users}
-                                onEdit={handleEditClick}
                                 onDelete={handleDeleteClick}
                                 onRegeneratePassword={handleRegeneratePassword}
                             />
@@ -101,12 +97,9 @@ export const AdminUsersPage: React.FC = () => {
                         isOpen={isModalOpen}
                         onClose={() => {
                             setIsModalOpen(false);
-                            setEditingUser(null);
                             setModalError(null);
                         }}
                         onAdd={handleAddUser}
-                        editingUser={editingUser}
-                        onEdit={handleUpdateUser}
                         error={modalError}
                         onClearError={() => setModalError(null)}
                         isLoading={modalLoading}

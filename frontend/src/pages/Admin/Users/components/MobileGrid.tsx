@@ -1,18 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Pencil, Trash2, User, Mail, Shield, ShieldAlert, Calendar } from 'lucide-react';
+import { Trash2, User, Mail, Shield, ShieldAlert, Calendar } from 'lucide-react';
 import { UserViewModel } from '@/services/admin/adminService';
 
 interface MobileGridProps {
     users: UserViewModel[];
-    onEdit: (user: UserViewModel) => void;
     onDelete: (id: string, name: string) => void;
     onRegeneratePassword: (userId: string, name: string) => void;
 }
 
 export const MobileGrid: React.FC<MobileGridProps> = ({ 
     users, 
-    onEdit, 
     onDelete, 
     onRegeneratePassword 
 }) => {
@@ -51,14 +49,7 @@ export const MobileGrid: React.FC<MobileGridProps> = ({
                             </div>
                         )}
                     </div>
-                    <div className="grid grid-cols-3 gap-3 mt-2">
-                        <button
-                            onClick={() => onEdit(user)}
-                            className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-gray-900 text-white text-[10px] font-black uppercase tracking-widest hover:bg-gray-800 transition-all active:scale-95"
-                            title="Edit"
-                        >
-                            <Pencil className="w-4 h-4" />
-                        </button>
+                    <div className="grid grid-cols-2 gap-3 mt-2">
                         <button
                             onClick={() => onRegeneratePassword(user.id, `${user.firstName} ${user.lastName}`)}
                             className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all active:scale-95"

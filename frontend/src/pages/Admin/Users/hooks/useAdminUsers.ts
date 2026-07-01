@@ -5,7 +5,6 @@ export const useAdminUsers = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingUser, setEditingUser] = useState<UserViewModel | null>(null);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
     const [regenerateConfirmation, setRegenerateConfirmation] = useState<{ id: string; name: string } | null>(null);
     const [users, setUsers] = useState<UserViewModel[]>([]);
@@ -78,26 +77,6 @@ export const useAdminUsers = () => {
         }
     };
 
-    const handleEditClick = (user: UserViewModel) => {
-        setEditingUser(user);
-        setModalError(null);
-        setIsModalOpen(true);
-    };
-
-    const handleUpdateUser = async (id: string, data: any) => {
-        setModalLoading(true);
-        setModalError(null);
-        try {
-            await adminService.updateUser(id, data);
-            await fetchUsers();
-            setIsModalOpen(false);
-            setEditingUser(null);
-        } catch (err: any) {
-            setModalError(adminService.formatError(err, 'Failed to update user.'));
-        } finally {
-            setModalLoading(false);
-        }
-    };
 
     const handleAddUser = async (data: any) => {
         setModalLoading(true);
@@ -107,7 +86,6 @@ export const useAdminUsers = () => {
             setCurrentPage(1);
             await fetchUsers();
             setIsModalOpen(false);
-            setEditingUser(null);
 
             if (temporaryPassword) {
                 setPasswordModal({
@@ -158,7 +136,6 @@ export const useAdminUsers = () => {
         isLoading,
         error, setError,
         isModalOpen, setIsModalOpen,
-        editingUser, setEditingUser,
         deleteConfirmation, setDeleteConfirmation,
         modalLoading,
         modalError, setModalError,
@@ -167,8 +144,6 @@ export const useAdminUsers = () => {
         isSearchEmpty,
         handleDeleteClick,
         confirmDelete,
-        handleEditClick,
-        handleUpdateUser,
         handleAddUser,
         regenerateConfirmation, setRegenerateConfirmation,
         confirmRegeneratePassword,

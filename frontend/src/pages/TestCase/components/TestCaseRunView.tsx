@@ -3,10 +3,11 @@ import { CheckCircle2, XCircle, StopCircle, Loader2, Play } from 'lucide-react';
 import { TestCaseCard } from '@/components/TestCaseCard';
 import { ScreenshotViewer } from '@/components/ScreenshotViewer';
 import { ErrorMessage } from '@/components/GeneralComponents';
-import { TestSuiteManagerLayout } from '../../TestSuiteManager/TestSuiteManagerLayout';
+import { WorkspaceLayout } from '@/components/Layout/WorkspaceLayout';
 import { TestCase, ActionStep } from '@/types';
 import { Button } from '@/components/ui/button';
 import { RunConfigurationModal } from '@/components/Modal/RunConfigurationModal';
+import { ExpandableStepText } from '@/components/ExpandableStepText';
 
 interface TestCaseRunViewProps {
     testCase: TestCase | null;
@@ -44,11 +45,10 @@ export const TestCaseRunView: React.FC<TestCaseRunViewProps> = ({
     handleAbort,
 }) => {
     const [isRunConfigModalOpen, setIsRunConfigModalOpen] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
 
 
     return (
-        <TestSuiteManagerLayout
+        <WorkspaceLayout
             error={error && <ErrorMessage message={error} />}
             sidebar={
                 <aside className="w-full lg:w-[400px] xl:w-[450px] bg-white border-r border-border flex flex-col h-full overflow-hidden shadow-sm z-10 text-left">
@@ -126,23 +126,10 @@ export const TestCaseRunView: React.FC<TestCaseRunViewProps> = ({
                                 <h4 className="text-[10px] font-black uppercase tracking-widest opacity-70 mb-2">
                                     Termination Reason
                                 </h4>
-                                <div className="relative">
-                                    <p className={`text-sm font-medium leading-relaxed break-words whitespace-pre-wrap transition-all duration-300 ${!isExpanded ? 'line-clamp-3' : ''
-                                        }`}>
-                                        {testCase.terminationReason}
-                                    </p>
-
-                                    {(testCase.terminationReason.length > 150) && (
-                                        <button
-                                            onClick={() => setIsExpanded(!isExpanded)}
-                                            className="mt-2 text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 hover:text-gray-600 transition-all hover:underline flex items-center gap-1"
-                                        >
-                                            {isExpanded ? 'Show less' : 'Show more'}
-                                        </button>
-
-
-                                    )}
-                                </div>
+                                <ExpandableStepText
+                                    text={testCase.terminationReason}
+                                    className="text-sm font-medium leading-relaxed break-words whitespace-pre-wrap text-current font-sans font-medium"
+                                />
                             </div>
                         )}
 
