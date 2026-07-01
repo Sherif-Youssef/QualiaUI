@@ -14,7 +14,6 @@ import {
   AdminUsersPage,
   SiteSettingsPage,
   TestSuiteRunDashboardPage,
-  LandingPage,
   TestCaseRunPage
 } from './pages/PagesExporter';
 
@@ -53,7 +52,6 @@ function App() {
           />
         )}
         <Routes>
-          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route element={<ProtectedRoute />}>

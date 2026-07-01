@@ -6,7 +6,6 @@ import { TestCasePage, TestCaseRunPage } from './TestCase';
 import { TestSuiteManagerPage } from './TestSuiteManager';
 import { ProfilePage } from './Profile';
 import { AdminUsersPage, SiteSettingsPage } from './Admin';
-import { LandingPage } from './Landing';
 
 export {
     LoginPage,
@@ -21,6 +20,5 @@ export {
     AdminUsersPage,
     SiteSettingsPage,
     TestSuiteRunDashboardPage,
-    LandingPage
 }
 
