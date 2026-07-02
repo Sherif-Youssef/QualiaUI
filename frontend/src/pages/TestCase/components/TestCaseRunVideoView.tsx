@@ -1,5 +1,5 @@
 import React from 'react';
-import { Video, AlertCircle, Info } from 'lucide-react';
+import { Video, Info } from 'lucide-react';
 
 interface TestCaseRunVideoViewProps {
     videoUrl?: string | null;
@@ -15,12 +15,14 @@ export const TestCaseRunVideoView: React.FC<TestCaseRunVideoViewProps> = ({
     return (
         <div className="flex-1 flex flex-col items-center justify-center p-8 bg-gray-50 min-h-0">
             {videoUrl ? (
-                <div className="w-full max-w-4xl bg-black rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
+                <div className="w-full max-w-4xl bg-black rounded-2xl shadow-2xl overflow-hidden border border-gray-200 flex flex-col max-h-full">
                     <video 
                         src={videoUrl} 
-                        controls 
-                        className="w-full h-auto max-h-[70vh]"
-                        autoPlay
+                        controls={true} 
+                        className="w-full h-auto max-h-[60vh] object-contain"
+                        autoPlay={true}
+                        muted={true}
+                        playsInline={true}
                     />
                 </div>
             ) : (
