@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Advanced Eval App</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; }
+        .section { margin-bottom: 30px; padding: 15px; border: 1px solid #ccc; }
+        .result-box { margin-top: 10px; font-weight: bold; color: blue; }
+        
+        /* Drag and drop styles */
+        .draggable { padding: 10px; margin: 5px; background: #eee; border: 1px solid #999; cursor: grab; }
+        .dropzone { padding: 20px; background: #fafafa; border: 2px dashed #ccc; min-height: 50px; }
+    </style>
+</head>
+<body>
+    <h1>Advanced Action Evaluation</h1>
+
+    <div class="section" id="drag-drop-section">
+        <h3>1. Drag and Drop</h3>
+        <div id="item-to-drag" class="draggable" draggable="true">Drag Me!</div>
+        <div id="drop-target" class="dropzone">Drop Here</div>
+        <div id="drag-result" class="result-box"></div>
+    </div>
+
+    <div class="section" id="keyboard-section">
+        <h3>2. Keyboard Press (Enter to Submit)</h3>
+        <p>Type "Hello" and press Enter (no submit button exists).</p>
+        <input type="text" id="search-input" placeholder="Type here...">
+        <div id="keyboard-result" class="result-box"></div>
+    </div>
+
+    <div class="section" id="delay-section">
+        <h3>3. Delayed Appearance</h3>
+        <p>A button will appear here after 2 seconds.</p>
+        <div id="delayed-container" style="min-height: 40px;"></div>
+        <div id="delay-result" class="result-box"></div>
+    </div>
+
+    <script>
+        // 1. Drag and Drop Logic
+        const dragItem = document.getElementById('item-to-drag');
+        const dropTarget = document.getElementById('drop-target');
+
+        dragItem.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', 'dragged');
+        });
+
+        dropTarget.addEventListener('dragover', (e) => {
+            e.preventDefault(); // allow drop
+        });
+
+        dropTarget.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropTarget.appendChild(dragItem);
+            document.getElementById('drag-result').innerText = 'Item Dropped Successfully';
+        });
+
+        // 2. Keyboard Logic
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                document.getElementById('keyboard-result').innerText = 'Searched: ' + e.target.value;
+            }
+        });
+
+        // 3. Delayed Appearance Logic
+        setTimeout(() => {
+            const btn = document.createElement('button');
+            btn.id = 'delayed-button';
+            btn.innerText = 'Click Me Now';
+            btn.addEventListener('click', () => {
+                document.getElementById('delay-result').innerText = 'Delayed Button Clicked';
+            });
+            document.getElementById('delayed-container').appendChild(btn);
+        }, 2000);
+    </script>
+</body>
+</html>

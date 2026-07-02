@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Eval Todo App</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 500px; }
+        .todo-item { display: flex; justify-content: space-between; margin-bottom: 8px; padding: 8px; border: 1px solid #ccc; }
+        .delete-btn { color: red; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>Todo List</h1>
+    <div>
+        <input type="text" id="new-todo" placeholder="What needs to be done?" style="width: 70%;">
+        <button id="add-btn">Add Todo</button>
+    </div>
+    
+    <ul id="todo-list" style="list-style-type: none; padding-left: 0; margin-top: 20px;">
+        <li class="todo-item" id="todo-1">
+            <span class="todo-text">Learn Playwright</span>
+            <button class="delete-btn">Delete</button>
+        </li>
+    </ul>
+
+    <script>
+        let counter = 2;
+        document.getElementById('add-btn').addEventListener('click', () => {
+            const input = document.getElementById('new-todo');
+            const text = input.value.trim();
+            if (text) {
+                const li = document.createElement('li');
+                li.className = 'todo-item';
+                li.id = 'todo-' + counter++;
+                li.innerHTML = `<span class="todo-text">${text}</span> <button class="delete-btn">Delete</button>`;
+                document.getElementById('todo-list').appendChild(li);
+                input.value = '';
+            }
+        });
+        
+        document.getElementById('todo-list').addEventListener('click', (e) => {
+            if (e.target.classList.contains('delete-btn')) {
+                e.target.parentElement.remove();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Eval Form App</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; }
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; }
+        
+        /* Hover menu styles */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-content { display: none; position: absolute; background-color: #f9f9f9; min-width: 160px; box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2); z-index: 1; }
+        .dropdown-content a { color: black; padding: 12px 16px; text-decoration: none; display: block; cursor: pointer; }
+        .dropdown:hover .dropdown-content { display: block; }
+        .dropdown-content a:hover { background-color: #f1f1f1; }
+
+        .result-box { margin-top: 10px; font-weight: bold; color: green; }
+    </style>
+</head>
+<body>
+    <h1>Action Evaluation Form</h1>
+
+    <div class="section" id="text-section">
+        <h3>1. Text Input</h3>
+        <input type="text" id="username" placeholder="Enter username">
+        <button id="submit-text">Submit Name</button>
+        <div id="text-result" class="result-box"></div>
+    </div>
+
+    <div class="section" id="select-section">
+        <h3>2. Dropdown Select</h3>
+        <select id="country">
+            <option value="">Select a country...</option>
+            <option value="US">United States</option>
+            <option value="CA">Canada</option>
+            <option value="UK">United Kingdom</option>
+        </select>
+        <button id="submit-select">Submit Country</button>
+        <div id="select-result" class="result-box"></div>
+    </div>
+
+    <div class="section" id="radio-section">
+        <h3>3. Radio Buttons</h3>
+        <label><input type="radio" name="contact" value="email"> Email</label>
+        <label><input type="radio" name="contact" value="phone"> Phone</label>
+        <label><input type="radio" name="contact" value="mail"> Mail</label>
+        <button id="submit-radio">Submit Preference</button>
+        <div id="radio-result" class="result-box"></div>
+    </div>
+
+    <div class="section" id="checkbox-section">
+        <h3>4. Checkboxes</h3>
+        <label><input type="checkbox" id="feature-a" value="A"> Feature A</label>
+        <label><input type="checkbox" id="feature-b" value="B"> Feature B</label>
+        <button id="submit-checkbox">Submit Features</button>
+        <div id="checkbox-result" class="result-box"></div>
+    </div>
+
+    <div class="section" id="hover-section">
+        <h3>5. Hover Interaction</h3>
+        <div class="dropdown">
+            <button id="hover-trigger">Hover Me!</button>
+            <div class="dropdown-content">
+                <a id="hidden-link-1">Action 1</a>
+                <a id="hidden-link-2">Action 2</a>
+            </div>
+        </div>
+        <div id="hover-result" class="result-box"></div>
+    </div>
+
+    <script>
+        document.getElementById('submit-text').addEventListener('click', () => {
+            document.getElementById('text-result').innerText = 'Username: ' + document.getElementById('username').value;
+        });
+
+        document.getElementById('submit-select').addEventListener('click', () => {
+            document.getElementById('select-result').innerText = 'Country: ' + document.getElementById('country').value;
+        });
+
+        document.getElementById('submit-radio').addEventListener('click', () => {
+            const selected = document.querySelector('input[name="contact"]:checked');
+            if (selected) {
+                document.getElementById('radio-result').innerText = 'Contact: ' + selected.value;
+            }
+        });
+
+        document.getElementById('submit-checkbox').addEventListener('click', () => {
+            const a = document.getElementById('feature-a').checked;
+            const b = document.getElementById('feature-b').checked;
+            document.getElementById('checkbox-result').innerText = 'Features: ' + (a ? 'A ' : '') + (b ? 'B' : '');
+        });
+
+        document.getElementById('hidden-link-2').addEventListener('click', () => {
+            document.getElementById('hover-result').innerText = 'Action 2 Clicked';
+        });
+    </script>
+</body>
+</html>
