@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 import secrets
 import string
@@ -115,7 +115,7 @@ def validate_username(username: str):
 
 def create_token(user_id: int, token_type: TokenType, expires_delta: timedelta) -> str:
     auth_settings = _get_auth_settings()
-    time_now = datetime.now()
+    time_now = datetime.now(tz=timezone.utc)
     payload = TokenPayload(
         user_id=user_id,
         exp=time_now + expires_delta,
