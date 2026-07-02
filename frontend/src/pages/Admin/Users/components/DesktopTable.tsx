@@ -1,18 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Pencil, Trash2, User, Mail, ShieldAlert } from 'lucide-react';
+import { Trash2, User, Mail, ShieldAlert } from 'lucide-react';
 import { UserViewModel } from '@/services/admin/adminService';
 
 interface DesktopTableProps {
     users: UserViewModel[];
-    onEdit: (user: UserViewModel) => void;
     onDelete: (id: string, name: string) => void;
     onRegeneratePassword: (userId: string, name: string) => void;
 }
 
 export const DesktopTable: React.FC<DesktopTableProps> = ({
     users,
-    onEdit,
     onDelete,
     onRegeneratePassword
 }) => {
@@ -64,13 +62,6 @@ export const DesktopTable: React.FC<DesktopTableProps> = ({
                                 </td>
                                 <td className="px-8 py-6">
                                     <div className="flex items-center justify-end gap-3 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
-                                        <button
-                                            onClick={() => onEdit(user)}
-                                            className="p-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-primary/20 text-gray-400 hover:text-primary transition-all active:scale-95"
-                                            title="Edit User"
-                                        >
-                                            <Pencil className="w-5 h-5" strokeWidth={1.5} />
-                                        </button>
                                         <button
                                             onClick={() => onRegeneratePassword(user.id, `${user.firstName} ${user.lastName}`)}
                                             className="p-3 rounded-2xl bg-white border border-gray-100 shadow-sm hover:shadow-md hover:border-amber-100 text-gray-400 hover:text-amber-500 transition-all active:scale-95"

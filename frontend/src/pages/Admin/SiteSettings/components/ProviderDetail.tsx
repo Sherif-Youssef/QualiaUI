@@ -1,12 +1,5 @@
-/**
- * @file ProviderDetail.tsx
- * @description Main display component for details of a selected LLM Provider.
- * Shows endpoint configuration, credentials info, list of associated models, edit/delete actions,
- * and a paginated model list representation.
- */
-
 import React from 'react';
-import { Server, Cpu, Edit2, Trash2, ShieldCheck, Plus } from 'lucide-react';
+import { Server, Cpu, Edit2, Trash2, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Pagination } from '@/components/Pagination';
 import { Provider, LLMModel, ProviderDisplayNames } from "@/types";
@@ -169,17 +162,6 @@ export const ProviderDetail: React.FC<ProviderDetailProps> = ({
                             )}
                         </>
                     )}
-                </div>
-            </div>
-
-            <div className="px-8 py-4 bg-gray-50/50 border-t border-gray-50 flex items-center gap-8 text-[10px] font-black uppercase tracking-widest text-gray-400">
-                <div className="flex items-center gap-2">
-                    <ShieldCheck className={`w-4 h-4 ${selectedProvider.has_api_key ? 'text-emerald-500' : 'text-gray-300'}`} />
-                    API Credentials: {selectedProvider.has_api_key ? 'Valid Configuration' : 'None Provided'}
-                </div>
-                <div className="flex items-center gap-2">
-                    <Plus className="w-4 h-4 text-gray-300" />
-                    Identifier: #{selectedProvider.id}
                 </div>
             </div>
         </div>

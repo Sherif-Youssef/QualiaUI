@@ -1,14 +1,8 @@
-/**
- * @file ProviderFormModal.tsx
- * @description Modal form component for creating or editing LLM Providers.
- * Manages configuration attributes, credentials key reveal/update actions, and custom key-value settings.
- */
-
 import React, { useEffect, useState } from 'react';
 import { X, Server, Globe, Key, Plus, Trash2, Settings2, Eye, EyeOff, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ErrorMessage } from '@/components/GeneralComponents';
-import { llmService } from '@/services/llmService';
+
 import {
     Select,
     SelectContent,
@@ -27,6 +21,8 @@ interface ProviderFormModalProps {
     error: string | null;
     onClearError?: () => void;
     isLoading: boolean;
+    onRevealApiKey: (id: number) => Promise<string | null>;
+    onUpdateApiKey: (id: number, newKey: string) => Promise<void>;
 }
 
 interface ConfigPair {
@@ -43,14 +39,16 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
     error,
     onClearError,
     isLoading,
+    onRevealApiKey,
+    onUpdateApiKey,
 }) => {
     const [displayName, setDisplayName] = useState('');
     const [providerType, setProviderType] = useState<ProviderType>(ProviderType.OPENAI);
     const [baseUrl, setBaseUrl] = useState('');
     const [apiKey, setApiKey] = useState('');
     const [configPairs, setConfigPairs] = useState<ConfigPair[]>([]);
-    
-    
+
+
     const [isApiKeyRevealed, setIsApiKeyRevealed] = useState(false);
     const [revealedApiKey, setRevealedApiKey] = useState<string | null>(null);
     const [isUpdatingApiKey, setIsUpdatingApiKey] = useState(false);
@@ -61,13 +59,13 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
             setDisplayName(editingProvider.display_name);
             setProviderType(editingProvider.provider_type);
             setBaseUrl(editingProvider.base_url || '');
-            setApiKey(''); 
+            setApiKey('');
             setIsApiKeyRevealed(false);
             setRevealedApiKey(null);
             setIsUpdatingApiKey(false);
             setNewApiKey('');
-            
-            
+
+
             const pairs = Object.entries(editingProvider.additional_config || {}).map(([key, value]) => ({
                 key,
                 value: typeof value === 'object' ? JSON.stringify(value) : String(value)
@@ -79,7 +77,7 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
             setBaseUrl('');
             setApiKey('');
             setConfigPairs([{ key: '', value: '' }]);
-            setIsApiKeyRevealed(true); 
+            setIsApiKeyRevealed(true);
         }
     }, [editingProvider, isOpen]);
 
@@ -88,7 +86,7 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
     const handleRevealApiKey = async () => {
         if (!editingProvider) return;
         try {
-            const key = await llmService.getProviderApiKey(editingProvider.id);
+            const key = await onRevealApiKey(editingProvider.id);
             setRevealedApiKey(key);
             setIsApiKeyRevealed(true);
         } catch (err) {
@@ -99,7 +97,7 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
     const handleUpdateApiKey = async () => {
         if (!editingProvider) return;
         try {
-            await llmService.updateProviderApiKey(editingProvider.id, newApiKey);
+            await onUpdateApiKey(editingProvider.id, newApiKey);
             setIsUpdatingApiKey(false);
             setNewApiKey('');
             setRevealedApiKey(newApiKey);
@@ -127,17 +125,16 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        
         const additional_config: Record<string, any> = {};
         configPairs.forEach(pair => {
             if (pair.key.trim()) {
                 let val: any = pair.value;
-                
+
                 if ((val.startsWith('{') && val.endsWith('}')) || (val.startsWith('[') && val.endsWith(']'))) {
                     try {
                         val = JSON.parse(val);
                     } catch (e) {
-                        
+
                     }
                 }
                 additional_config[pair.key.trim()] = val;
@@ -148,7 +145,7 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
             display_name: displayName,
             provider_type: providerType,
             base_url: baseUrl || undefined,
-            api_key: !editingProvider ? apiKey : undefined, 
+            api_key: !editingProvider ? apiKey : undefined,
             additional_config
         };
 
@@ -263,16 +260,15 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
                                                     readOnly={!isUpdatingApiKey}
                                                     type={isApiKeyRevealed ? "text" : "password"}
                                                     value={
-                                                        isUpdatingApiKey 
-                                                            ? newApiKey 
-                                                            : (isApiKeyRevealed 
-                                                                ? (revealedApiKey || '') 
+                                                        isUpdatingApiKey
+                                                            ? newApiKey
+                                                            : (isApiKeyRevealed
+                                                                ? (revealedApiKey || '')
                                                                 : (editingProvider?.has_api_key ? '••••••••••••••••' : 'No key configured'))
                                                     }
                                                     onChange={(e) => setNewApiKey(e.target.value)}
-                                                    className={`w-full pl-12 pr-4 py-4 border border-gray-100 rounded-2xl text-sm font-bold transition-all outline-none ${
-                                                        isUpdatingApiKey ? 'bg-white border-primary/30 ring-4 ring-primary/5 text-gray-900' : 'bg-gray-100 text-gray-400 cursor-default italic'
-                                                    }`}
+                                                    className={`w-full pl-12 pr-4 py-4 border border-gray-100 rounded-2xl text-sm font-bold transition-all outline-none ${isUpdatingApiKey ? 'bg-white border-primary/30 ring-4 ring-primary/5 text-gray-900' : 'bg-gray-100 text-gray-400 cursor-default italic'
+                                                        }`}
                                                 />
                                             </div>
                                             {!isUpdatingApiKey ? (
@@ -296,7 +292,7 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
                                             )}
                                         </div>
                                         {!isUpdatingApiKey ? (
-                                            <button 
+                                            <button
                                                 type="button"
                                                 onClick={() => setIsUpdatingApiKey(true)}
                                                 className="text-[10px] font-black text-primary uppercase tracking-widest self-end mr-2 hover:underline"
@@ -304,7 +300,7 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
                                                 Change Key
                                             </button>
                                         ) : (
-                                            <button 
+                                            <button
                                                 type="button"
                                                 onClick={() => setIsUpdatingApiKey(false)}
                                                 className="text-[10px] font-black text-gray-400 uppercase tracking-widest self-end mr-2 hover:underline"
@@ -323,10 +319,10 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
                                     <Settings2 className="w-4 h-4" />
                                     <h3 className="text-sm font-black uppercase tracking-tight">Additional Configuration</h3>
                                 </div>
-                                <Button 
-                                    type="button" 
-                                    variant="outline" 
-                                    size="sm" 
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="sm"
                                     onClick={handleAddPair}
                                     className="rounded-xl h-8 px-3 text-[10px] font-black uppercase tracking-widest border-gray-100"
                                 >
@@ -334,7 +330,7 @@ export const ProviderFormModal: React.FC<ProviderFormModalProps> = ({
                                     Add Property
                                 </Button>
                             </div>
-                            
+
                             <div className="space-y-3">
                                 {configPairs.map((pair, index) => (
                                     <div key={index} className="flex gap-3 items-start group">

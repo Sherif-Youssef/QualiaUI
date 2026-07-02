@@ -1,8 +1,3 @@
-/**
- * @file SiteSettingsHeader.tsx
- * @description Presentational page header component for the Admin Site Settings page.
- */
-
 import React from 'react';
 import { Settings } from 'lucide-react';
 

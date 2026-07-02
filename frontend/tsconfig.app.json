@@ -21,7 +21,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": false,
-    "baseUrl": ".",
     "paths": {
       "@/*": [
         "./src/*"

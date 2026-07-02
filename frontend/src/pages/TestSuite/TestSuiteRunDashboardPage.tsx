@@ -5,7 +5,7 @@ import { runService } from '@/services/runService';
 import { TestSuiteRun, TestCaseRun } from "@/types";
 import { parseUTCDate, formatDate } from '@/utils/formatters';
 import { ErrorMessage } from '@/components/GeneralComponents';
-import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
+import { TopNav } from '@/components/TopNav';
 import {
     CheckCircle2,
     XCircle,
@@ -140,7 +140,7 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isAborting, setIsAborting] = useState(false);
-    const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+    const debounceTimerRef = useRef<number | null>(null);
     const isFetchingRef = useRef(false);
     const [isDownloadingReport, setIsDownloadingReport] = useState(false);
     const [activeView, setActiveView] = useState<'cases' | 'details'>('cases');
@@ -175,27 +175,26 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
 
     const debouncedFetchRunDetails = useCallback(() => {
         if (debounceTimerRef.current) {
-            return;
+            window.clearTimeout(debounceTimerRef.current);
         }
-        debounceTimerRef.current = setTimeout(async () => {
-            debounceTimerRef.current = null;
-            if (isFetchingRef.current) {
-                setTimeout(debouncedFetchRunDetails, 500);
-                return;
-            }
+        
+        debounceTimerRef.current = window.setTimeout(async () => {
+            if (isFetchingRef.current) return;
+            
             isFetchingRef.current = true;
             try {
                 await fetchRunDetails();
             } finally {
                 isFetchingRef.current = false;
             }
-        }, 500);
+        }, 300);
     }, [fetchRunDetails]);
+
     useEffect(() => {
         if (!suiteRun) setIsLoading(true);
         fetchRunDetails();
         return () => {
-            if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+            if (debounceTimerRef.current) window.clearTimeout(debounceTimerRef.current);
         };
     }, [runId, fetchRunDetails]);
 
@@ -273,7 +272,17 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
         );
     };
 
-    if (isLoading) return <TestSuiteManagerLoading />;
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-gray-50 flex flex-col overflow-hidden text-left">
+                <TopNav />
+                <div className="flex-1 flex flex-col items-center justify-center py-24 bg-white m-8 rounded-3xl border border-gray-100 shadow-sm">
+                    <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-6"></div>
+                    <p className="text-gray-500 font-bold font-sans tracking-wide uppercase text-sm">Syncing Test Cases...</p>
+                </div>
+            </div>
+        );
+    }
     if (error) return <div className="p-8"><ErrorMessage message={error} onClose={() => setError(null)} /></div>;
     if (!suiteRun) return <div className="p-8 text-center text-gray-500 font-bold">Run not found</div>;
 

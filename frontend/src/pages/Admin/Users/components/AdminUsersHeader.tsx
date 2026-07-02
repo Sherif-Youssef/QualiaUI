@@ -20,4 +20,3 @@ export const AdminUsersHeader: React.FC<AdminUsersHeaderProps> = ({ onAddUser })
         </div>
     );
 };
-

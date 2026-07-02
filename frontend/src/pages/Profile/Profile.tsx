@@ -2,6 +2,7 @@ import React from "react";
 import { Settings } from 'lucide-react';
 import { useParams } from "react-router-dom";
 import { UpdatePasswordModal } from "@/components/Modal/UpdatePasswordModal";
+import { ErrorMessage, SuccessMessage } from '@/components/GeneralComponents';
 
 import { ProfileHeader } from "./ProfileHeader";
 import { PersonalInfo } from "./PersonalInfo";
@@ -19,6 +20,8 @@ export const ProfilePage: React.FC = () => {
         role,
         isLoading,
         isSaving,
+        error, setError,
+        success,
         isPasswordModalOpen, setIsPasswordModalOpen,
         handleSaveAll
     } = useProfile({ userId });
@@ -33,13 +36,17 @@ export const ProfilePage: React.FC = () => {
                 />
             }
             leftColumn={
-                <PersonalInfo
-                    fullName={fullName}
-                    username={username}
-                    email={email}
-                    setFullName={setFullName}
-                    readOnly={!!userId}
-                />
+                <div className="space-y-6">
+                    {error && <ErrorMessage message={error} onClose={() => setError(null)} />}
+                    {success && <SuccessMessage message={success} />}
+                    <PersonalInfo
+                        fullName={fullName}
+                        username={username}
+                        email={email}
+                        setFullName={setFullName}
+                        readOnly={!!userId}
+                    />
+                </div>
             }
             rightColumn={
                 !userId ? (

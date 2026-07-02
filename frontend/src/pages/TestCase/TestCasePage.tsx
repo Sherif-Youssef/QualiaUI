@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutGrid, History, Settings } from 'lucide-react';
+import { LayoutGrid, History, Settings, ChevronLeft } from 'lucide-react';
 import { TestCaseRunView } from './components/TestCaseRunView';
 import { TestCaseHistoryView } from './TestCaseHistoryView';
 import { TestCaseManageView } from './TestCaseManageView';
 import { TopNav } from '@/components/TopNav';
 import { useTestCaseRun } from './hooks/useTestCaseRun';
-import { TestSuiteManagerLoading } from '../TestSuiteManager/TestSuiteManagerLoading';
+import { Button } from '@/components/ui/button';
 
 export const TestCasePage: React.FC = () => {
     const { projectId, suiteId, caseId } = useParams<{ projectId: string; suiteId: string; caseId: string }>();
@@ -53,6 +53,31 @@ export const TestCasePage: React.FC = () => {
     return (
         <div className="h-screen bg-gray-50 flex flex-col overflow-hidden text-left">
             <TopNav />
+            <div className="bg-white border-b border-gray-100 shrink-0 px-8 py-6">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-6">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => navigate(`/project/${projectId}/suite/${suiteId}`)}
+                            className="h-12 w-12 rounded-[1.25rem] bg-white shadow-sm border border-gray-100 hover:bg-gray-50 transition-all hover:scale-105 active:scale-95 shrink-0"
+                        >
+                            <ChevronLeft className="w-6 h-6 text-gray-600" />
+                        </Button>
+                        <div>
+                            <h1 className="text-3xl font-black text-gray-900 tracking-tight capitalize">
+                                {testCase?.name || 'Test Case'}
+                            </h1>
+                            <div className="flex items-center gap-3 mt-1">
+                                <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                                    Test Case Session
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div className="bg-white border-b border-gray-100 shrink-0">
                 <div className="px-2 pb-0">
                     <div className="flex gap-2 -mb-px">
@@ -95,7 +120,10 @@ export const TestCasePage: React.FC = () => {
 
             <div className="flex-1 flex flex-col overflow-hidden min-h-0">
                 {activeView === 'live' && isLoading ? (
-                    <TestSuiteManagerLoading />
+                    <div className="flex-1 flex flex-col items-center justify-center py-24 bg-white m-8 rounded-3xl border border-gray-100 shadow-sm">
+                        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-6"></div>
+                        <p className="text-gray-500 font-bold font-sans tracking-wide uppercase text-sm">Syncing Test Cases...</p>
+                    </div>
                 ) : activeView === 'live' && projectId && suiteId && caseId ? (
                     <TestCaseRunView
                         testCase={testCase}

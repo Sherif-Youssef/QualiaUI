@@ -163,10 +163,6 @@ export const runService = {
         const url = `/api/v1/runs/${scope.toLowerCase()}s/${runId}/stream${token ? `?token=${encodeURIComponent(token)}` : ''}`;
         const eventSource = new EventSource(url);
 
-        eventSource.onopen = () => {
-            console.log(`[SSE] Connection established for ${scope} run ${runId}`);
-        };
-
         eventSource.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);

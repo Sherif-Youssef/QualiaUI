@@ -5,8 +5,8 @@ export const useAdminUsers = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingUser, setEditingUser] = useState<UserViewModel | null>(null);
     const [deleteConfirmation, setDeleteConfirmation] = useState<{ id: string; name: string } | null>(null);
+    const [regenerateConfirmation, setRegenerateConfirmation] = useState<{ id: string; name: string } | null>(null);
     const [users, setUsers] = useState<UserViewModel[]>([]);
 
     const [isLoading, setIsLoading] = useState(true);
@@ -77,26 +77,6 @@ export const useAdminUsers = () => {
         }
     };
 
-    const handleEditClick = (user: UserViewModel) => {
-        setEditingUser(user);
-        setModalError(null);
-        setIsModalOpen(true);
-    };
-
-    const handleUpdateUser = async (id: string, data: any) => {
-        setModalLoading(true);
-        setModalError(null);
-        try {
-            await adminService.updateUser(id, data);
-            await fetchUsers();
-            setIsModalOpen(false);
-            setEditingUser(null);
-        } catch (err: any) {
-            setModalError(adminService.formatError(err, 'Failed to update user.'));
-        } finally {
-            setModalLoading(false);
-        }
-    };
 
     const handleAddUser = async (data: any) => {
         setModalLoading(true);
@@ -106,7 +86,6 @@ export const useAdminUsers = () => {
             setCurrentPage(1);
             await fetchUsers();
             setIsModalOpen(false);
-            setEditingUser(null);
 
             if (temporaryPassword) {
                 setPasswordModal({
@@ -122,16 +101,22 @@ export const useAdminUsers = () => {
         }
     };
 
-    const handleRegeneratePassword = async (userId: string, name: string) => {
-        if (!window.confirm(`Are you sure you want to regenerate a temporary password for ${name}?`)) return;
+    const handleRegeneratePassword = (userId: string, name: string) => {
+        setModalError(null);
+        setRegenerateConfirmation({ id: userId, name });
+    };
+
+    const confirmRegeneratePassword = async () => {
+        if (!regenerateConfirmation) return;
 
         setModalLoading(true);
         setModalError(null);
         try {
-            const result = await adminService.regenerateTempPassword(userId);
-            setPasswordModal({ pass: result.temporary_password, name: name, title: 'Password Regenerated' });
+            const result = await adminService.regenerateTempPassword(regenerateConfirmation.id);
+            setPasswordModal({ pass: result.temporary_password, name: regenerateConfirmation.name, title: 'Password Regenerated' });
+            setRegenerateConfirmation(null);
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to regenerate temporary password.');
+            setModalError(err.response?.data?.detail || 'Failed to regenerate temporary password.');
         } finally {
             setModalLoading(false);
         }
@@ -151,7 +136,6 @@ export const useAdminUsers = () => {
         isLoading,
         error, setError,
         isModalOpen, setIsModalOpen,
-        editingUser, setEditingUser,
         deleteConfirmation, setDeleteConfirmation,
         modalLoading,
         modalError, setModalError,
@@ -160,9 +144,9 @@ export const useAdminUsers = () => {
         isSearchEmpty,
         handleDeleteClick,
         confirmDelete,
-        handleEditClick,
-        handleUpdateUser,
         handleAddUser,
+        regenerateConfirmation, setRegenerateConfirmation,
+        confirmRegeneratePassword,
         handleRegeneratePassword
     };
 };

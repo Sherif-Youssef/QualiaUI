@@ -1,13 +1,13 @@
 import React from 'react';
 
-interface TestSuiteManagerLayoutProps {
+interface WorkspaceLayoutProps {
     sidebar: React.ReactNode;
     content: React.ReactNode;
-    modals: React.ReactNode;
+    modals?: React.ReactNode;
     error?: React.ReactNode;
 }
 
-export const TestSuiteManagerLayout: React.FC<TestSuiteManagerLayoutProps> = ({
+export const WorkspaceLayout: React.FC<WorkspaceLayoutProps> = ({
     sidebar,
     content,
     modals,

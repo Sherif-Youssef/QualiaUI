@@ -18,6 +18,8 @@ export const useProfile = ({ userId }: UseProfileProps) => {
     const [isSaving, setIsSaving] = useState(false);
 
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
 
     useEffect(() => {
         const getProfile = async () => {
@@ -37,12 +39,6 @@ export const useProfile = ({ userId }: UseProfileProps) => {
 
                 setRole(p.role || (p.isAdmin ? "Administrator" : "Member"));
                 setEmailNotifications(p.emailNotifications ?? p.email_notifications ?? true);
-
-                console.log("Profile loaded successfully:", {
-                    name: resolvedFullName,
-                    user: p.username,
-                    email: p.email
-                });
             } catch (error) {
                 console.error("Error fetching profile:", error);
             } finally {
@@ -52,8 +48,28 @@ export const useProfile = ({ userId }: UseProfileProps) => {
         getProfile();
     }, [userId]);
 
+    useEffect(() => {
+        if (success) {
+            const timer = setTimeout(() => {
+                setSuccess(null);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [success]);
+
+    useEffect(() => {
+        if (error) {
+            const timer = setTimeout(() => {
+                setError(null);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [error]);
+
     const handleSaveAll = useCallback(async () => {
         setIsSaving(true);
+        setError(null);
+        setSuccess(null);
         try {
             await profileService.updateProfile({
                 id: id || "",
@@ -61,10 +77,10 @@ export const useProfile = ({ userId }: UseProfileProps) => {
                 role: role || "",
                 emailNotifications: emailNotifications
             });
-            alert("Profile updated successfully!");
-        } catch (error) {
-            console.error("Save failed:", error);
-            alert("Failed to update profile.");
+            setSuccess("Profile updated successfully!");
+        } catch (err: any) {
+            console.error("Save failed:", err);
+            setError(err.response?.data?.detail || "Failed to update profile.");
         } finally {
             setIsSaving(false);
         }
@@ -78,8 +94,9 @@ export const useProfile = ({ userId }: UseProfileProps) => {
         emailNotifications, setEmailNotifications,
         isLoading,
         isSaving,
+        error, setError,
+        success, setSuccess,
         isPasswordModalOpen, setIsPasswordModalOpen,
         handleSaveAll
     };
 };
-

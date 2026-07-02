@@ -1,9 +1,3 @@
-/**
- * @file ModelFormModal.tsx
- * @description Modal form component for creating or editing models within an LLM Provider.
- * Manages validation of model identifiers and display names.
- */
-
 import React, { useEffect, useState } from 'react';
 import { X, Cpu, Tag, Server } from 'lucide-react';
 import { Button } from '@/components/ui/button';

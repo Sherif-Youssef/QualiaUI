@@ -26,7 +26,6 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
     const [error, setError] = useState<string | null>(null);
     const [debouncedSearch, setDebouncedSearch] = useState('');
 
-
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false);
     const [modalLoading, setModalLoading] = useState(false);
@@ -69,7 +68,6 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
         setError(null);
         try {
             const offset = (currentPage - 1) * itemsPerPage;
-
             if (activeView === 'suites') {
                 const res = await testSuiteService.getTestSuites(projectId, offset, itemsPerPage, debouncedSearch);
                 setTestSuites(res.testSuites);
@@ -172,17 +170,29 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
         }
     };
 
-    const handleMemberRemove = async (email: string) => {
-        if (!projectId) return;
-        try {
-            await projectService.removeMember(projectId, email);
-            fetchData();
-        } catch (err: any) {
-            setError(err.response?.data?.detail || 'Failed to remove member.');
-        }
+    const [removeMemberConfirmation, setRemoveMemberConfirmation] = useState<{ email: string; name: string } | null>(null);
+
+    const handleRemoveMemberClick = (email: string) => {
+        const memberObj = projectMembers.find(m => m.user.email === email);
+        const name = memberObj ? `${memberObj.user.firstName} ${memberObj.user.lastName}` : email;
+        setModalError(null);
+        setRemoveMemberConfirmation({ email, name });
     };
 
-
+    const confirmRemoveMember = async () => {
+        if (!removeMemberConfirmation || !projectId) return;
+        setModalLoading(true);
+        setModalError(null);
+        try {
+            await projectService.removeMember(projectId, removeMemberConfirmation.email);
+            fetchData();
+            setRemoveMemberConfirmation(null);
+        } catch (err: any) {
+            setModalError(err.response?.data?.detail || 'Failed to remove member.');
+        } finally {
+            setModalLoading(false);
+        }
+    };
 
     return {
         projectName,
@@ -213,6 +223,8 @@ export const useProjectWorkspace = ({ projectId }: UseProjectWorkspaceProps) => 
         handleDeleteSuiteClick,
         handleDeleteTestSuite,
         handleMemberAdd,
-        handleMemberRemove,
+        removeMemberConfirmation, setRemoveMemberConfirmation,
+        handleRemoveMemberClick,
+        confirmRemoveMember,
     };
 };

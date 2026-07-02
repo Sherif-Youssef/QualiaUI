@@ -38,38 +38,27 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
 
     const handleSSEError = useCallback(async (runId: number) => {
         const streamErrorMessage = 'Connection to run progress stream lost. The backend execution may have crashed or timed out.';
+
+        await new Promise(resolve => setTimeout(resolve, 800));
+
         try {
             let currentStatus: TestCase['status'] = 'error';
             let reason = streamErrorMessage;
             let steps: ActionStep[] = [];
-
-            if (parentSuiteRunId) {
-                try {
-                    const suiteDetails = await runService.getTestSuiteRunDetails(Number(parentSuiteRunId), true);
-                    const runDetails = suiteDetails.testcase_runs?.find((r: any) => String(r.id) === String(runId));
-                    if (runDetails) {
-                        currentStatus = (runDetails.status?.toLowerCase() as TestCase['status']) || currentStatus;
-                        reason = runDetails.termination_reason || reason;
-                    }
-                } catch (e) {
-                    console.warn("Failed to fetch suite details on SSE error");
+            const fullDetails = await runService.getTestCaseRunDetails(runId, true);
+            if (fullDetails) {
+                if (fullDetails.teststep_runs) {
+                    steps = fullDetails.teststep_runs.map((s: any, i: number) => mapTestStepRunToActionStep(s, i));
                 }
-            } else {
-                const fullDetails = await runService.getTestCaseRunDetails(runId, true);
-                if (fullDetails) {
-                    if (fullDetails.teststep_runs) {
-                        steps = fullDetails.teststep_runs.map((s: any, i: number) => mapTestStepRunToActionStep(s, i));
-                    }
-                    currentStatus = (fullDetails.status?.toLowerCase() as TestCase['status']) || currentStatus;
-                    reason = fullDetails.termination_reason || reason;
-                }
+                currentStatus = (fullDetails.status?.toLowerCase() as TestCase['status']) || currentStatus;
+                reason = fullDetails.termination_reason || reason;
             }
-
             if (['running', 'queued', 'pending', 'idle'].includes(currentStatus || '')) {
                 currentStatus = 'error';
-                reason = streamErrorMessage;
+                if (!reason || reason === streamErrorMessage) {
+                    reason = streamErrorMessage;
+                }
             }
-
             setTestCase(prev => {
                 if (!prev) return null;
                 return {
@@ -145,28 +134,6 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
         }
     }, [activeRunId]);
 
-    const refreshTestCase = useCallback(async () => {
-        if (!projectId || !caseId) return;
-        try {
-            const finalSuiteId = suiteId || testCase?.suiteId || '0';
-            const updatedCase = await testCaseService.getTestCaseById(projectId, finalSuiteId, caseId, true);
-            setTestCase(prev => {
-                if (!prev) return updatedCase;
-                const isSameCase = String(prev.id) === String(caseId);
-                if (!isSameCase) return updatedCase;
-                return {
-                    ...updatedCase,
-                    status: (prev.status !== 'idle' && updatedCase.status === 'idle') ? prev.status : updatedCase.status,
-                    steps: prev.steps && prev.steps.length > 0 ? prev.steps : updatedCase.steps,
-                    terminationReason: updatedCase.terminationReason || prev.terminationReason
-                };
-            });
-            setCurrentUrl(updatedCase.url || '');
-        } catch (err: any) {
-            console.error('Failed to refresh test case:', err);
-        }
-    }, [projectId, suiteId, caseId, testCase?.suiteId]);
-
     useEffect(() => {
         setTestCase(null);
         setCurrentScreenshot('');
@@ -190,18 +157,6 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
 
                 if (runIdToFetch) {
                     try {
-                        let runDetails: any;
-                        if (parentSuiteRunId) {
-                            try {
-                                const suiteDetails = await runService.getTestSuiteRunDetails(Number(parentSuiteRunId));
-                                runDetails = suiteDetails.testcase_runs?.find((r: any) => String(r.id) === String(runIdToFetch));
-                                if (runDetails) {
-                                    currentStatus = (runDetails.status?.toLowerCase() as TestCase['status']) || currentStatus;
-                                }
-                            } catch (e) {
-                                console.warn("Failed to fetch suite details, falling back to case details");
-                            }
-                        }
                         const fullDetails = await runService.getTestCaseRunDetails(Number(runIdToFetch));
                         if (fullDetails) {
                             setRunDetails(fullDetails);
@@ -281,6 +236,5 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
         handleRunTest,
         handleAbort,
         handleBack: () => navigate(-1),
-        refreshTestCase
     };
 };
