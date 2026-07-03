@@ -9,7 +9,6 @@ import {
   ProjectsPage,
   TestCasePage,
   TestSuitePage,
-  ForgotPasswordPage,
   AdminUsersPage,
   SiteSettingsPage,
   TestSuiteRunDashboardPage,
@@ -53,7 +52,6 @@ function App() {
         <Routes>
           <Route path="/" element={<Navigate to="/projects" replace />} />
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route element={<ProtectedRoute />}>
             <Route path="/projects" element={<ProjectsPage />} />
             <Route path="/project/:projectId" element={<ProjectPage />} />

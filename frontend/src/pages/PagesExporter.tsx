@@ -1,4 +1,4 @@
-import { LoginPage, ForgotPasswordPage } from './Auth';
+import { LoginPage } from './Auth';
 import { ProjectsPage } from './Projects';
 import { ProjectPage } from './Project';
 import { TestSuitePage, TestSuiteRunDashboardPage } from './TestSuite';
@@ -14,7 +14,6 @@ export {
     TestCasePage,
     TestCaseRunPage,
     ProfilePage,
-    ForgotPasswordPage,
     AdminUsersPage,
     SiteSettingsPage,
     TestSuiteRunDashboardPage
