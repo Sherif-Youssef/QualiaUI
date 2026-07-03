@@ -3,7 +3,6 @@ import {
     TestSuiteDTO, TestSuite,
     TestCaseDTO, TestCase, ActionStep,
     UserDTO, UserProfile, PasswordDTO, UpdatePasswordForm,
-    DashboardDTO, DashboardData,
     TestCaseRun, TestStepRun,
     Cookie
 } from "@/types";
@@ -165,19 +164,4 @@ export const mapProfileToDTO = (profile: Partial<UserProfile>): Partial<UserDTO>
 export const mapPasswordToDTO = (form: UpdatePasswordForm): PasswordDTO => ({
     current_password: form.currentPassword,
     new_password: form.newPassword,
-});
-export const mapDashboardToViewModel = (dto: DashboardDTO): DashboardData => ({
-    metrics: {
-        totalProjects: dto.metrics.total_projects,
-        totalUsers: dto.metrics.total_users,
-        executionRate: dto.metrics.execution_rate,
-        systemLoad: dto.metrics.system_load,
-        projectGrowth: dto.metrics.project_growth,
-        userGrowth: dto.metrics.user_growth,
-        executionGrowth: dto.metrics.execution_growth,
-        loadGrowth: dto.metrics.load_growth,
-    },
-    projectHealth: dto.project_health,
-    executionTrend: dto.execution_trend,
-    globalSuccessRate: dto.global_success_rate,
 });
