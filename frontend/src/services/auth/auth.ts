@@ -14,6 +14,17 @@ export const authService = {
             throw error;
         }
     },
+    logout: async () => {
+        try {
+            await api.post('/auth/logout');
+        }
+        catch (error) {
+            console.error('Logout failed:', error);
+        }
+        finally {
+            localStorage.removeItem('token');
+        }
+    },
     getCurrentUser: async () => {
         if (currentUserPromise) return currentUserPromise;
 

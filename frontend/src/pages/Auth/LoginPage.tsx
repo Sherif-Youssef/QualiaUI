@@ -68,16 +68,7 @@ export const LoginPage: React.FC = () => {
             type: 'password',
             placeholder: 'Enter your password',
             value: password,
-            onChange: setPassword,
-            rightElement: (
-              <button
-                type="button"
-                onClick={() => navigate('/forgot-password')}
-                className="text-xs text-primary hover:underline font-medium"
-              >
-                Forgot password?
-              </button>
-            )
+            onChange: setPassword
           }
         ]}
       />
