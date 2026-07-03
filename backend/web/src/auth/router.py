@@ -74,8 +74,19 @@ async def refresh_route(
     if not refresh_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing refresh token.")
     return refresh_tokens(session, refresh_token)
-  
-    
+
+
+@auth_router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+async def logout_route(
+    response: Response,
+) -> Response:
+    response.delete_cookie(
+        key="refresh_token",
+        httponly=True,
+        secure=True,
+        samesite="lax",
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 @auth_router.post("/users/{user_id}/temporary-password/regenerate", response_model=ProvisionedUserRead)
 async def regenerate_temporary_password_route(
