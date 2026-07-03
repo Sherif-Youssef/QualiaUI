@@ -158,12 +158,12 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
         }
     };
 
-    const fetchRunDetails = useCallback(async () => {
+    const fetchRunDetails = useCallback(async (force = false) => {
         if (!runId) return;
 
         try {
             const id = parseInt(runId);
-            const data = await runService.getTestSuiteRunDetails(id);
+            const data = await runService.getTestSuiteRunDetails(id, force);
             setSuiteRun(data);
         } catch (err: any) {
             console.error('Run dashboard details error:', err);
@@ -173,7 +173,7 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
         }
     }, [runId]);
 
-    const debouncedFetchRunDetails = useCallback(() => {
+    const debouncedFetchRunDetails = useCallback((force = false) => {
         if (debounceTimerRef.current) {
             window.clearTimeout(debounceTimerRef.current);
         }
@@ -183,7 +183,7 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
             
             isFetchingRef.current = true;
             try {
-                await fetchRunDetails();
+                await fetchRunDetails(force);
             } finally {
                 isFetchingRef.current = false;
             }
@@ -199,7 +199,7 @@ export const TestSuiteRunDashboardPage: React.FC = () => {
     }, [runId, fetchRunDetails]);
 
     const handleStatusChange = useCallback(() => {
-        debouncedFetchRunDetails();
+        debouncedFetchRunDetails(true);
     }, [debouncedFetchRunDetails]);
     useRunStreaming({
         scope: 'TESTSUITE',

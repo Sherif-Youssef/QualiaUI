@@ -6,6 +6,7 @@ import { mapActiveStepToActionStep } from '@/utils/mappers';
 interface UseTestCaseRunSSEProps {
     caseId?: string;
     parentSuiteRunId?: string | number;
+    detectedSuiteRunIdRef?: React.MutableRefObject<number | null>;
     setTestCase: React.Dispatch<React.SetStateAction<TestCase | null>>;
     setIsRunning: React.Dispatch<React.SetStateAction<boolean>>;
     setIsAborting: React.Dispatch<React.SetStateAction<boolean>>;
@@ -18,6 +19,7 @@ interface UseTestCaseRunSSEProps {
 export const useTestCaseRunSSE = ({
     caseId,
     parentSuiteRunId,
+    detectedSuiteRunIdRef,
     setTestCase,
     setIsRunning,
     setIsAborting,
@@ -36,7 +38,9 @@ export const useTestCaseRunSSE = ({
     }, []);
 
     const subscribeToRun = useCallback((runId: number) => {
-        const subscriptionId = parentSuiteRunId ? Number(parentSuiteRunId) : runId;
+
+        const suiteId = parentSuiteRunId || detectedSuiteRunIdRef?.current;
+        const subscriptionId = suiteId ? Number(suiteId) : runId;
 
         if (eventSourceRef.current) {
             if ((eventSourceRef.current as any).subscriptionId === subscriptionId) {
@@ -46,7 +50,7 @@ export const useTestCaseRunSSE = ({
         }
         setIsRunning(true);
 
-        const scope = parentSuiteRunId ? 'TESTSUITE' : 'TESTCASE';
+        const scope = suiteId ? 'TESTSUITE' : 'TESTCASE';
 
         const eventSource = runService.subscribeToRunProgress(
             scope as Scope,

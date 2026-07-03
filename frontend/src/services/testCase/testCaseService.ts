@@ -1,6 +1,5 @@
 import api, { ApiResponse, getDeduplicated } from "@/lib/api";
 import { TestCaseDTO, TestCase } from "@/types";
-import { testSuiteService } from "../testSuit/testSuiteService";
 import { mapTestCaseToViewModel } from "@/utils/mappers";
 
 export const testCaseService = {
@@ -112,32 +111,6 @@ export const testCaseService = {
             await api.delete(`/projects/${projectId}/testsuites/${suiteId}/testcases/${caseId}/cookies/${cookieId}`);
         } catch (error) {
             console.error(`Service error (deleteTestCaseCookie ${cookieId}):`, error);
-            throw error;
-        }
-    },
-
-    getAllProjectTestCases: async (projectId: string): Promise<TestCase[]> => {
-        try {
-            
-            const suitesRes = await testSuiteService.getTestSuites(projectId, 0, 100);
-            const allCases: TestCase[] = [];
-
-            for (const suite of suitesRes.testSuites) {
-                const casesRes = await testCaseService.getTestCases(projectId, suite.id, 0, 100);
-                allCases.push(...casesRes.testCases.map(tc => ({ ...tc, suiteId: suite.id, suiteName: suite.name })));
-            }
-
-            return allCases;
-        } catch (error: any) {
-            console.error('Service error (getAllProjectTestCases):', error);
-            
-            if (error.response?.status === 422) {
-                const detail = error.response.data.detail;
-                const message = Array.isArray(detail)
-                    ? detail.map((err: any) => `${err.loc.join('.')}: ${err.msg}`).join(', ')
-                    : typeof detail === 'string' ? detail : 'Validation Error';
-                throw new Error(message);
-            }
             throw error;
         }
     }

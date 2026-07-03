@@ -20,6 +20,8 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
     const stateRunId = location.state?.runId;
     const startRun = location.state?.startRun;
     const model = location.state?.model;
+    const [detectedSuiteRunId, setDetectedSuiteRunId] = useState<number | null>(null);
+    const detectedSuiteRunIdRef = useRef<number | null>(null);
     const [testCase, setTestCase] = useState<TestCase | null>(null);
     const [currentScreenshot, setCurrentScreenshot] = useState('');
     const [currentUrl, setCurrentUrl] = useState('');
@@ -83,7 +85,8 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
 
     const { subscribeToRun, closeStream } = useTestCaseRunSSE({
         caseId,
-        parentSuiteRunId,
+        parentSuiteRunId: parentSuiteRunId || detectedSuiteRunId,
+        detectedSuiteRunIdRef,
         setTestCase,
         setIsRunning,
         setIsAborting,
@@ -165,6 +168,11 @@ export const useTestCaseRun = ({ projectId, suiteId, caseId, runId: propRunId }:
                             }
                             currentStatus = (fullDetails.status?.toLowerCase() as TestCase['status']) || currentStatus;
                             reason = fullDetails.termination_reason || undefined;
+
+                            if (fullDetails.testsuite_run_id) {
+                                detectedSuiteRunIdRef.current = fullDetails.testsuite_run_id;
+                                setDetectedSuiteRunId(fullDetails.testsuite_run_id);
+                            }
                         }
 
                         if (['running', 'queued', 'pending'].includes(currentStatus || '')) {

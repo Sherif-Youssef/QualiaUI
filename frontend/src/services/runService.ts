@@ -3,7 +3,6 @@ import {
     RunMode,
     Scope,
     StartRunResponse,
-    ProjectRun,
     TestSuiteRun,
     TestCaseRun,
     TestStepRun
@@ -68,15 +67,6 @@ export const runService = {
 
 
 
-    getProjectRuns: async (projectId: string | number, offset = 0, limit = 10): Promise<{ runs: ProjectRun[]; total: number }> => {
-        const response = await api.get<ApiResponse<ProjectRun>>(`/projects/${projectId}/runs`, {
-            params: { offset, limit }
-        });
-        return {
-            runs: response.data.items,
-            total: response.data.total_items
-        };
-    },
 
     getTestSuiteRuns: async (projectId: string | number, testsuiteId: string | number, offset = 0, limit = 10): Promise<{ runs: TestSuiteRun[]; total: number }> => {
         const response = await api.get<ApiResponse<TestSuiteRun>>(`/projects/${projectId}/testsuites/${testsuiteId}/runs`, {
@@ -99,18 +89,6 @@ export const runService = {
     },
 
 
-    getProjectRunDetails: async (runId: number, force = false): Promise<ProjectRun & { testsuite_runs: TestSuiteRun[] }> => {
-        try {
-            const response = await getDeduplicated<ProjectRun & { testsuite_runs: TestSuiteRun[] }>(
-                `/runs/projects/${runId}`,
-                undefined,
-                force
-            );
-            return response.data;
-        } catch (error) {
-            throw error;
-        }
-    },
 
     getTestSuiteRunDetails: async (runId: number, force = false): Promise<TestSuiteRun & { testcase_runs: TestCaseRun[] }> => {
         try {

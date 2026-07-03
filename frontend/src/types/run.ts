@@ -2,7 +2,7 @@ import { UserDTO } from './user';
 
 export type RunStatus = 'QUEUED' | 'RUNNING' | 'PASSED' | 'FAILED' | 'ERROR' | 'ABORTED' | 'EXECUTED';
 export type RunMode = 'NATURAL' | 'EXECUTABLE';
-export type Scope = 'PROJECT' | 'TESTSUITE' | 'TESTCASE';
+export type Scope = 'TESTSUITE' | 'TESTCASE';
 
 export interface BaseRun {
     id: number;
@@ -30,13 +30,9 @@ export interface BaseRun {
     user?: UserDTO;
 }
 
-export interface ProjectRun extends BaseRun {
-    project_id: number;
-}
 
 export interface TestSuiteRun extends BaseRun {
     testsuite_id: number;
-    project_run_id: number | null;
     name?: string;
 }
 
